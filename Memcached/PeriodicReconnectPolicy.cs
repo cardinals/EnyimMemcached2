@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Enyim.Caching.Configuration;
 using Funq;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public class PeriodicReconnectPolicy : IReconnectPolicy, ISupportInitialize
 	{

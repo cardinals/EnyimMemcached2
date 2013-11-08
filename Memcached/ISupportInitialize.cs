@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public interface ISupportInitialize
 	{

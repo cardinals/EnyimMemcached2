@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	internal static class Murmur32
 	{

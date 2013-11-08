@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	internal class ReceiveBuffer : Stream
 	{

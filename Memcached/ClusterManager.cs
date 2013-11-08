@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Enyim.Caching.Configuration;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public static class ClusterManager
 	{

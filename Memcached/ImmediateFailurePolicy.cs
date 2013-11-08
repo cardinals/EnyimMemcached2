@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public class ImmediateFailurePolicy : IFailurePolicy
 	{

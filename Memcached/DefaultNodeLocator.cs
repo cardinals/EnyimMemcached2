@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public class DefaultNodeLocator : INodeLocator
 	{

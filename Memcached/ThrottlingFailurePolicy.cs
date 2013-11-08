@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Enyim.Caching.Configuration;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	/// <summary>
 	/// Fails a node when the specified number of failures happen in a specified time window.

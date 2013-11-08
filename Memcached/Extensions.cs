@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	internal static class QueueExtensions
 	{
