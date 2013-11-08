@@ -57,7 +57,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BasicConfiguration.cs" />
+    <Compile Include="Configuration\BasicConfiguration.cs" />
+    <Compile Include="Configuration\AppSettingsConfiguration.cs" />
     <Compile Include="IClusterFactory.cs" />
     <Compile Include="ISocket.cs" />
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />

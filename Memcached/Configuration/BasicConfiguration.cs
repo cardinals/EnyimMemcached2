@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Funq;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Configuration
 {
 	public class BasicConfiguration : IClusterFactory
 	{
@@ -20,18 +20,8 @@ namespace Enyim.Caching.Memcached
 			container = new Container { DefaultReuse = ReuseScope.None };
 			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
 			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
-			container.AutoWireAs<IReconnectPolicy, SimpleReconnectPolicy>();
+			container.AutoWireAs<IReconnectPolicy, PeriodicReconnectPolicy>();
 			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
-
-			// cluster + nodes
-			container
-				.AutoWireAs<INode, BinaryNode, IPEndPoint>()
-				.InitializedBy((c, n) =>
-				{
-					BufferSize = BufferSize;
-				});
-
-			container.AutoWireAs<ICluster, MemcachedCluster, IEnumerable<IPEndPoint>>();
 
 			// socket
 			container
@@ -41,6 +31,18 @@ namespace Enyim.Caching.Memcached
 					s.ConnectionTimeout = ConnectionTimeout;
 					s.ReceiveTimeout = ConnectionTimeout;
 				});
+
+			// cluster + nodes
+			container
+				.AutoWireAs<INode, BinaryNode, IPEndPoint>()
+				.InitializedBy((c, n) =>
+				{
+					BufferSize = BufferSize;
+				});
+
+			container
+				.AutoWireAs<ICluster, MemcachedCluster, IEnumerable<IPEndPoint>>()
+				.ReusedWithin(ReuseScope.Container);
 		}
 
 		public IList<IPEndPoint> Nodes { get { return nodes; } }

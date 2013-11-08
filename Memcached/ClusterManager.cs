@@ -42,47 +42,6 @@ namespace Enyim.Caching.Memcached
 
 			return retval;
 		}
-
-		public static ICluster RegisterConfigurationSection(string sectionName)
-		{
-			var section = ConfigurationManager.GetSection(sectionName) as ClusterConfigurationSection;
-			if (section == null)
-				throw new ConfigurationErrorsException(String.Format("Section {0} was not found or it's not a ClusterConfigurationSection", sectionName));
-
-			var config = new BasicConfiguration
-			{
-				BufferSize = section.Connection.BufferSize,
-				ConnectionTimeout = section.Connection.Timeout
-			};
-
-			RegisterProviderElement(config, section.FailurePolicy, ReuseScope.None);
-			RegisterProviderElement(config, section.ReconnectPolicy);
-			RegisterProviderElement(config, section.NodeLocator);
-			RegisterProviderElement(config, section.KeyTransformer);
-
-			config.AddNodes(section.Nodes.ToIPEndPoints());
-
-			return Register(sectionName, config);
-		}
-
-		private static IRegistration<TContract> RegisterProviderElement<TContract>(BasicConfiguration config, ProviderElement<TContract> element, ReuseScope scope = ReuseScope.Default)
-			where TContract : class
-		{
-			if (element == null) return null;
-
-			var type = element.Type;
-			if (type == null) return null;
-
-			var reg = config.Container.AutoWireAs<TContract>(type);
-
-			if (typeof(ISupportInitialize).IsAssignableFrom(type))
-				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
-
-			if (scope != ReuseScope.Default)
-				reg.ReusedWithin(scope);
-
-			return reg;
-		}
 	}
 }
 
