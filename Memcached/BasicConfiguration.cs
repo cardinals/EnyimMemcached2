@@ -32,7 +32,8 @@ namespace Enyim.Caching.Memcached
 				})
 				.ReusedWithin(ReuseScope.None);
 
-			container.Register<ICluster, MemcachedCluster>();
+			container.Register<ICluster>(typeof(MemcachedCluster), new[] { typeof(IEnumerable<IPEndPoint>) });
+			//container.Register<ICluster, MemcachedCluster>();
 
 			// socket
 			container
