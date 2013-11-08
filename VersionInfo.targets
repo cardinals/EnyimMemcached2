@@ -1,26 +1,34 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- generates assembly info based on git tags -->
+	<!-- local build or Appveyor? -->
 	<PropertyGroup>
-		<ProjectVersion Condition="'$(ProjectVersion)' == ''">0.2.0</ProjectVersion>
+		<ProjectVersion Condition="'$(AppVeyor_ProjectBuildNumber)' != ''">$(AppVeyor_ProjectBuildNumber)</ProjectVersion>
+		<ProjectVersion Condition="'$(AppVeyor_ProjectBuildNumber)' == ''">0.2.0</ProjectVersion>
+	</PropertyGroup>
+
+	<!-- if local build, try to run git to get a commit hash -->
+	<PropertyGroup Condition="'$(CommitId)' == ''">
 		<GitExe Condition="Exists('$(ProgramFiles32)\git\bin\git.exe')">"$(ProgramFiles32)\git\bin\git.exe"</GitExe>
 		<GitExe Condition="Exists('$(ProgramFiles)\git\bin\git.exe')">"$(ProgramFiles)\git\bin\git.exe"</GitExe>
 		<GitExe Condition="Exists('$(ProgramFiles) (x86)\git\bin\git.exe')">"$(ProgramFiles) (x86)\git\bin\git.exe"</GitExe>
-		<GitExe Condition="'$(GitExe)' == ''">git.exe</GitExe>
-		
+
 		<GeneratedAssemblyInfo>$(IntermediateOutputPath)__versioninfo.cs</GeneratedAssemblyInfo>
 		<GitVersionCache>$(IntermediateOutputPath)__gitlastknown</GitVersionCache>
 	</PropertyGroup>
 
-	<Target Name="GetGitVersionInfo">
-		<Error Condition="'$(GitExe)' == ''" Text="Git.exe cannot be found" />
-		
+	<!-- git is not installed :( -->
+	<PropertyGroup Condition="'$(GitExe)' == ''">
+		<CommitId>local</CommitId>
+	</PropertyGroup>
+
+	<!-- have git, but does not have commit hash -->
+	<Target Name="GetGitVersionInfo" Condition="'$(CommitId)' == ''">
 		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
 		<ReadLinesFromFile File="$(GitVersionCache)" ContinueOnError="true">
 			<Output TaskParameter="Lines" PropertyName="_LastGitVersion"/>
 		</ReadLinesFromFile>
 		<Exec Command="$(GitExe) log --pretty=format:%%h -1 &gt; $(GitVersionCache)" IgnoreExitCode="false" />
 		<ReadLinesFromFile File="$(GitVersionCache)" ContinueOnError="true">
-			<Output TaskParameter="Lines" PropertyName="_CurrentGitVersion"/>
+			<Output TaskParameter="Lines" PropertyName="CommitId"/>
 		</ReadLinesFromFile>
 	</Target>
 
@@ -28,13 +36,15 @@
 		assembly info is only regenerated if the git repo changes
 		this speeds up local builds considerably
 	-->
-	<Target Name="CreateAssemblyInfoFromGit" Condition=" '$(_CurrentGitVersion)' != '$(_LastGitVersion)' Or '$(Configuration)' == 'Release' ">
+	<Target Name="CreateAssemblyInfoFromGit" Condition=" '$(CommitId)' != '$(_LastGitVersion)' Or '$(Configuration)' == 'Release' ">
+		<Message Text="Current ($(CommitId)) != Last ($(_LastGitVersion))" Importance="high" />
+		
 		<Delete Files="$(GeneratedAssemblyInfo)" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="true"
 						  Lines="
 [assembly: System.Reflection.AssemblyFileVersion(&quot;$(ProjectVersion)&quot;)]
 [assembly: System.Reflection.AssemblyVersion(&quot;$(ProjectVersion)&quot;)]
-[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ProjectVersion)-$(_CurrentGitVersion)&quot;)]
+[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ProjectVersion)-$(CommitId)&quot;)]
 " />
 	</Target>
 
