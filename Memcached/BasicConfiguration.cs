@@ -17,11 +17,11 @@ namespace Enyim.Caching.Memcached
 		{
 			nodes = new List<IPEndPoint>();
 
-			container = new Container();
-			container.Register<INodeLocator, DefaultNodeLocator>();
-			container.Register<INodeFailurePolicy, ImmediateFailurePolicy>();
-			container.Register<IReconnectPolicy, SimpleReconnectPolicy>();
-			container.Register<IKeyTransformer, NullKeyTransformer>();
+			container = new Container { DefaultReuse = ReuseScope.None };
+			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
+			container.AutoWireAs<INodeFailurePolicy, ImmediateFailurePolicy>();
+			container.AutoWireAs<IReconnectPolicy, SimpleReconnectPolicy>();
+			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
 
 			// cluster + nodes
 			container
@@ -29,11 +29,9 @@ namespace Enyim.Caching.Memcached
 				.InitializedBy((c, n) =>
 				{
 					BufferSize = BufferSize;
-				})
-				.ReusedWithin(ReuseScope.None);
+				});
 
-			container.Register<ICluster>(typeof(MemcachedCluster), new[] { typeof(IEnumerable<IPEndPoint>) });
-			//container.Register<ICluster, MemcachedCluster>();
+			container.AutoWireAs<ICluster, MemcachedCluster, IEnumerable<IPEndPoint>>();
 
 			// socket
 			container
@@ -42,8 +40,7 @@ namespace Enyim.Caching.Memcached
 				{
 					s.ConnectionTimeout = ConnectionTimeout;
 					s.ReceiveTimeout = ConnectionTimeout;
-				})
-				.ReusedWithin(ReuseScope.None);
+				});
 		}
 
 		public IList<IPEndPoint> Nodes { get { return nodes; } }

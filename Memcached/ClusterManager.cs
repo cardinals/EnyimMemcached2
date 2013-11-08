@@ -73,7 +73,7 @@ namespace Enyim.Caching.Memcached
 			var type = element.Type;
 			if (type == null) return null;
 
-			var reg = config.Container.Register<TContract>(type);
+			var reg = config.Container.AutoWireAs<TContract>(type);
 
 			if (typeof(ISupportInitialize).IsAssignableFrom(type))
 				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
