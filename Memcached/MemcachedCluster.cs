@@ -82,7 +82,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public virtual Task Queue(ISingleItemOperation op)
+		public virtual Task Execute(ISingleItemOperation op)
 		{
 			var node = locator.Locate(op.Key);
 

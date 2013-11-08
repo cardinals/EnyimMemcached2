@@ -7,9 +7,8 @@ namespace Enyim.Caching
 	public interface ICluster: IDisposable
 	{
 		void Start();
-		//void Shutdown();
 
-		Task Queue(ISingleItemOperation op);
+		Task Execute(ISingleItemOperation op);
 		Task Broadcast(Func<IOperation> op);
 	}
 }
