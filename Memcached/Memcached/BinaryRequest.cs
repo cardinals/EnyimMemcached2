@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BinaryRequest
+	public class BinaryRequest: IRequest
 	{
 		private static int InstanceCounter;
 
@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached.Operations
 			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // session id
 		}
 
-		public unsafe IReadOnlyList<ArraySegment<byte>> CreateBuffer()
+		public IReadOnlyList<ArraySegment<byte>> CreateBuffer()
 		{
 			var key = BinaryConverter.EncodeKey(Key);
 			var keyLength = key == null ? 0 : key.Length;

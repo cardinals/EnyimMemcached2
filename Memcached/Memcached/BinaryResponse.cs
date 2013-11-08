@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BinaryResponse
+	public class BinaryResponse: IResponse
 	{
 		private const int STATE_NEED_HEADER = 1;
 		private const int STATE_NEED_BODY = 2;

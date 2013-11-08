@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching
 {
-	internal class SegmentListCopier
+	public class SegmentListCopier
 	{
 		private IReadOnlyList<ArraySegment<byte>> segments;
 		private int segmentIndex;

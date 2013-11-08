@@ -57,6 +57,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IRequest.cs" />
+    <Compile Include="IResponse.cs" />
+    <Compile Include="NodeBase.cs" />
     <Compile Include="Configuration\BasicConfiguration.cs" />
     <Compile Include="Configuration\AppSettingsConfiguration.cs" />
     <Compile Include="IClusterFactory.cs" />
@@ -92,7 +95,7 @@
     <Compile Include="INodeLocator.cs" />
     <Compile Include="ICluster.cs" />
     <Compile Include="IOperation.cs" />
-    <Compile Include="Stuff.cs" />
+    <Compile Include="Memcached\NoOp.cs" />
     <Compile Include="ReceiveBuffer.cs" />
     <Compile Include="SegmentListCopier.cs" />
     <Compile Include="BinaryNode.cs" />

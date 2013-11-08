@@ -1,13 +1,17 @@
 ﻿using System;
-using Enyim.Caching.Memcached.Operations;
 
-namespace Enyim.Caching
+namespace Enyim.Caching.Memcached.Operations
 {
-	public interface IOperation
+	public class NoOp : BinaryOperation
 	{
-		IRequest GetRequest();
-		bool Matches(IResponse response);
-		void ProcessResponse(IResponse response);
+		internal const int BufferSize = Protocol.HeaderLength;
+
+		protected override void DoProcessResponse(BinaryResponse response) { }
+
+		protected override BinaryRequest DoGetRequest()
+		{
+			return new BinaryRequest(OpCode.NoOp);
+		}
 	}
 }
 

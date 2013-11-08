@@ -17,7 +17,7 @@ namespace Enyim.Caching.Memcached.Operations
 			this.expires = expires;
 		}
 
-		public override BinaryRequest GetRequest()
+		protected override BinaryRequest DoGetRequest()
 		{
 			OpCode op;
 			switch (this.mode)
@@ -46,6 +46,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		protected override void DoProcessResponse(BinaryResponse response)
 		{
+			if (response != null) StatusCode = response.StatusCode;
 		}
 
 		public override string ToString()

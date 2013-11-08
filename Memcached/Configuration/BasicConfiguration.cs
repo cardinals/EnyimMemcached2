@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			// cluster + nodes
 			container
-				.AutoWireAs<INode, BinaryNode, IPEndPoint>()
+				.AutoWireAs<INode, MemcachedNode, IPEndPoint>()
 				.InitializedBy((c, n) =>
 				{
 					BufferSize = BufferSize;

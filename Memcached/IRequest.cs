@@ -1,31 +1,11 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Operations;
-using Funq;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
-	public class NoOp : BinaryOperation
+	public interface IRequest
 	{
-		internal const int BufferSize = Protocol.HeaderLength;
-
-		public override BinaryRequest GetRequest()
-		{
-			return new BinaryRequest(OpCode.NoOp);
-		}
-
-		protected override void DoProcessResponse(BinaryResponse response) { }
+		IReadOnlyList<ArraySegment<byte>> CreateBuffer();
 	}
 }
 

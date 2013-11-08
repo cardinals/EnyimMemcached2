@@ -6,14 +6,28 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		public int StatusCode { get; protected set; }
 
-		public abstract BinaryRequest GetRequest();
+		private uint correlationId;
 
-		public void ProcessResponse(BinaryResponse response)
+		public IRequest GetRequest()
 		{
-			StatusCode = response == null ? 0 : response.StatusCode;
-			DoProcessResponse(response);
+			var retval = DoGetRequest();
+			correlationId = retval.CorrelationId;
+
+			return retval;
 		}
 
+		public void ProcessResponse(IResponse response)
+		{
+			//StatusCode = response == null ? 0 : response.StatusCode;
+			DoProcessResponse((BinaryResponse)response);
+		}
+
+		public bool Matches(IResponse response)
+		{
+			return correlationId == ((BinaryResponse)response).CorrelationId;
+		}
+
+		protected abstract BinaryRequest DoGetRequest();
 		protected abstract void DoProcessResponse(BinaryResponse response);
 	}
 }

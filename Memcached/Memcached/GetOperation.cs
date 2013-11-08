@@ -6,7 +6,9 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		public GetOperation(string key) : base(key) { }
 
-		public override BinaryRequest GetRequest()
+		public ArraySegment<byte> Result { get; private set; }
+
+		protected override BinaryRequest DoGetRequest()
 		{
 			var request = new BinaryRequest(OpCode.Get)
 			{
@@ -19,14 +21,12 @@ namespace Enyim.Caching.Memcached.Operations
 
 		protected override void DoProcessResponse(BinaryResponse response)
 		{
-			if (StatusCode == 0)
+			if (response != null)
 			{
 				//var flags = BinaryConverter.DecodeInt32(response.Extra, 0);
 				Result = response.Data;
 			}
 		}
-
-		public ArraySegment<byte> Result { get; private set; }
 	}
 }
 

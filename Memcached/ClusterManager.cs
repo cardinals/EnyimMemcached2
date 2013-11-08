@@ -33,11 +33,11 @@ namespace Enyim.Caching
 
 		public static ICluster Register(string name, IClusterFactory factory)
 		{
-			var retval = clusters.AddOrUpdate(name,
+			var retval = clusters.AddOrUpdate(name ?? String.Empty,
 												_ => factory.Create(),
 												(a, b) =>
 												{
-													throw new InvalidOperationException("cluster already exists: " + (name ?? "<default cluster>"));
+													throw new InvalidOperationException("cluster already exists: " + (String.IsNullOrEmpty(name) ? "<default cluster>" : name));
 												});
 
 			return retval;

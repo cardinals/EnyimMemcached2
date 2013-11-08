@@ -3,5 +3,5 @@ bin/
 obj/
 *.user
 *.suo
-
+Tester
 Sql/Sql.dbmdl

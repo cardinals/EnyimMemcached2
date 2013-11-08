@@ -1,13 +1,11 @@
 ﻿using System;
-using Enyim.Caching.Memcached.Operations;
+using System.IO;
 
 namespace Enyim.Caching
 {
-	public interface IOperation
+	public interface IResponse
 	{
-		IRequest GetRequest();
-		bool Matches(IResponse response);
-		void ProcessResponse(IResponse response);
+		bool Read(Stream stream);
 	}
 }
 
