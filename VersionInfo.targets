@@ -1,8 +1,10 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<!-- local build or Appveyor? -->
 	<PropertyGroup>
-		<ProjectVersion Condition="'$(AppVeyor_ProjectBuildNumber)' != ''">$(AppVeyor_ProjectBuildNumber)</ProjectVersion>
-		<ProjectVersion Condition="'$(AppVeyor_ProjectBuildNumber)' == ''">0.2.0</ProjectVersion>
+		<ProjectVersion Condition="'$(AppVeyor_ProjectVersion)' != ''">$(AppVeyor_ProjectVersion)</ProjectVersion>
+		<ProjectVersion Condition="'$(AppVeyor_ProjectVersion)' == ''">0.2.0</ProjectVersion>
+		<GeneratedAssemblyInfo>$(IntermediateOutputPath)__versioninfo.cs</GeneratedAssemblyInfo>
+		<GitVersionCache>$(IntermediateOutputPath)__gitlastknown</GitVersionCache>
 	</PropertyGroup>
 
 	<!-- if local build, try to run git to get a commit hash -->
@@ -11,13 +13,8 @@
 		<GitExe Condition="Exists('$(ProgramFiles)\git\bin\git.exe')">"$(ProgramFiles)\git\bin\git.exe"</GitExe>
 		<GitExe Condition="Exists('$(ProgramFiles) (x86)\git\bin\git.exe')">"$(ProgramFiles) (x86)\git\bin\git.exe"</GitExe>
 
-		<GeneratedAssemblyInfo>$(IntermediateOutputPath)__versioninfo.cs</GeneratedAssemblyInfo>
-		<GitVersionCache>$(IntermediateOutputPath)__gitlastknown</GitVersionCache>
-	</PropertyGroup>
-
-	<!-- git is not installed :( -->
-	<PropertyGroup Condition="'$(GitExe)' == ''">
-		<CommitId>local</CommitId>
+		<!-- git is not installed :( -->
+		<CommitId Condition="'$(GitExe)' == ''">local</CommitId>
 	</PropertyGroup>
 
 	<!-- have git, but does not have commit hash -->
@@ -37,8 +34,9 @@
 		this speeds up local builds considerably
 	-->
 	<Target Name="CreateAssemblyInfoFromGit" Condition=" '$(CommitId)' != '$(_LastGitVersion)' Or '$(Configuration)' == 'Release' ">
+		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
 		<Message Text="Current ($(CommitId)) != Last ($(_LastGitVersion))" Importance="high" />
-		
+
 		<Delete Files="$(GeneratedAssemblyInfo)" />
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="true"
 						  Lines="
