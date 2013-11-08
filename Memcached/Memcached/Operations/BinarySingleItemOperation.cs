@@ -1,16 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Text;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations
 {
-	public interface IMultiItemOperation : IOperation
+	public abstract class BinarySingleItemOperation : BinaryOperation, ISingleKeyOperation
 	{
-		IReadOnlyList<byte[]> Keys { get; }
-	}
+		protected BinarySingleItemOperation(string key)
+		{
+			Key = key;
+		}
 
-	public interface IStoreOperation : ISingleKeyOperation
-	{
-		StoreMode Mode { get; }
+		public string Key { get; private set; }
+
+		byte[] ISingleKeyOperation.Key
+		{
+			get { return Encoding.UTF8.GetBytes(Key); }
+		}
 	}
 }
 

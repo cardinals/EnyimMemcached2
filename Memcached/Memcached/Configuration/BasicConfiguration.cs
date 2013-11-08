@@ -41,7 +41,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				});
 
 			container
-				.AutoWireAs<ICluster, MemcachedCluster, IEnumerable<IPEndPoint>>()
+				.AutoWireAs<ICluster, DefaultCluster, IEnumerable<IPEndPoint>>()
 				.ReusedWithin(ReuseScope.Container);
 		}
 

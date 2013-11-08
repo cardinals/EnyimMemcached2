@@ -6,10 +6,11 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Enyim.Caching;
 
 namespace Enyim.Caching.Memcached
 {
-	public class MemcachedCluster : ICluster
+	public class DefaultCluster : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly TaskCompletionSource<bool> fail;
@@ -27,7 +28,7 @@ namespace Enyim.Caching.Memcached
 		private INode[] workingNodes;
 		private ConcurrentQueue<INode> reconnectedNodes;
 
-		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints,
+		public DefaultCluster(IEnumerable<IPEndPoint> endpoints,
 								INodeLocator locator, 
 								IReconnectPolicy policy, 
 								Func<IPEndPoint, INode> nodeFactory)
@@ -43,7 +44,7 @@ namespace Enyim.Caching.Memcached
 			this.allNodes = endpoints.Select(nodeFactory).ToArray();
 		}
 
-		static MemcachedCluster()
+		static DefaultCluster()
 		{
 			fail = new TaskCompletionSource<bool>();
 			fail.SetException(new IOException());
@@ -82,7 +83,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public virtual Task Execute(ISingleItemOperation op)
+		public virtual Task Execute(ISingleKeyOperation op)
 		{
 			var node = locator.Locate(op.Key);
 

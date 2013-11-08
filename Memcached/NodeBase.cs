@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Threading.Tasks;
-using Enyim.Caching.Memcached;
 using System.Threading;
-using Enyim.Caching.Memcached.Operations;
+using System.Threading.Tasks;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public abstract class NodeBase : INode
 	{
@@ -191,8 +188,6 @@ namespace Enyim.Caching.Memcached
 					if (log.IsTraceEnabled) log.Trace("Sent & finished " + data.Op);
 				}
 			}
-
-			var didNoop = false;
 
 			if (currentWriteCopier == null)
 			{

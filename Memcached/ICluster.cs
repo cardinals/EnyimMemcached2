@@ -8,7 +8,7 @@ namespace Enyim.Caching
 	{
 		void Start();
 
-		Task Execute(ISingleItemOperation op);
+		Task Execute(ISingleKeyOperation op);
 		Task Broadcast(Func<IOperation> op);
 	}
 }
