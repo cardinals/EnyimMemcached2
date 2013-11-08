@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached
 	/// <summary>
 	/// Fails a node when the specified number of failures happen in a specified time window.
 	/// </summary>
-	public class ThrottlingFailurePolicy : INodeFailurePolicy, ISupportInitialize
+	public class ThrottlingFailurePolicy : IFailurePolicy, ISupportInitialize
 	{
 		private static readonly ILog log = LogManager.GetLogger(typeof(ThrottlingFailurePolicy));
 

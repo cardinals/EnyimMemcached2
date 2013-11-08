@@ -59,6 +59,8 @@
   <ItemGroup>
     <Compile Include="BasicConfiguration.cs" />
     <Compile Include="IClusterFactory.cs" />
+    <Compile Include="ISocket.cs" />
+    <Compile Include="Require.cs" />
     <Compile Include="SimpleReconnectPolicy.cs" />
     <Compile Include="ThrottlingFailurePolicy.cs" />
     <Compile Include="ISupportInitialize.cs" />

@@ -28,9 +28,9 @@ namespace Enyim.Caching.Memcached
 			return canRead;
 		}
 
-		public void Fill(SafeSocket socket)
+		public void Fill(ISocket socket)
 		{
-			var didRead = socket.Read(readBuffer, 0, readBuffer.Length);
+			var didRead = socket.Receive(readBuffer, 0, readBuffer.Length);
 
 			position = 0;
 			length = didRead;

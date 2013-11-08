@@ -27,9 +27,9 @@ namespace Enyim.Caching.Configuration
 		}
 
 		[ConfigurationProperty("failurePolicy")]
-		public ProviderElement<INodeFailurePolicy> FailurePolicy
+		public ProviderElement<IFailurePolicy> FailurePolicy
 		{
-			get { return (ProviderElement<INodeFailurePolicy>)base["failurePolicy"]; }
+			get { return (ProviderElement<IFailurePolicy>)base["failurePolicy"]; }
 			set { base["failurePolicy"] = value; }
 		}
 

@@ -8,19 +8,21 @@ using System.Threading;
 namespace Enyim.Caching.Memcached
 {
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
-	public class SafeSocket : IDisposable
+	public class SafeSocket : ISocket
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		private readonly object InstanceLock = new object();
 
 		private IPEndPoint endpoint;
-		private Socket socket;
+		private int bufferSize;
 		private TimeSpan receiveTimeout;
+		private TimeSpan connectionTimeout;
+
+		private Socket socket;
 		private int state;
 
-		public SafeSocket(IPEndPoint endpoint)
+		public SafeSocket()
 		{
-			this.endpoint = endpoint;
-
 			receiveTimeout = TimeSpan.FromSeconds(10);
 			ConnectionTimeout = TimeSpan.FromSeconds(10);
 			BufferSize = 16 * 1024;
@@ -39,17 +41,87 @@ namespace Enyim.Caching.Memcached
 			DestroySocket();
 		}
 
-		public int BufferSize { get; set; }
-		public TimeSpan ConnectionTimeout { get; set; }
-
-		public TimeSpan ReceiveTimeout
+		public void Connect(IPEndPoint endpoint, CancellationToken token)
 		{
-			get { return FromTimeout(socket.ReceiveTimeout); }
-			set
+			lock (InstanceLock)
+				PerformConnect(endpoint, token);
+		}
+
+		private void PerformConnect(IPEndPoint endpoint, CancellationToken token)
+		{
+			this.endpoint = endpoint;
+			this.IsAlive = false;
+
+			using (var mre = new ManualResetEventSlim(false))
+			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
 			{
-				receiveTimeout = value;
-				RefreshSocket();
+				opt.Completed += (a, b) => mre.Set();
+				RecreateSocket();
+
+				if (socket.ConnectAsync(opt)
+					&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
+				{
+					if (log.IsTraceEnabled) log.Trace("mre.Wait() timeout while connecting");
+
+					Socket.CancelConnectAsync(opt);
+					throw new TimeoutException();
+				}
+
+				if (opt.SocketError == SocketError.Success)
+				{
+					if (log.IsDebugEnabled) log.Debug(endpoint + " is connected");
+					IsAlive = true;
+				}
+				else
+				{
+					throw new IOException("Could not connect to " + endpoint);
+				}
 			}
+		}
+
+		/// <summary>
+		/// Reads from the socket.
+		/// </summary>
+		/// <param name="buffer"></param>
+		/// <param name="offset"></param>
+		/// <param name="count"></param>
+		/// <returns>The amount of bytes read.</returns>
+		public int Receive(byte[] buffer, int offset, int count)
+		{
+			if (count < 1) return count;
+
+			SocketError errorCode;
+			var read = socket.Receive(buffer, offset, count, SocketFlags.None, out errorCode);
+
+			// read=0 means we must reconnect
+			if (errorCode != SocketError.Success || read < 1)
+				ThrowIOE("Could not read, reason: " + errorCode);
+
+			return read;
+		}
+
+		/// <summary>
+		/// Sends the data.
+		/// </summary>
+		public void Send(WriteBuffer buffer)
+		{
+			Send(buffer.GetBuffer(), 0, buffer.Position);
+			buffer.Reset();
+		}
+
+		/// <summary>
+		/// Sends the data.
+		/// </summary>
+		public void Send(byte[] buffer, int offset, int count)
+		{
+			if (count < 1) return;
+
+			SocketError errorCode;
+			var sent = socket.Send(buffer, offset, count, SocketFlags.None, out errorCode);
+
+			// sent=0 means we must reconnect
+			if (errorCode != SocketError.Success || sent < 1)
+				ThrowIOE("Could not write, reason: " + errorCode);
 		}
 
 		public bool IsAlive
@@ -62,12 +134,40 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		private void RefreshSocket()
+		public int BufferSize
 		{
-			var tmp = ToTimeout(ReceiveTimeout);
+			get { return bufferSize; }
+			set
+			{
+				Require.That(!IsAlive, "Cannot change BufferSize while connected.");
+				Require.Value("value", value > 0, "BufferSize must be > 0");
 
-			socket.ReceiveTimeout = tmp;
-			socket.SendTimeout = tmp;
+				bufferSize = value;
+			}
+		}
+
+		public TimeSpan ConnectionTimeout
+		{
+			get { return connectionTimeout; }
+			set
+			{
+				Require.That(!IsAlive, "Cannot change ConnectionTimeout while connected.");
+				Require.Value("value", value >= TimeSpan.Zero, "ConnectionTimeout must be > 0");
+
+				connectionTimeout = value;
+			}
+		}
+
+		public TimeSpan ReceiveTimeout
+		{
+			get { return receiveTimeout; }
+			set
+			{
+				Require.That(!IsAlive, "Cannot change ReceiveTimeout while connected.");
+				Require.Value("value", value >= TimeSpan.Zero, "ReceiveTimeout must be > 0");
+
+				receiveTimeout = value;
+			}
 		}
 
 		private void RecreateSocket()
@@ -75,14 +175,15 @@ namespace Enyim.Caching.Memcached
 			if (log.IsTraceEnabled) log.Trace("RecreateSocket");
 			DestroySocket();
 
+			var tmp = ToTimeout(ReceiveTimeout);
 			socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
 			{
 				NoDelay = true,
 				ReceiveBufferSize = BufferSize,
-				SendBufferSize = BufferSize
+				SendBufferSize = BufferSize,
+				ReceiveTimeout = tmp,
+				SendTimeout = tmp
 			};
-
-			RefreshSocket();
 		}
 
 		private void DestroySocket()
@@ -108,85 +209,6 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public void Connect(CancellationToken token)
-		{
-			IsAlive = false;
-
-			using (var mre = new ManualResetEventSlim(false))
-			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
-			{
-				opt.Completed += (a, b) => mre.Set();
-				RecreateSocket();
-
-				if (socket.ConnectAsync(opt)
-					&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
-				{
-					if (log.IsTraceEnabled) log.Trace("mre.Wait() timeout while connecting");
-
-					Socket.CancelConnectAsync(opt);
-					throw new TimeoutException();
-				}
-
-				if (opt.SocketError == SocketError.Success)
-				{
-					if (log.IsDebugEnabled) log.Debug(endpoint + " is connected");
-					IsAlive = true;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Reads from the socket.
-		/// </summary>
-		/// <param name="buffer"></param>
-		/// <param name="offset"></param>
-		/// <param name="count"></param>
-		/// <returns>The amount of bytes read.</returns>
-		/// <exception cref="T:System.Net.Sockets.SocketException">Cannot read from the socket.</exception>
-		public int Read(byte[] buffer, int offset, int count)
-		{
-			if (count < 1) return count;
-
-			SocketError errorCode;
-			var read = socket.Receive(buffer, offset, count, SocketFlags.None, out errorCode);
-
-			// read=0 means we must reconnect
-			if (errorCode != SocketError.Success || read < 1)
-				ThrowIOE("Could not read, reason: " + errorCode);
-
-			return read;
-		}
-
-		private void ThrowIOE(string message)
-		{
-			throw new IOException(endpoint + " has failed. " + message);
-		}
-
-		public void Write(WriteBuffer buffer)
-		{
-			Write(buffer.GetBuffer(), 0, buffer.Position);
-			buffer.Reset();
-		}
-
-		/// <summary>
-		/// Sends the data.
-		/// </summary>
-		/// <param name="buffer"></param>
-		/// <param name="offset"></param>
-		/// <param name="count"></param>
-		/// <exception cref="T:System.Net.Sockets.SocketException">Cannot send the data for some reason.</exception>
-		public void Write(byte[] buffer, int offset, int count)
-		{
-			if (count < 1) return;
-
-			SocketError errorCode;
-			var sent = socket.Send(buffer, offset, count, SocketFlags.None, out errorCode);
-
-			// sent=0 means we must reconnect
-			if (errorCode != SocketError.Success || sent < 1)
-				ThrowIOE("Could not write, reason: " + errorCode);
-		}
-
 		private static int ToTimeout(TimeSpan time)
 		{
 			return time == TimeSpan.MaxValue
@@ -194,11 +216,9 @@ namespace Enyim.Caching.Memcached
 						: (int)time.TotalMilliseconds;
 		}
 
-		private static TimeSpan FromTimeout(int msec)
+		private void ThrowIOE(string message)
 		{
-			return msec == Timeout.Infinite
-						? TimeSpan.MaxValue
-						: TimeSpan.FromMilliseconds(msec);
+			throw new IOException(endpoint + " has failed. " + message);
 		}
 	}
 }

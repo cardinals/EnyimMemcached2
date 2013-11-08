@@ -2,7 +2,7 @@
 
 namespace Enyim.Caching
 {
-	public interface INodeFailurePolicy
+	public interface IFailurePolicy
 	{
 		bool ShouldFail();
 	}

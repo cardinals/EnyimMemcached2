@@ -2,7 +2,7 @@
 
 namespace Enyim.Caching.Memcached
 {
-	public class ImmediateFailurePolicy : INodeFailurePolicy
+	public class ImmediateFailurePolicy : IFailurePolicy
 	{
 		public bool ShouldFail()
 		{

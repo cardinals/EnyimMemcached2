@@ -12,34 +12,38 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	class BinaryNode : INode
+	public class BinaryNode : INode
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
 		private readonly IPEndPoint endpoint;
-		private SafeSocket socket;
+		private ISocket socket;
 
 		private int state;
 		private readonly ConcurrentQueue<Data> writeQueue;
 		private readonly Queue<Data> readQueue;
 		private readonly Queue<Data> bufferQueue;
 
-		private readonly WriteBuffer writeBuffer;
-		private readonly ReceiveBuffer readStream;
+		private WriteBuffer writeBuffer;
+		private ReceiveBuffer readStream;
 
 		private SegmentListCopier currentWriteCopier;
 		private BinaryResponse currentResponse;
+		private IFailurePolicy failurePolicy;
 
-		public BinaryNode(IPEndPoint endpoint, INodeFailurePolicy failurePolicy)
+		private bool mustReconnect;
+
+		public BinaryNode(IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 		{
+			BufferSize = 16384;
+
 			this.endpoint = endpoint;
+			this.socket = socket;
+			this.failurePolicy = failurePolicy;
 
 			this.writeQueue = new ConcurrentQueue<Data>();
 			this.readQueue = new Queue<Data>();
 			this.bufferQueue = new Queue<Data>();
-
-			this.writeBuffer = new WriteBuffer(BufferSize);
-			this.readStream = new ReceiveBuffer(BufferSize);
 		}
 
 		public int BufferSize { get; set; } // TODO throw after it's connected
@@ -48,11 +52,7 @@ namespace Enyim.Caching.Memcached
 		public bool IsAlive
 		{
 			get { return state == 1; }
-			private set
-			{
-				Interlocked.Exchange(ref state, value ? 1 : 0);
-				Thread.MemoryBarrier();
-			}
+			private set { Interlocked.Exchange(ref state, value ? 1 : 0); }
 		}
 
 		public void Connect()
@@ -64,7 +64,10 @@ namespace Enyim.Caching.Memcached
 		{
 			if (log.IsDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
 
-			RecreateSocket(token);
+			socket.Connect(endpoint, token);
+
+			writeBuffer = new WriteBuffer(BufferSize);
+			readStream = new ReceiveBuffer(BufferSize);
 
 			Debug.Assert(currentWriteCopier == null);
 			Debug.Assert(currentResponse == null);
@@ -78,17 +81,6 @@ namespace Enyim.Caching.Memcached
 			}
 
 			IsAlive = true;
-		}
-
-		private void RecreateSocket(CancellationToken token)
-		{
-			if (socket != null)
-				socket.Dispose();
-
-			socket = new SafeSocket(endpoint);
-			socket.Connect(token);
-
-			if (!socket.IsAlive) throw new IOException("Could not connect to " + endpoint);
 		}
 
 		public void Shutdown()
@@ -126,29 +118,33 @@ namespace Enyim.Caching.Memcached
 
 		public bool Send()
 		{
-			try
-			{
-				return IsAlive ? PerformSend() : false;
-			}
-			catch (Exception e)
-			{
-				IsAlive = false;
-				HandleIOFail(e);
-				throw;
-			}
+			return Run(PerformSend);
 		}
 
 		public bool Receive()
 		{
+			return Run(PerformReceive);
+		}
+
+		private bool Run(Func<bool> work)
+		{
 			try
 			{
-				return IsAlive ? PerformReceive() : false;
+				if (mustReconnect) Connect(false, CancellationToken.None);
+
+				return IsAlive && work();
 			}
 			catch (Exception e)
 			{
-				IsAlive = false;
-				HandleIOFail(e);
-				throw;
+				if (failurePolicy.ShouldFail())
+				{
+					IsAlive = false;
+					HandleIOFail(e);
+					throw;
+				}
+
+				mustReconnect = true;
+				return true;
 			}
 		}
 
@@ -229,7 +225,7 @@ namespace Enyim.Caching.Memcached
 					IntroduceNoOp();
 				}
 
-				socket.Write(writeBuffer);
+				socket.Send(writeBuffer);
 
 				if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
 				if (log.IsTraceEnabled) log.Trace("Flush write buffer");
@@ -307,7 +303,7 @@ namespace Enyim.Caching.Memcached
 					matching = data.CorrelationId == response.CorrelationId;
 
 					// null is a response to a successful quiet op
-					data.Op.ProcessResponse(matching ? response : null); 
+					data.Op.ProcessResponse(matching ? response : null);
 
 					if (data.Task != null)
 						data.Task.TrySetResult(true);

@@ -19,13 +19,13 @@ namespace Enyim.Caching.Memcached
 
 			container = new Container { DefaultReuse = ReuseScope.None };
 			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
-			container.AutoWireAs<INodeFailurePolicy, ImmediateFailurePolicy>();
+			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
 			container.AutoWireAs<IReconnectPolicy, SimpleReconnectPolicy>();
 			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
 
 			// cluster + nodes
 			container
-				.Register<INode, IPEndPoint>((c, ip) => new BinaryNode(ip, c.Resolve<INodeFailurePolicy>()))
+				.AutoWireAs<INode, BinaryNode, IPEndPoint>()
 				.InitializedBy((c, n) =>
 				{
 					BufferSize = BufferSize;
@@ -35,7 +35,7 @@ namespace Enyim.Caching.Memcached
 
 			// socket
 			container
-				.Register<SafeSocket, IPEndPoint>((c, p) => new SafeSocket(p))
+				.AutoWireAs<ISocket, SafeSocket>()
 				.InitializedBy((c, s) =>
 				{
 					s.ConnectionTimeout = ConnectionTimeout;
