@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Enyim.Caching.Memcached</RootNamespace>
+    <AssemblyName>Enyim.Caching.Memcached</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="NLog">
+      <HintPath>..\packages\NLog.2.1.0\lib\net45\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\packages\Microsoft.Bcl.Immutable.1.0.27\lib\portable-net45+win8+wp8\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Logging\LogManager.cs" />
+    <Compile Include="Logging\ConsoleLoggerFactory.cs" />
+    <Compile Include="Logging\ILogFactory.cs" />
+    <Compile Include="Logging\ILog.cs" />
+    <Compile Include="DefaultNodeLocator.cs" />
+    <Compile Include="INode.cs" />
+    <Compile Include="IReconnectPolicy.cs" />
+    <Compile Include="Memcached\Protocol.cs" />
+    <Compile Include="Murmur32.cs" />
+    <Compile Include="INodeLocator.cs" />
+    <Compile Include="INodePool.cs" />
+    <Compile Include="IOperation.cs" />
+    <Compile Include="Stuff.cs" />
+    <Compile Include="ReceiveBuffer.cs" />
+    <Compile Include="SegmentListCopier.cs" />
+    <Compile Include="BinaryNode.cs" />
+    <Compile Include="WriteBuffer.cs" />
+    <Compile Include="Memcached\SafeSocket.cs" />
+    <Compile Include="NodePool.cs" />
+    <Compile Include="Funq\FunqExtensions.cs" />
+    <Compile Include="Funq\Container.cs" />
+    <Compile Include="Funq\Container.LazyResolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.LazyResolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.Register.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.Register.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.Resolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.Resolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.ResolveImpl.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.ResolveImpl.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.TryResolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.TryResolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Header.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Header.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Helpers.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Helpers.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\IFluentInterface.cs" />
+    <Compile Include="Funq\IFunqlet.cs" />
+    <Compile Include="Funq\Owner.cs" />
+    <Compile Include="Memcached\BinaryConverter.cs" />
+    <Compile Include="Memcached\BinaryOperation.cs" />
+    <Compile Include="Memcached\BinaryRequest.cs" />
+    <Compile Include="Memcached\BinaryResponse.cs" />
+    <Compile Include="Memcached\BinarySingleItemOperation.cs" />
+    <Compile Include="Memcached\GetOperation.cs" />
+    <Compile Include="Memcached\OpCode.cs" />
+    <Compile Include="Memcached\OperationInterfaces.cs" />
+    <Compile Include="Memcached\StoreMode.cs" />
+    <Compile Include="Memcached\StoreOperation.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\ResolutionException.cs" />
+    <Compile Include="Funq\ReuseScope.cs" />
+    <Compile Include="Funq\ServiceEntry.cs" />
+    <Compile Include="Funq\ServiceEntry.Generic.cs" />
+    <Compile Include="Funq\ServiceKey.cs" />
+    <Compile Include="Funq\Syntax.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Funq\Container.LazyResolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.Register.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.Register.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.Resolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.Resolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.ResolveImpl.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.ResolveImpl.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.TryResolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.TryResolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Funq.Overloads.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Funq.Overloads.xdoc</LastGenOutput>
+    </None>
+    <None Include="Funq\Funq.Overloads.xdoc">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Funq.Overloads.tt</DependentUpon>
+    </None>
+    <None Include="Funq\Funq.xdoc" />
+    <None Include="Funq\Header.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Header.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Helpers.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Helpers.cs</LastGenOutput>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
