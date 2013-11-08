@@ -63,7 +63,7 @@
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />
     <Compile Include="KeyTransformers\NullKeyTransformer.cs" />
     <Compile Include="Require.cs" />
-    <Compile Include="SimpleReconnectPolicy.cs" />
+    <Compile Include="PeriodicReconnectPolicy.cs" />
     <Compile Include="ThrottlingFailurePolicy.cs" />
     <Compile Include="ISupportInitialize.cs" />
     <Compile Include="ImmediateFailurePolicy.cs" />

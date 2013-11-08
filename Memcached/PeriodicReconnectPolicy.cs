@@ -10,9 +10,9 @@ using Funq;
 
 namespace Enyim.Caching.Memcached
 {
-	public class SimpleReconnectPolicy : IReconnectPolicy, ISupportInitialize
+	public class PeriodicReconnectPolicy : IReconnectPolicy, ISupportInitialize
 	{
-		public SimpleReconnectPolicy()
+		public PeriodicReconnectPolicy()
 		{
 			Interval = TimeSpan.FromSeconds(10);
 		}
