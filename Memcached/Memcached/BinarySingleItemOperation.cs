@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations
 {
@@ -10,6 +11,11 @@ namespace Enyim.Caching.Memcached.Operations
 		}
 
 		public string Key { get; private set; }
+
+		byte[] ISingleItemOperation.Key
+		{
+			get { return Encoding.UTF8.GetBytes(Key); }
+		}
 	}
 }
 

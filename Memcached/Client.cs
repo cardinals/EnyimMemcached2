@@ -16,5 +16,9 @@ namespace Enyim.Caching.Memcached
 
 	public class NullKeyTransformer : IKeyTransformer
 	{
+		public byte[] Transform(byte[] key)
+		{
+			return key;
+		}
 	}
 }

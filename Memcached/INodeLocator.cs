@@ -6,7 +6,7 @@ namespace Enyim.Caching
 	public interface INodeLocator
 	{
 		void Initialize(IEnumerable<INode> nodes);
-		INode Locate(string key);
+		INode Locate(byte[] key);
 	}
 }
 

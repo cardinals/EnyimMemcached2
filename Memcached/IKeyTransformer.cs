@@ -4,6 +4,7 @@ namespace Enyim.Caching
 {
 	public interface IKeyTransformer
 	{
+		byte[] Transform(byte[] key);
 	}
 }
 

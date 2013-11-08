@@ -5,12 +5,12 @@ namespace Enyim.Caching.Memcached
 {
 	public interface ISingleItemOperation : IOperation
 	{
-		string Key { get; }
+		byte[] Key { get; }
 	}
 
 	public interface IMultiItemOperation : IOperation
 	{
-		IReadOnlyList<string> Keys { get; }
+		IReadOnlyList<byte[]> Keys { get; }
 	}
 
 	public interface IStoreOperation : ISingleItemOperation

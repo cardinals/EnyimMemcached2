@@ -50,7 +50,12 @@ namespace Enyim.Caching.Memcached
 			return Murmur32.ComputeHash(NoPreambleUtf8.GetBytes(key));
 		}
 
-		public INode Locate(string key)
+		private static uint GetKeyHash(byte[] key)
+		{
+			return Murmur32.ComputeHash(key);
+		}
+
+		public INode Locate(byte[] key)
 		{
 			if (key == null) throw new ArgumentNullException("key");
 
@@ -67,10 +72,14 @@ namespace Enyim.Caching.Memcached
 					// (DefaultServerPool will resurrect the nodes in the background without affecting the hashring)
 					if (!retval.IsAlive)
 					{
-						for (var i = 0; i < nodes.Length; i++)
+						var alteredKey = new byte[key.Length + 1];
+						Array.Copy(key, 0, alteredKey, 1, key.Length);
+
+						for (var i = (byte)'0'; i < (byte)'7'; i++)
 						{
+							alteredKey[0] = i;
 							// -- this is from spymemcached
-							var tmpKey = (ulong)GetKeyHash(i + key);
+							var tmpKey = (ulong)GetKeyHash(alteredKey);
 							tmpKey += (uint)(tmpKey ^ (tmpKey >> 32));
 							tmpKey &= 0xffffffffL; /* truncate to 32-bits */
 							// -- end
