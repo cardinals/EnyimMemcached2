@@ -54,7 +54,13 @@ namespace Enyim.Caching.Memcached
 			workingNodes = allNodes.ToArray();
 
 			workerQuit = new ManualResetEventSlim(false);
-			RunOnNodes(n => { n.Connect(true, shutdownToken.Token); return false; });
+
+			Parallel.ForEach(allNodes, n =>
+			{
+				try { n.Connect(true, shutdownToken.Token); }
+				catch (Exception e) { FailNode(n, e); }
+			});
+
 			locator.Initialize(workingNodes);
 
 			worker.Start();
