@@ -30,7 +30,7 @@ namespace Enyim.Caching.Memcached
 		private SegmentListCopier currentWriteCopier;
 		private BinaryResponse currentResponse;
 
-		public BinaryNode(IPEndPoint endpoint)
+		public BinaryNode(IPEndPoint endpoint, INodeFailurePolicy failurePolicy)
 		{
 			this.endpoint = endpoint;
 
@@ -38,10 +38,11 @@ namespace Enyim.Caching.Memcached
 			this.readQueue = new Queue<Data>();
 			this.bufferQueue = new Queue<Data>();
 
-			this.writeBuffer = new WriteBuffer(SafeSocket.BufferSize);
-			this.readStream = new ReceiveBuffer(SafeSocket.BufferSize);
+			this.writeBuffer = new WriteBuffer(BufferSize);
+			this.readStream = new ReceiveBuffer(BufferSize);
 		}
 
+		public int BufferSize { get; set; } // TODO throw after it's connected
 		public IPEndPoint EndPoint { get { return endpoint; } }
 
 		public bool IsAlive

@@ -12,8 +12,6 @@ namespace Enyim.Caching.Memcached
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
-		public const int BufferSize = 16 * 1024;
-
 		private IPEndPoint endpoint;
 		private Socket socket;
 		private TimeSpan receiveTimeout;
@@ -25,6 +23,7 @@ namespace Enyim.Caching.Memcached
 
 			receiveTimeout = TimeSpan.FromSeconds(10);
 			ConnectionTimeout = TimeSpan.FromSeconds(10);
+			BufferSize = 16 * 1024;
 		}
 
 		~SafeSocket()
@@ -40,18 +39,26 @@ namespace Enyim.Caching.Memcached
 			DestroySocket();
 		}
 
+		public int BufferSize { get; set; }
 		public TimeSpan ConnectionTimeout { get; set; }
 
 		public TimeSpan ReceiveTimeout
 		{
-			get
-			{
-				return FromTimeout(socket.ReceiveTimeout);
-			}
+			get { return FromTimeout(socket.ReceiveTimeout); }
 			set
 			{
 				receiveTimeout = value;
 				RefreshSocket();
+			}
+		}
+
+		public bool IsAlive
+		{
+			get { return state == 1; }
+			private set
+			{
+				Interlocked.Exchange(ref state, value ? 1 : 0);
+				Thread.MemoryBarrier();
 			}
 		}
 
@@ -125,16 +132,6 @@ namespace Enyim.Caching.Memcached
 					if (log.IsDebugEnabled) log.Debug(endpoint + " is connected");
 					IsAlive = true;
 				}
-			}
-		}
-
-		public bool IsAlive
-		{
-			get { return state == 1; }
-			private set
-			{
-				Interlocked.Exchange(ref state, value ? 1 : 0);
-				Thread.MemoryBarrier();
 			}
 		}
 

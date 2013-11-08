@@ -47,6 +47,7 @@
       <HintPath>..\packages\NLog.2.1.0\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
@@ -56,7 +57,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicConfiguration.cs" />
+    <Compile Include="IClusterFactory.cs" />
+    <Compile Include="SimpleReconnectPolicy.cs" />
+    <Compile Include="ThrottlingFailurePolicy.cs" />
+    <Compile Include="ISupportInitialize.cs" />
+    <Compile Include="ImmediateFailurePolicy.cs" />
+    <Compile Include="Client.cs" />
+    <Compile Include="Configuration\ConnectionElement.cs" />
+    <Compile Include="Configuration\ProviderElement.cs" />
+    <Compile Include="Configuration\TextElement.cs" />
+    <Compile Include="Configuration\ConfigurationHelper.cs" />
+    <Compile Include="Configuration\NodeElementCollection.cs" />
+    <Compile Include="Configuration\NodeElement.cs" />
+    <Compile Include="Configuration\ClusterConfigurationSection.cs" />
+    <Compile Include="ClusterManager.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="IKeyTransformer.cs" />
+    <Compile Include="IFailurePolicy.cs" />
     <Compile Include="Logging\LogManager.cs" />
     <Compile Include="Logging\ConsoleLoggerFactory.cs" />
     <Compile Include="Logging\ILogFactory.cs" />
@@ -67,7 +85,7 @@
     <Compile Include="Memcached\Protocol.cs" />
     <Compile Include="Murmur32.cs" />
     <Compile Include="INodeLocator.cs" />
-    <Compile Include="INodePool.cs" />
+    <Compile Include="ICluster.cs" />
     <Compile Include="IOperation.cs" />
     <Compile Include="Stuff.cs" />
     <Compile Include="ReceiveBuffer.cs" />
@@ -75,7 +93,7 @@
     <Compile Include="BinaryNode.cs" />
     <Compile Include="WriteBuffer.cs" />
     <Compile Include="Memcached\SafeSocket.cs" />
-    <Compile Include="NodePool.cs" />
+    <Compile Include="MemcachedCluster.cs" />
     <Compile Include="Funq\FunqExtensions.cs" />
     <Compile Include="Funq\Container.cs" />
     <Compile Include="Funq\Container.LazyResolve.cs">

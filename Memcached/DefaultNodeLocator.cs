@@ -15,17 +15,18 @@ namespace Enyim.Caching.Memcached
 
 		private INode[] nodes;
 		private uint[] keyRing;
+		private int keyRingLengthComplement;
 		private Dictionary<uint, INode> keyToServer;
 
 		public void Initialize(IEnumerable<INode> currentNodes)
 		{
-			// quit if we've been initialized because we can handle dead nodes,
-			// so there is no need to recalculate everything
+			// quit if we've been initialized because we can handle dead nodes
 			if (keyRing != null) return;
 
 			nodes = currentNodes.ToArray();
 			keyRing = new uint[this.nodes.Length * ServerAddressMutations];
 			keyToServer = new Dictionary<uint, INode>(keyRing.Length);
+			keyRingLengthComplement = ~keyRing.Length;
 
 			var i = 0;
 
@@ -34,12 +35,12 @@ namespace Enyim.Caching.Memcached
 				for (var mutation = 0; mutation < ServerAddressMutations; mutation++)
 				{
 					var address = node.EndPoint.ToString();
-					var hash = Murmur32.ComputeHash(Encoding.ASCII.GetBytes(address + "-" + mutation));
+					var hash = GetKeyHash(address + "-" + mutation);
 
 					keyRing[i++] = hash;
 					keyToServer[hash] = node;
 				}
- 			}
+			}
 
 			Array.Sort<uint>(keyRing);
 		}
@@ -55,15 +56,14 @@ namespace Enyim.Caching.Memcached
 
 			switch (nodes.Length)
 			{
-				case 0: return O.Instance;
+				case 0: return AlreadyFailedNode.Instance;
 				case 1: return nodes[0];
 				default:
 
 					var retval = LocateNode(GetKeyHash(key));
 
-					// if the result is not alive then try to mutate the item key and 
-					// find another node this way we do not have to reinitialize every 
-					// time a node dies/comes back
+					// if the result is not alive then try to mutate the item key and find another node
+					// this way we do not have to reinitialize every time a node dies/comes back
 					// (DefaultServerPool will resurrect the nodes in the background without affecting the hashring)
 					if (!retval.IsAlive)
 					{
@@ -89,40 +89,31 @@ namespace Enyim.Caching.Memcached
 			// get the index of the server assigned to this hash
 			var foundIndex = Array.BinarySearch<uint>(keyRing, itemKeyHash);
 
-			// no exact match
-			if (foundIndex < 0)
-			{
-				// this is the nearest server in the list
-				foundIndex = ~foundIndex;
-
-				// it's smaller than everything, so use the last server (with the highest key)
-				if (foundIndex == 0)
-					foundIndex = keyRing.Length;
-
-				// the key was larger than all server keys, so return the first server
-				if (foundIndex >= keyRing.Length)
-					foundIndex = 0;
-			}
+			if (foundIndex == keyRingLengthComplement) foundIndex = 0;
+			else if (foundIndex == ~0) foundIndex = keyRing.Length;
+			else if (foundIndex < 0) foundIndex = ~foundIndex;
 
 			return keyToServer[keyRing[foundIndex]];
 		}
 
-		#region [ FailedNode                   ]
+		#region [ AlreadyFailedNode            ]
 
-		private class O : INode
+		private class AlreadyFailedNode : INode
 		{
 			public static readonly INode Instance;
 			private static readonly TaskCompletionSource<bool> FailedTask;
 
-			static O()
+			static AlreadyFailedNode()
 			{
 				FailedTask = new TaskCompletionSource<bool>();
 				FailedTask.SetException(new IOException("AlwaysDead"));
-				Instance = new O();
+				Instance = new AlreadyFailedNode();
 			}
 
 			public void Connect(bool reset, CancellationToken token) { }
 			public void Shutdown() { }
+
+			public int BufferSize { get; set; }
 
 			public bool IsAlive
 			{

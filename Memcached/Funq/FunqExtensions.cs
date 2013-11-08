@@ -14,14 +14,17 @@ namespace Funq
 		public static IRegistration<TService> Register<TService>(this Container container)
 			where TService : class
 		{
-			return container.Register<TService, TService>();
+			return Register<TService>(container, typeof(TService));
 		}
 
-		public static IRegistration<TService> Register<TImplementation, TService>(this Container container)
+		public static IRegistration<TService> Register<TService, TImplementation>(this Container container)
 			where TImplementation : TService
 		{
-			var implType = typeof(TImplementation);
+			return Register<TService>(container, typeof(TImplementation));
+		}
 
+		public static IRegistration<TService> Register<TService>(this Container container, Type implType)
+		{
 			if (!implType.IsClass) throw new ArgumentException(implType + " must be a class");
 			if (!typeof(TService).IsAssignableFrom(implType)) throw new ArgumentException(typeof(TService) + " is incompatible with " + implType);
 

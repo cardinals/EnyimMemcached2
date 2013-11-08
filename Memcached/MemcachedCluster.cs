@@ -9,56 +9,48 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
-	public class DefaultNodePool : INodePool
+	public class MemcachedCluster : ICluster
 	{
-		private static ILog log = LogManager.GetCurrentClassLogger();
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		private static readonly TaskCompletionSource<bool> fail;
 
-		private INodeLocator locator;
+		private readonly Func<IPEndPoint, INode> nodeFactory;
+		private readonly INodeLocator locator;
+		private readonly IReconnectPolicy policy;
+
+		private readonly CancellationTokenSource shutdownToken;
+
 		private Thread worker;
 		private ManualResetEventSlim workerQuit;
 		private ManualResetEventSlim hasWork;
-
-		private IReconnectPolicy policy;
-		private CancellationTokenSource shutdownToken;
-
 		private INode[] allNodes;
 		private INode[] workingNodes;
-
 		private ConcurrentQueue<INode> reconnectedNodes;
 
-		public DefaultNodePool(INodeLocator locator, IReconnectPolicy policy)
+		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints,
+								INodeLocator locator, 
+								IReconnectPolicy policy, 
+								Func<IPEndPoint, INode> nodeFactory)
 		{
 			this.policy = policy;
 			this.locator = locator;
+			this.nodeFactory = nodeFactory;
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.hasWork = new ManualResetEventSlim();
 			this.worker = new Thread(Worker) { Name = "The Worker" };
 			this.reconnectedNodes = new ConcurrentQueue<INode>();
+			this.allNodes = endpoints.Select(nodeFactory).ToArray();
 		}
 
-		static DefaultNodePool()
+		static MemcachedCluster()
 		{
 			fail = new TaskCompletionSource<bool>();
 			fail.SetException(new IOException());
 		}
 
-		static IPEndPoint MkEndpoint(int port)
-		{
-			//return new IPEndPoint(IPAddress.Parse("10.253.129.138"), port);
-			//return new IPEndPoint(IPAddress.Parse("172.16.105.1"), port);
-
-			return new IPEndPoint(IPAddress.Parse("10.0.4.14"), port);
-			return new IPEndPoint(IPAddress.Parse("10.0.10.10"), port);
-		}
-
 		public virtual void Start()
 		{
-			allNodes = Enumerable
-								.Range(11211, 4)
-								.Select(p => CreateNode(MkEndpoint(p)))
-								.ToArray();
-
 			workingNodes = allNodes.ToArray();
 
 			workerQuit = new ManualResetEventSlim(false);
@@ -68,12 +60,7 @@ namespace Enyim.Caching.Memcached
 			worker.Start();
 		}
 
-		protected virtual INode CreateNode(IPEndPoint endpoint)
-		{
-			return new BinaryNode(endpoint);
-		}
-
-		public virtual void Shutdown()
+		public virtual void Dispose()
 		{
 			shutdownToken.Cancel();
 			workerQuit.Wait();
@@ -88,8 +75,6 @@ namespace Enyim.Caching.Memcached
 				}
 			}
 		}
-
-		private static TaskCompletionSource<bool> fail;
 
 		public virtual Task Queue(ISingleItemOperation op)
 		{

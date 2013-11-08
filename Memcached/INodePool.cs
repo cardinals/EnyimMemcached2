@@ -4,10 +4,10 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching
 {
-	public interface INodePool
+	public interface ICluster: IDisposable
 	{
 		void Start();
-		void Shutdown();
+		//void Shutdown();
 
 		Task Queue(ISingleItemOperation op);
 		Task Broadcast(Func<IOperation> op);

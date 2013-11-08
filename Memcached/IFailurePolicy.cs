@@ -1,23 +1,10 @@
 ﻿using System;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public interface INode
+	public interface INodeFailurePolicy
 	{
-		void Connect(bool reset, CancellationToken token);
-		void Shutdown();
-
-		bool IsAlive { get; }
-
-		IPEndPoint EndPoint { get; }
-		int BufferSize { get; set; }
-
-		Task Enqueue(IOperation op);
-		bool Send();
-		bool Receive();
+		bool ShouldFail();
 	}
 }
 
