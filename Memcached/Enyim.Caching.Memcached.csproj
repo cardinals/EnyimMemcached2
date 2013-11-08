@@ -60,6 +60,8 @@
     <Compile Include="BasicConfiguration.cs" />
     <Compile Include="IClusterFactory.cs" />
     <Compile Include="ISocket.cs" />
+    <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />
+    <Compile Include="KeyTransformers\NullKeyTransformer.cs" />
     <Compile Include="Require.cs" />
     <Compile Include="SimpleReconnectPolicy.cs" />
     <Compile Include="ThrottlingFailurePolicy.cs" />
