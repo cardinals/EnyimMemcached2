@@ -43,9 +43,6 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NLog">
-      <HintPath>..\packages\NLog.2.1.0\lib\net45\NLog.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -167,7 +164,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="Funq\Container.LazyResolve.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>
@@ -206,7 +202,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Helpers.cs</LastGenOutput>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
