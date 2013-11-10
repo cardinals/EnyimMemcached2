@@ -1,31 +1,39 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class GetOperation : BinarySingleItemOperation
+	public class GetOperation : BinarySingleItemOperation<IGetOperationResult>, IGetOperation
 	{
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
+
 		public GetOperation(string key) : base(key) { }
 
-		public ArraySegment<byte> Result { get; private set; }
-
-		protected override BinaryRequest DoGetRequest()
+		protected override BinaryRequest CreateRequest()
 		{
-			var request = new BinaryRequest(OpCode.Get)
+			return new BinaryRequest(OpCode.GetQ)
 			{
 				Key = this.Key,
-				Cas = 0
+				Cas = this.Cas
 			};
-
-			return request;
 		}
 
-		protected override void DoProcessResponse(BinaryResponse response)
+		protected override IGetOperationResult CreateResult(BinaryResponse response)
 		{
-			if (response != null)
+			var retval = new GetOperationResult();
+
+			if (response == null)
+				return retval.NotFound(this);
+
+			if (response.StatusCode == 0)
 			{
-				//var flags = BinaryConverter.DecodeInt32(response.Extra, 0);
-				Result = response.Data;
+				var flags = BinaryConverter.DecodeInt32(response.Extra.Array, 0);
+				retval.Value = new CacheItem((uint)flags, response.Data);
 			}
+
+			return retval.WithResponse(response);
 		}
 	}
 }

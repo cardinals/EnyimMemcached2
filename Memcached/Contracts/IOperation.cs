@@ -1,8 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
+using Enyim.Caching.Memcached.Operations;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
+	public interface IOperation
+	{
+		IRequest CreateRequest();
+		bool Matches(IResponse response);
+		void HandleResponse(IResponse response);
+	}
 }
 
 #region [ License information          ]

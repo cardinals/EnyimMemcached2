@@ -167,7 +167,7 @@ namespace Enyim.Caching
 
 		protected void AddToBuffer(IOperation op)
 		{
-			var request = op.GetRequest();
+			var request = op.CreateRequest();
 			new SegmentListCopier(request.CreateBuffer()).WriteTo(writeBuffer);
 
 			bufferQueue.Enqueue(new Data { Op = op });
@@ -194,7 +194,7 @@ namespace Enyim.Caching
 				while (!writeBuffer.IsFull && !writeQueue.IsEmpty)
 				{
 					var data = PeekWriteOp();
-					var request = data.Op.GetRequest();
+					var request = data.Op.CreateRequest();
 					var copier = new SegmentListCopier(request.CreateBuffer());
 
 					BeforeWriteOp(copier, writeBuffer, data.Op);
@@ -288,7 +288,7 @@ namespace Enyim.Caching
 					matching = data.Op.Matches(response);
 
 					// null is a response to a successful quiet op
-					data.Op.ProcessResponse(matching ? response : null);
+					data.Op.HandleResponse(matching ? response : null);
 
 					if (data.Task != null)
 						data.Task.TrySetResult(true);

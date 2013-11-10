@@ -1,13 +1,33 @@
 ﻿using System;
-using Enyim.Caching.Memcached.Operations;
+using Enyim.Caching.Memcached.Results;
 
-namespace Enyim.Caching
+namespace Enyim.Caching.Memcached.Operations
 {
-	public interface IOperation
+	public abstract class MemcachedOperationBase<TResult> : IOperation, IHaveResult<TResult>
 	{
-		IRequest GetRequest();
-		bool Matches(IResponse response);
-		void ProcessResponse(IResponse response);
+		public TResult Result { get; private set; }
+		protected uint CorrelationId { get; private set; }
+
+		IRequest IOperation.CreateRequest()
+		{
+			var retval = CreateRequest();
+			CorrelationId = retval.CorrelationId;
+
+			return retval;
+		}
+
+		bool IOperation.Matches(IResponse response)
+		{
+			return CorrelationId == ((BinaryResponse)response).CorrelationId;
+		}
+
+		void IOperation.HandleResponse(IResponse response)
+		{
+			Result = CreateResult((BinaryResponse)response);
+		}
+
+		protected abstract BinaryRequest CreateRequest();
+		protected abstract TResult CreateResult(BinaryResponse response);
 	}
 }
 

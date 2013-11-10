@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public abstract class BinarySingleItemOperation : BinaryOperation, ISingleKeyOperation
+	public abstract class BinarySingleItemOperation<TResult> : MemcachedOperationBase<TResult>, ISingleKeyOperation
 	{
 		protected BinarySingleItemOperation(string key)
 		{
@@ -11,6 +11,7 @@ namespace Enyim.Caching.Memcached.Operations
 		}
 
 		public string Key { get; private set; }
+		public ulong Cas { get; set; }
 
 		byte[] ISingleKeyOperation.Key
 		{

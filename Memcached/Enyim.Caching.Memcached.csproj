@@ -54,20 +54,53 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IRequest.cs" />
-    <Compile Include="IResponse.cs" />
+    <Compile Include="Contracts\IRequest.cs" />
+    <Compile Include="Contracts\IResponse.cs" />
+    <Compile Include="Memcached\Contracts\IHaveResult.cs" />
+    <Compile Include="Memcached\Contracts\IGetOperation.cs" />
+    <Compile Include="Memcached\Contracts\IStoreOperation.cs" />
+    <Compile Include="Memcached\Contracts\IDeleteOperation.cs" />
+    <Compile Include="Memcached\Contracts\IConcatOperation.cs" />
+    <Compile Include="Memcached\Contracts\IMutatorOperation.cs" />
+    <Compile Include="Memcached\Contracts\IStatsOperation.cs" />
+    <Compile Include="Memcached\Contracts\IFlushOperation.cs" />
+    <Compile Include="Memcached\CacheItem.cs" />
+    <Compile Include="Memcached\MutationMode.cs" />
+    <Compile Include="Memcached\Operations\ConcatOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\DeleteOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\ConcatenationMode.cs" />
+    <Compile Include="Memcached\Operations\FlushOperation.cs" />
+    <Compile Include="Memcached\Operations\MutatorOperation.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Memcached\Operations\StoreOperation.cs" />
+    <Compile Include="Memcached\Results\BinaryOperationResult.cs" />
+    <Compile Include="Memcached\Results\ConcatOperationResult.cs" />
+    <Compile Include="Memcached\Results\OperationResultExtensions.cs" />
+    <Compile Include="Memcached\Results\GetOperationResult.cs" />
+    <Compile Include="Memcached\Results\GetOperationResult`1.cs" />
+    <Compile Include="Memcached\Results\IMutateOperationResult.cs" />
+    <Compile Include="Memcached\Results\IGetOperationResults.cs" />
+    <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
+    <Compile Include="Memcached\Results\INullableOperationResult`1.cs" />
+    <Compile Include="Memcached\Results\IOperationResult.cs" />
+    <Compile Include="Memcached\Results\OperationResultBase.cs" />
     <Compile Include="NodeBase.cs" />
     <Compile Include="Memcached\Configuration\BasicConfiguration.cs" />
     <Compile Include="Memcached\Configuration\AppSettingsConfiguration.cs" />
-    <Compile Include="IClusterFactory.cs" />
-    <Compile Include="ISocket.cs" />
+    <Compile Include="Contracts\IClusterFactory.cs" />
+    <Compile Include="Contracts\ISocket.cs" />
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />
     <Compile Include="KeyTransformers\NullKeyTransformer.cs" />
-    <Compile Include="OperationInterfaces.cs" />
+    <Compile Include="Contracts\ISingleKeyOperation.cs" />
     <Compile Include="Require.cs" />
     <Compile Include="PeriodicReconnectPolicy.cs" />
     <Compile Include="ThrottlingFailurePolicy.cs" />
-    <Compile Include="ISupportInitialize.cs" />
+    <Compile Include="Contracts\ISupportInitialize.cs" />
     <Compile Include="ImmediateFailurePolicy.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Configuration\ConnectionElement.cs" />
@@ -79,20 +112,20 @@
     <Compile Include="Configuration\ClusterConfigurationSection.cs" />
     <Compile Include="ClusterManager.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="IKeyTransformer.cs" />
-    <Compile Include="IFailurePolicy.cs" />
+    <Compile Include="Contracts\IKeyTransformer.cs" />
+    <Compile Include="Contracts\IFailurePolicy.cs" />
     <Compile Include="Logging\LogManager.cs" />
     <Compile Include="Logging\ConsoleLoggerFactory.cs" />
     <Compile Include="Logging\ILogFactory.cs" />
     <Compile Include="Logging\ILog.cs" />
     <Compile Include="DefaultNodeLocator.cs" />
-    <Compile Include="INode.cs" />
-    <Compile Include="IReconnectPolicy.cs" />
+    <Compile Include="Contracts\INode.cs" />
+    <Compile Include="Contracts\IReconnectPolicy.cs" />
     <Compile Include="Memcached\Operations\Protocol.cs" />
     <Compile Include="Murmur32.cs" />
-    <Compile Include="INodeLocator.cs" />
-    <Compile Include="ICluster.cs" />
-    <Compile Include="IOperation.cs" />
+    <Compile Include="Contracts\INodeLocator.cs" />
+    <Compile Include="Contracts\ICluster.cs" />
+    <Compile Include="Contracts\IOperation.cs" />
     <Compile Include="Memcached\Operations\NoOp.cs" />
     <Compile Include="ReceiveBuffer.cs" />
     <Compile Include="SegmentListCopier.cs" />
@@ -141,15 +174,14 @@
     <Compile Include="Funq\IFunqlet.cs" />
     <Compile Include="Funq\Owner.cs" />
     <Compile Include="Memcached\Operations\BinaryConverter.cs" />
-    <Compile Include="Memcached\Operations\BinaryOperation.cs" />
+    <Compile Include="Memcached\Operations\MemcachedOperationBase.cs" />
     <Compile Include="Memcached\Operations\BinaryRequest.cs" />
     <Compile Include="Memcached\Operations\BinaryResponse.cs" />
     <Compile Include="Memcached\Operations\BinarySingleItemOperation.cs" />
     <Compile Include="Memcached\Operations\GetOperation.cs" />
-    <Compile Include="Memcached\Operations\OpCode.cs" />
+    <Compile Include="Memcached\OpCode.cs" />
     <Compile Include="Memcached\OperationInterfaces.cs" />
     <Compile Include="Memcached\StoreMode.cs" />
-    <Compile Include="Memcached\Operations\StoreOperation.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -212,6 +244,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Import Project="$(SolutionDir)\VersionInfo.targets" Condition="Exists('$(SolutionDir)\VersionInfo.targets')" />
