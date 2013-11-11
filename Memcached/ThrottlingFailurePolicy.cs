@@ -61,7 +61,7 @@ namespace Enyim.Caching
 			return false;
 		}
 
-		void ISupportInitialize.Initialize(Dictionary<string, string> properties)
+		void ISupportInitialize.Initialize(IDictionary<string, string> properties)
 		{
 			ResetAfter = ConfigurationHelper.GetAndRemove(properties, "resetAfter", true, ResetAfter);
 			Threshold = ConfigurationHelper.GetAndRemove(properties, "threshold", true, Threshold);

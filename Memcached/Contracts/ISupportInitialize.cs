@@ -5,6 +5,6 @@ namespace Enyim.Caching
 {
 	public interface ISupportInitialize
 	{
-		void Initialize(Dictionary<string, string> properties);
+		void Initialize(IDictionary<string, string> properties);
 	}
 }

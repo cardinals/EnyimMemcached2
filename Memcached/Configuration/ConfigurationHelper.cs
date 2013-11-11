@@ -7,7 +7,7 @@ namespace Enyim.Caching.Configuration
 {
 	public static class ConfigurationHelper
 	{
-		public static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out int value, bool required)
+		public static bool TryGetAndRemove(IDictionary<string, string> dict, string name, out int value, bool required)
 		{
 			string tmp;
 			if (TryGetAndRemove(dict, name, out tmp, required)
@@ -24,21 +24,21 @@ namespace Enyim.Caching.Configuration
 			return false;
 		}
 
-		public static TimeSpan GetAndRemove(Dictionary<string, string> dict, string name, bool required, TimeSpan @default)
+		public static TimeSpan GetAndRemove(IDictionary<string, string> dict, string name, bool required, TimeSpan @default)
 		{
 			TimeSpan tmp;
 
 			return TryGetAndRemove(dict, name, out tmp, required) ? tmp : @default;
 		}
 
-		public static int GetAndRemove(Dictionary<string, string> dict, string name, bool required, int @default)
+		public static int GetAndRemove(IDictionary<string, string> dict, string name, bool required, int @default)
 		{
 			int tmp;
 
 			return TryGetAndRemove(dict, name, out tmp, required) ? tmp : @default;
 		}
 
-		public static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out TimeSpan value, bool required)
+		public static bool TryGetAndRemove(IDictionary<string, string> dict, string name, out TimeSpan value, bool required)
 		{
 			string tmp;
 			if (TryGetAndRemove(dict, name, out tmp, required)
@@ -55,7 +55,7 @@ namespace Enyim.Caching.Configuration
 			return false;
 		}
 
-		public static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out string value, bool required)
+		public static bool TryGetAndRemove(IDictionary<string, string> dict, string name, out string value, bool required)
 		{
 			if (dict.TryGetValue(name, out value))
 			{
@@ -71,7 +71,7 @@ namespace Enyim.Caching.Configuration
 			return false;
 		}
 
-		public static void CheckForUnknownAttributes(Dictionary<string, string> dict)
+		public static void CheckForUnknownAttributes(IDictionary<string, string> dict)
 		{
 			if (dict.Count > 0)
 				throw new System.Configuration.ConfigurationErrorsException("Unrecognized parameter: " + dict.Keys.First());

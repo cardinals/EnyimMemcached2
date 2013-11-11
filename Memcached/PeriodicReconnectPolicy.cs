@@ -28,7 +28,7 @@ namespace Enyim.Caching
 		{
 		}
 
-		void ISupportInitialize.Initialize(Dictionary<string, string> properties)
+		void ISupportInitialize.Initialize(IDictionary<string, string> properties)
 		{
 			Interval = ConfigurationHelper.GetAndRemove(properties, "interval", false, Interval);
 
