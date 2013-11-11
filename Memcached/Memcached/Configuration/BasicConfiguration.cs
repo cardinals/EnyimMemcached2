@@ -21,7 +21,6 @@ namespace Enyim.Caching.Memcached.Configuration
 			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
 			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
 			container.AutoWireAs<IReconnectPolicy, PeriodicReconnectPolicy>();
-			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
 
 			// socket
 			container

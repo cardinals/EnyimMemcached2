@@ -14,14 +14,20 @@ namespace Enyim.Caching
 {
 	public static class ClusterManager
 	{
-		private static readonly ConcurrentDictionary<string, ICluster> clusters = new ConcurrentDictionary<string, ICluster>();
+		private static readonly object NullKey = new Object();
+		private static readonly ConcurrentDictionary<object, ICluster> clusters = new ConcurrentDictionary<object, ICluster>();
+
+		public static ICluster Get()
+		{
+			return Get(null);
+		}
 
 		public static ICluster Get(string name)
 		{
 			ICluster retval;
 
-			if (!clusters.TryGetValue(name, out retval))
-				throw new InvalidOperationException("cluster is not registered: " + (name ?? "<default cluster>"));
+			if (!clusters.TryGetValue(name ?? NullKey, out retval))
+				throw new InvalidOperationException("cluster is not registered: " + (name ?? "<default>"));
 
 			return retval;
 		}
@@ -33,14 +39,24 @@ namespace Enyim.Caching
 
 		public static ICluster Register(string name, IClusterFactory factory)
 		{
-			var retval = clusters.AddOrUpdate(name ?? String.Empty,
+			var retval = clusters.AddOrUpdate(name ?? NullKey,
 												_ => factory.Create(),
 												(a, b) =>
 												{
-													throw new InvalidOperationException("cluster already exists: " + (String.IsNullOrEmpty(name) ? "<default cluster>" : name));
+													throw new InvalidOperationException("cluster already exists: " + (name ?? "<default>"));
 												});
 
 			return retval;
+		}
+
+		public static void Remove(string name)
+		{
+			ICluster value;
+
+			if (!clusters.TryRemove(name ?? NullKey, out value))
+				throw new InvalidOperationException("cluster nbot found: " + (name ?? "<default>"));
+
+			value.Dispose();
 		}
 	}
 }

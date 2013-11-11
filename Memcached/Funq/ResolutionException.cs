@@ -47,7 +47,7 @@ namespace Funq
 		public ResolutionException(Type missingServiceType)
 			: base(String.Format(
 				CultureInfo.CurrentCulture,
-				Enyim.Caching.Memcached.Properties.Resources.ResolutionException_MissingType,
+				Enyim.Caching.Properties.Resources.ResolutionException_MissingType,
 				missingServiceType.FullName))
 		{ }
 
@@ -55,7 +55,7 @@ namespace Funq
 		public ResolutionException(Type missingServiceType, string missingServiceName)
 			: base(String.Format(
 				CultureInfo.CurrentCulture,
-				Enyim.Caching.Memcached.Properties.Resources.ResolutionException_MissingNamedType,
+				Enyim.Caching.Properties.Resources.ResolutionException_MissingNamedType,
 				missingServiceType.FullName, missingServiceName))
 		{ }
 

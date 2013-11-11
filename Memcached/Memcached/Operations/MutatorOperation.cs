@@ -3,13 +3,13 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class MutatorOperation : BinarySingleItemOperation<IMutateOperationResult>, IMutatorOperation
+	public class MutateOperation : BinarySingleItemOperation<IMutateOperationResult>, IMutateOperation
 	{
 		private ulong defaultValue;
 		private ulong delta;
 		private uint expires;
 
-		public MutatorOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		public MutateOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
 			: base(key)
 		{
 			Require.Value("delta", delta >= 0, "delta must be a positive integer");

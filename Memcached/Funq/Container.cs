@@ -217,7 +217,7 @@ namespace Funq
 		private ServiceEntry<TService, TFunc> RegisterImpl<TService, TFunc>(string name, TFunc factory)
 		{
 			if (typeof(TService) == typeof(Container))
-				throw new ArgumentException(Enyim.Caching.Memcached.Properties.Resources.Registration_CantRegisterContainer);
+				throw new ArgumentException(Enyim.Caching.Properties.Resources.Registration_CantRegisterContainer);
 
 			var entry = new ServiceEntry<TService, TFunc>(factory)
 			{

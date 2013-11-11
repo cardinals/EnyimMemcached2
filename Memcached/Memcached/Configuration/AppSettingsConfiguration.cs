@@ -38,7 +38,6 @@ namespace Enyim.Caching.Memcached.Configuration
 				RegisterProviderElement(config, section.FailurePolicy);
 				RegisterProviderElement(config, section.ReconnectPolicy);
 				RegisterProviderElement(config, section.NodeLocator);
-				RegisterProviderElement(config, section.KeyTransformer);
 
 				config.AddNodes(section.Nodes.ToIPEndPoints());
 

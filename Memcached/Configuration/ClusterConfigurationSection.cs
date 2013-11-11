@@ -18,14 +18,7 @@ namespace Enyim.Caching.Configuration
 			get { return (ProviderElement<IReconnectPolicy>)base["reconnectPolicy"]; }
 			set { base["reconnectPolicy"] = value; }
 		}
-
-		[ConfigurationProperty("keyTransformer")]
-		public ProviderElement<IKeyTransformer> KeyTransformer
-		{
-			get { return (ProviderElement<IKeyTransformer>)base["keyTransformer"]; }
-			set { base["keyTransformer"] = value; }
-		}
-
+				
 		[ConfigurationProperty("failurePolicy")]
 		public ProviderElement<IFailurePolicy> FailurePolicy
 		{

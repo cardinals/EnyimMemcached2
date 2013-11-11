@@ -44,7 +44,7 @@ namespace Enyim.Caching.Memcached.Operations
 			var retval = new BinaryOperationResult();
 
 			return response == null
-					? retval.Pass(this)
+					? retval.Success(this)
 					: retval.WithResponse(response);
 		}
 	}

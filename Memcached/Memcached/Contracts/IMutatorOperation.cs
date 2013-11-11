@@ -6,7 +6,7 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMutatorOperation : ISingleKeyOperation, IHaveResult<IMutateOperationResult>
+	public interface IMutateOperation : ISingleKeyOperation, IHaveResult<IMutateOperationResult>
 	{
 		MutationMode Mode { get; }
 	}
