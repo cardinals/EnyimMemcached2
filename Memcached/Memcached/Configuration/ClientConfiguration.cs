@@ -6,20 +6,20 @@ using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	public class MemcachedClientConfiguration : IMemcachedClientConfiguration
+	public class ClientConfiguration : IMemcachedClientConfiguration
 	{
 		private Funq.Container container;
 		private IOperationFactory operationFactory;
 		private ITranscoder transcoder;
-		private IKeyTransformer keyTransformer;
+		private IPerformanceMonitor performanceMonitor;
 
-		public MemcachedClientConfiguration()
+		public ClientConfiguration()
 		{
 			container = new Funq.Container();
 
 			container.Register<IOperationFactory>(c => new MemcachedOperationFactory());
 			container.Register<ITranscoder>(c => new DefaultTranscoder());
-			container.Register<IKeyTransformer>(c => new Murmur32KeyTransformer());
+			container.AutoWireAs<IPerformanceMonitor, NullPerformanceMonitor>();
 		}
 
 		public Container Container { get { return container; } }
@@ -34,9 +34,9 @@ namespace Enyim.Caching.Memcached.Configuration
 			get { return transcoder ?? (transcoder = container.Resolve<ITranscoder>()); }
 		}
 
-		IKeyTransformer IMemcachedClientConfiguration.KeyTransformer
+		IPerformanceMonitor IMemcachedClientConfiguration.PerformanceMonitor
 		{
-			get { return keyTransformer ?? (keyTransformer = container.Resolve<IKeyTransformer>()); }
+			get { return performanceMonitor ?? (performanceMonitor = container.Resolve<IPerformanceMonitor>()); }
 		}
 	}
 }

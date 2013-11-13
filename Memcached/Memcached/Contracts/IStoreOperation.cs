@@ -6,7 +6,7 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IStoreOperation : ISingleKeyOperation, IHaveResult<IOperationResult>
+	public interface IStoreOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 		StoreMode Mode { get; }
 	}

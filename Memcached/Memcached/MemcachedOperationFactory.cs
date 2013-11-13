@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached
 			return new GetOperation(key);
 		}
 
-		public IStoreOperation Store(StoreMode mode, string key, CacheItem value, uint expires, ulong cas)
+		public IStoreOperation Store(StoreMode mode, string key, CacheItem value, ulong cas, uint expires)
 		{
 			return new StoreOperation(mode, key, value, expires) { Cas = cas };
 		}
@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached
 			return new DeleteOperation(key) { Cas = cas };
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ulong cas)
+		public IMutateOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
 			return new MutateOperation(mode, key, defaultValue, delta, expires) { Cas = cas };
 		}

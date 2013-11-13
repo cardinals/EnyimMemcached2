@@ -9,11 +9,17 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
 
-		public GetOperation(string key) : base(key) { }
+		public GetOperation(string key)
+			: base(key)
+		{
+			Silent = true;
+		}
+
+		public bool Silent { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
-			return new BinaryRequest(OpCode.GetQ)
+			return new BinaryRequest(Silent ? OpCode.GetQ : OpCode.Get)
 			{
 				Key = this.Key,
 				Cas = this.Cas

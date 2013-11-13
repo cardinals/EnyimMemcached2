@@ -10,6 +10,6 @@ namespace Enyim.Caching.Memcached
 	{
 		IOperationFactory OperationFactory { get; }
 		ITranscoder Transcoder { get; }
-		IKeyTransformer KeyTransformer { get; }
+		IPerformanceMonitor PerformanceMonitor { get; }
 	}
 }

@@ -8,21 +8,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using Enyim.Caching;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public class DefaultCluster : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly TaskCompletionSource<bool> fail;
 
-		private readonly Func<IPEndPoint, INode> nodeFactory;
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy policy;
+		private readonly IKeyTransformer keyTransformer;
+		private readonly Func<IPEndPoint, INode> nodeFactory;
 
 		private readonly CancellationTokenSource shutdownToken;
 
 		private Thread worker;
-		private ManualResetEventSlim workerQuit;
+		private ManualResetEventSlim workerIsDone;
 		private ManualResetEventSlim hasWork;
 		private INode[] allNodes;
 		private INode[] workingNodes;
@@ -31,38 +32,41 @@ namespace Enyim.Caching.Memcached
 		public DefaultCluster(IEnumerable<IPEndPoint> endpoints,
 								INodeLocator locator, 
 								IReconnectPolicy policy, 
+								IKeyTransformer keyTransformer,
 								Func<IPEndPoint, INode> nodeFactory)
 		{
-			this.policy = policy;
+			this.allNodes = endpoints.Select(nodeFactory).ToArray();
+			this.workingNodes = allNodes.ToArray();
+
 			this.locator = locator;
+			this.policy = policy;
+			this.keyTransformer = keyTransformer;
 			this.nodeFactory = nodeFactory;
+
+			this.worker = new Thread(Worker) { Name = "The Worker" };
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.hasWork = new ManualResetEventSlim();
-			this.worker = new Thread(Worker) { Name = "The Worker" };
+			this.workerIsDone = new ManualResetEventSlim(false);
 			this.reconnectedNodes = new ConcurrentQueue<INode>();
-			this.allNodes = endpoints.Select(nodeFactory).ToArray();
+
+			locator.Initialize(allNodes);
 		}
 
 		static DefaultCluster()
 		{
 			fail = new TaskCompletionSource<bool>();
-			fail.SetException(new IOException());
+			fail.SetException(new IOException("All nodes are dead."));
 		}
 
 		public virtual void Start()
 		{
-			workingNodes = allNodes.ToArray();
-
-			workerQuit = new ManualResetEventSlim(false);
-
+			// TODO nodes should connect lazily (the first time they start processing ops)
 			Parallel.ForEach(allNodes, n =>
 			{
 				try { n.Connect(true, shutdownToken.Token); }
 				catch (Exception e) { FailNode(n, e); }
 			});
-
-			locator.Initialize(workingNodes);
 
 			worker.Start();
 		}
@@ -70,7 +74,7 @@ namespace Enyim.Caching.Memcached
 		public virtual void Dispose()
 		{
 			shutdownToken.Cancel();
-			workerQuit.Wait();
+			workerIsDone.Wait();
 
 			foreach (var node in allNodes)
 			{
@@ -85,7 +89,8 @@ namespace Enyim.Caching.Memcached
 
 		public virtual Task Execute(ISingleKeyOperation op)
 		{
-			var node = locator.Locate(op.Key);
+			var opKey = keyTransformer.Transform(op.Key);
+			var node = locator.Locate(opKey);
 
 			if (node.IsAlive)
 			{
@@ -100,7 +105,7 @@ namespace Enyim.Caching.Memcached
 
 		public virtual Task Broadcast(Func<IOperation> op)
 		{
-			var nodes = workingNodes; // create local copy
+			var nodes = workingNodes; // create local "copy"
 			var tasks = new List<Task>(nodes.Length);
 
 			foreach (var node in nodes)
@@ -142,7 +147,7 @@ namespace Enyim.Caching.Memcached
 
 			if (log.IsDebugEnabled) log.Debug("shutdownToken was cancelled, finishing work");
 
-			workerQuit.Set();
+			workerIsDone.Set();
 		}
 
 		protected virtual bool RunOnNodes(Func<INode, bool> what)

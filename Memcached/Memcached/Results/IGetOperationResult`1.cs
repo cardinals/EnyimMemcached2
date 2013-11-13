@@ -5,8 +5,10 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Results
 {
-	public interface IGetOperationResult<T> : INullableOperationResult<T>
+	public interface IGetOperationResult<T> : IOperationResult
 	{
+		T Value { get; }
+		bool HasValue { get; }
 	}
 }
 

@@ -6,7 +6,7 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IDeleteOperation : ISingleKeyOperation, IHaveResult<IOperationResult>
+	public interface IDeleteOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 	}
 }

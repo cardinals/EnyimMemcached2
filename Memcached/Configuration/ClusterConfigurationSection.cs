@@ -39,5 +39,12 @@ namespace Enyim.Caching.Configuration
 			get { return (ConnectionElement)base["connection"]; }
 			set { base["connection"] = value; }
 		}
+
+		[ConfigurationProperty("keyTransformer")]
+		public ProviderElement<IKeyTransformer> KeyTransformer
+		{
+			get { return (ProviderElement<IKeyTransformer>)base["keyTransformer"]; }
+			set { base["keyTransformer"] = value; }
+		}
 	}
 }

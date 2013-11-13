@@ -6,7 +6,7 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IConcatOperation : ISingleKeyOperation, IHaveResult<IOperationResult>
+	public interface IConcatOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 		ConcatenationMode Mode { get; }
 		ArraySegment<byte> Data { get; }

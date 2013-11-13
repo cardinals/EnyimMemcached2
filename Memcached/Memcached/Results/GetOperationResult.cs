@@ -7,9 +7,7 @@ namespace Enyim.Caching.Memcached.Results
 {
 	public class GetOperationResult : BinaryOperationResult, IGetOperationResult
 	{
-		public bool HasValue { get { return Value != null; } }
-		public object Value { get; set; }
-
+		public CacheItem Value { get; set; }
 	}
 }
 

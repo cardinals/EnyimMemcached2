@@ -6,14 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Funq;
 
-namespace Enyim.Caching.Memcached.Configuration
+namespace Enyim.Caching.Configuration
 {
-	public class BasicConfiguration : IClusterFactory
+	public abstract class ClusterFactoryBase : IClusterFactory
 	{
 		private Funq.Container container;
 		private List<IPEndPoint> nodes;
 
-		public BasicConfiguration()
+		public ClusterFactoryBase()
 		{
 			nodes = new List<IPEndPoint>();
 
@@ -21,6 +21,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
 			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
 			container.AutoWireAs<IReconnectPolicy, PeriodicReconnectPolicy>();
+			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
 
 			// socket
 			container
@@ -33,15 +34,10 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			// cluster + nodes
 			container
-				.AutoWireAs<INode, MemcachedNode, IPEndPoint>()
-				.InitializedBy((c, n) =>
-				{
-					BufferSize = BufferSize;
-				});
-
-			container
 				.AutoWireAs<ICluster, DefaultCluster, IEnumerable<IPEndPoint>>()
 				.ReusedWithin(ReuseScope.Container);
+
+			container.Register<INode>(c => { throw new InvalidOperationException("Must register an INode implementation"); });
 		}
 
 		public IList<IPEndPoint> Nodes { get { return nodes; } }

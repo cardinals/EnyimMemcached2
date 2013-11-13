@@ -19,6 +19,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		public ConcatenationMode Mode { get; private set; }
 		public ArraySegment<byte> Data { get; private set; }
+		public bool Silent { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
@@ -26,8 +27,8 @@ namespace Enyim.Caching.Memcached.Operations
 
 			switch (Mode)
 			{
-				case ConcatenationMode.Append: op = OpCode.AppendQ; break;
-				case ConcatenationMode.Prepend: op = OpCode.PrependQ; break;
+				case ConcatenationMode.Append: op = Silent ? OpCode.AppendQ : OpCode.Append; break;
+				case ConcatenationMode.Prepend: op = Silent ? OpCode.PrependQ : OpCode.Prepend; break;
 				default: throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
 			}
 

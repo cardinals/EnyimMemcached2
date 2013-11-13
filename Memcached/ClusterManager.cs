@@ -40,7 +40,13 @@ namespace Enyim.Caching
 		public static ICluster Register(string name, IClusterFactory factory)
 		{
 			var retval = clusters.AddOrUpdate(name ?? NullKey,
-												_ => factory.Create(),
+												_ =>
+												{
+													var c = factory.Create();
+													c.Start();
+
+													return c;
+												},
 												(a, b) =>
 												{
 													throw new InvalidOperationException("cluster already exists: " + (name ?? "<default>"));

@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	{
 		private IOperationFactory operationFactory;
 		private ITranscoder transcoder;
-		private IKeyTransformer keyTransformer;
+		private IPerformanceMonitor performanceMonitor;
 
 		[ConfigurationProperty("operationFactory")]
 		public ProviderElement<IOperationFactory> OperationFactory
@@ -26,37 +26,72 @@ namespace Enyim.Caching.Memcached.Configuration
 			set { base["transcoder"] = value; }
 		}
 
-		[ConfigurationProperty("keyTransformer")]
-		public ProviderElement<IKeyTransformer> KeyTransformer
+		[ConfigurationProperty("performanceMonitor")]
+		public ProviderElement<IPerformanceMonitor> PerformanceMonitor
 		{
-			get { return (ProviderElement<IKeyTransformer>)base["keyTransformer"]; }
-			set { base["keyTransformer"] = value; }
+			get { return (ProviderElement<IPerformanceMonitor>)base["performanceMonitor"]; }
+			set { base["performanceMonitor"] = value; }
 		}
 
 		IOperationFactory IMemcachedClientConfiguration.OperationFactory
 		{
-			get { return operationFactory ?? (operationFactory = Create(OperationFactory)); }
+			get { return innerConfig.OperationFactory; }
 		}
 
 		ITranscoder IMemcachedClientConfiguration.Transcoder
 		{
-			get { return transcoder ?? (transcoder = Create(Transcoder)); }
+			get { return innerConfig.Transcoder; }
 		}
 
-		IKeyTransformer IMemcachedClientConfiguration.KeyTransformer
+		IPerformanceMonitor IMemcachedClientConfiguration.PerformanceMonitor
 		{
-			get { return keyTransformer ?? (keyTransformer = Create(KeyTransformer)); }
+			get { return innerConfig.PerformanceMonitor; }
+		}
+
+		private IMemcachedClientConfiguration innerConfig;
+
+		protected override void PostDeserialize()
+		{
+			base.PostDeserialize();
+
+			var innerConfig = new ClientConfiguration();
+
+			RegisterProviderElement(innerConfig, OperationFactory);
+			RegisterProviderElement(innerConfig, Transcoder);
+			RegisterProviderElement(innerConfig, PerformanceMonitor);
+
+			this.innerConfig = innerConfig;
 		}
 
 		static T Create<T>(ProviderElement<T> element) where T : class
 		{
-			var instance = (T)Enyim.Reflection.FastActivator.Create(element.Type);
-			var isi = instance as ISupportInitialize;
+			var type = element.Type;
+			if (type == null) return null;
 
-			if (isi != null)
-				isi.Initialize(element.Parameters);
+			var instance = (T)Enyim.Reflection.FastActivator.Create(element.Type);
+			var init = instance as ISupportInitialize;
+
+			if (init != null)
+				init.Initialize(element.Parameters);
 
 			return instance;
 		}
+
+		private static IRegistration<TContract> RegisterProviderElement<TContract>(ClientConfiguration config, ProviderElement<TContract> element)
+	where TContract : class
+		{
+			if (element == null) return null;
+
+			var type = element.Type;
+			if (type == null) return null;
+
+			var reg = config.Container.AutoWireAs<TContract>(type);
+
+			if (typeof(ISupportInitialize).IsAssignableFrom(type))
+				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
+
+			return reg;
+		}
+
 	}
 }

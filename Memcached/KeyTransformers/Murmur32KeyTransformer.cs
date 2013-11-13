@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
 	public class Murmur32KeyTransformer : IKeyTransformer
 	{

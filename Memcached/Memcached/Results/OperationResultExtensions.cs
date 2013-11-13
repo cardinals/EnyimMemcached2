@@ -52,6 +52,38 @@ namespace Enyim.Caching.Memcached.Results
 
 			return self;
 		}
+
+		/// <summary>
+		/// Combine will attempt to minimize the depth of InnerResults and maintain status codes
+		/// </summary>
+		/// <param name="target"></param>
+		public static T UpdateFrom<T>(this T target, IOperationResult source)
+			where T : IOperationResult
+		{
+			target.Message = source.Message;
+			target.Success = source.Success;
+			target.Exception = source.Exception;
+			target.StatusCode = source.StatusCode ?? target.StatusCode;
+			target.InnerResult = source.InnerResult ?? source;
+
+			return target;
+		}
+
+		/// <summary>
+		/// Combine will attempt to minimize the depth of InnerResults and maintain status codes
+		/// </summary>
+		/// <param name="target"></param>
+		public static T Combine<T>(this IOperationResult source, T target)
+			where T : IOperationResult
+		{
+			target.Message = source.Message;
+			target.Success = source.Success;
+			target.Exception = source.Exception;
+			target.StatusCode = source.StatusCode ?? target.StatusCode;
+			target.InnerResult = source.InnerResult ?? source;
+
+			return target;
+		}
 	}
 
 	public enum StatusCode

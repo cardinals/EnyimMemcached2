@@ -12,7 +12,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	public class AppSettingsConfiguration : IClusterFactory
 	{
 		private string sectionName;
-		private BasicConfiguration innerConfig;
+		private MemcachedClusterFactory innerConfig;
 
 		public AppSettingsConfiguration() : this("enyim.com/memcached/default") { }
 
@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				if (section == null)
 					throw new ConfigurationErrorsException(String.Format("Section {0} was not found or it's not a ClusterConfigurationSection", sectionName));
 
-				var config = new BasicConfiguration
+				var config = new MemcachedClusterFactory
 				{
 					BufferSize = section.Connection.BufferSize,
 					ConnectionTimeout = section.Connection.Timeout
@@ -38,6 +38,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				RegisterProviderElement(config, section.FailurePolicy);
 				RegisterProviderElement(config, section.ReconnectPolicy);
 				RegisterProviderElement(config, section.NodeLocator);
+				RegisterProviderElement(config, section.KeyTransformer);
 
 				config.AddNodes(section.Nodes.ToIPEndPoints());
 
@@ -47,7 +48,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			return innerConfig.Create();
 		}
 
-		private static IRegistration<TContract> RegisterProviderElement<TContract>(BasicConfiguration config, ProviderElement<TContract> element, ReuseScope scope = ReuseScope.Default)
+		private static IRegistration<TContract> RegisterProviderElement<TContract>(MemcachedClusterFactory config, ProviderElement<TContract> element)
 			where TContract : class
 		{
 			if (element == null) return null;
@@ -59,9 +60,6 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			if (typeof(ISupportInitialize).IsAssignableFrom(type))
 				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
-
-			if (scope != ReuseScope.Default)
-				reg.ReusedWithin(scope);
 
 			return reg;
 		}

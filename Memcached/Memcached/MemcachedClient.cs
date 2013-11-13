@@ -1,25 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Results;
-using Funq;
 
 namespace Enyim.Caching.Memcached
 {
-	public class MemcachedClient : IDisposable
+	public partial class MemcachedClient : IDisposable, IMemcachedClientWithResults, IMemcachedClient
 	{
 		private ICluster cluster;
 		private bool owns;
 		private IMemcachedClientConfiguration configuration;
+		private IOperationFactory opFactory;
+		private ITranscoder transcoder;
 
-		//public MemcachedClient() : this(String.Empty) { }
-		//public MemcachedClient(string clusterName) : this(String.Empty, ClusterManager.Get(clusterName)) { }
-		//public MemcachedClient(string configName, string clusterName) : this(String.Empty, ClusterManager.Get(clusterName)) { }
-		//public MemcachedClient( IClusterFactory clusterFactory) : this(clusterFactory.Create(), true) { }
+		protected MemcachedClient() { }
 
 		public MemcachedClient(IMemcachedClientConfiguration configuration, ICluster cluster) : this(configuration, cluster, false) { }
 
@@ -28,6 +19,9 @@ namespace Enyim.Caching.Memcached
 			this.cluster = cluster;
 			this.configuration = configuration;
 			this.owns = owns;
+
+			this.opFactory = configuration.OperationFactory;
+			this.transcoder = configuration.Transcoder;
 		}
 
 		~MemcachedClient()
@@ -46,20 +40,30 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public async Task<object> Get(string key)
-		{
-			var tmp = await GetWithResult(key);
+		#region [ Expiration helper            ]
 
-			return tmp.Value;
+		protected const int MaxSeconds = 60 * 60 * 24 * 30;
+		protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+		protected static uint GetExpiration(TimeSpan validFor)
+		{
+			// infinity
+			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
+
+			var seconds = (uint)validFor.TotalSeconds;
+			if (seconds < MaxSeconds) return seconds;
+
+			return GetExpiration(SystemTime.Now() + validFor);
 		}
 
-		public async Task<IGetOperationResult> GetWithResult(string key)
+		protected static uint GetExpiration(DateTime expiresAt)
 		{
-			var op = configuration.OperationFactory.Get(key);
+			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
+			if (expiresAt <= UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
 
-			await cluster.Execute(op);
-
-			return op.Result;
+			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
 		}
+
+		#endregion
 	}
 }

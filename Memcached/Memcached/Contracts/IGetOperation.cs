@@ -6,8 +6,13 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IGetOperation : ISingleKeyOperation, IHaveResult<IGetOperationResult>
+	public interface IGetOperation : ISingleKeyOperation, IHaveResult<IGetOperationResult>, ICanBeSilent
 	{
+	}
+
+	public interface ICanBeSilent
+	{
+		bool Silent { get; set; }
 	}
 }
 

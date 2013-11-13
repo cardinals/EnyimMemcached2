@@ -20,15 +20,16 @@ namespace Enyim.Caching.Memcached.Operations
 		}
 
 		public StoreMode Mode { get; private set; }
+		public bool Silent { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
 			OpCode op;
 			switch (Mode)
 			{
-				case StoreMode.Add: op = OpCode.AddQ; break;
-				case StoreMode.Set: op = OpCode.SetQ; break;
-				case StoreMode.Replace: op = OpCode.ReplaceQ; break;
+				case StoreMode.Add: op = Silent ? OpCode.AddQ : OpCode.Add; break;
+				case StoreMode.Set: op = Silent ? OpCode.SetQ : OpCode.Set; break;
+				case StoreMode.Replace: op = Silent ? OpCode.ReplaceQ : OpCode.Replace; break;
 				default: throw new ArgumentOutOfRangeException("mode", Mode + " is not supported");
 			}
 

@@ -5,8 +5,9 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Results
 {
-	public interface IGetOperationResult : INullableOperationResult<object>
+	public interface IGetOperationResult : IOperationResult
 	{
+		CacheItem Value { get; }
 	}
 }
 
