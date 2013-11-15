@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 
-namespace Enyim.Caching.Memcached.Results
+namespace Enyim.Caching.Memcached
 {
-	public class MutatorOperationResult : BinaryOperationResult, IMutateOperationResult
+	public interface ICanBeSilent
 	{
-		public ulong Value { get; set; }
+		bool Silent { get; set; }
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    @author Couchbase <info@couchbase.com>
- *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2012 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kisk�, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

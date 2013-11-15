@@ -9,9 +9,9 @@ using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	public class MemcachedClusterFactory : ClusterFactoryBase
+	public class DefaultClusterFactory : ClusterFactoryBase
 	{
-		public MemcachedClusterFactory()
+		public DefaultClusterFactory()
 		{
 			Container
 				.AutoWireAs<INode, MemcachedNode, IPEndPoint>()

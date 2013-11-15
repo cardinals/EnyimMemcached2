@@ -57,7 +57,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		protected override IMutateOperationResult CreateResult(BinaryResponse response)
 		{
-			var retval = new MutatorOperationResult();
+			var retval = new MutateOperationResult();
 
 			if (response == null)
 				return retval.NotFound(this);

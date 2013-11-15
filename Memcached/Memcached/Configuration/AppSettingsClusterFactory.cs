@@ -9,14 +9,14 @@ using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	public class AppSettingsConfiguration : IClusterFactory
+	public class AppSettingsClusterFactory : IClusterFactory
 	{
 		private string sectionName;
-		private MemcachedClusterFactory innerConfig;
+		private DefaultClusterFactory innerConfig;
 
-		public AppSettingsConfiguration() : this("enyim.com/memcached/default") { }
+		public AppSettingsClusterFactory() : this("enyim.com/memcached/default") { }
 
-		public AppSettingsConfiguration(string sectionName)
+		public AppSettingsClusterFactory(string sectionName)
 		{
 			this.sectionName = sectionName;
 		}
@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				if (section == null)
 					throw new ConfigurationErrorsException(String.Format("Section {0} was not found or it's not a ClusterConfigurationSection", sectionName));
 
-				var config = new MemcachedClusterFactory
+				var config = new DefaultClusterFactory
 				{
 					BufferSize = section.Connection.BufferSize,
 					ConnectionTimeout = section.Connection.Timeout
@@ -48,7 +48,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			return innerConfig.Create();
 		}
 
-		private static IRegistration<TContract> RegisterProviderElement<TContract>(MemcachedClusterFactory config, ProviderElement<TContract> element)
+		private static IRegistration<TContract> RegisterProviderElement<TContract>(DefaultClusterFactory config, ProviderElement<TContract> element)
 			where TContract : class
 		{
 			if (element == null) return null;

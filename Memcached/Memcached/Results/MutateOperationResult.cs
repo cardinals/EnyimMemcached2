@@ -5,6 +5,10 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Results
 {
+	public class MutateOperationResult : BinaryOperationResult, IMutateOperationResult
+	{
+		public ulong Value { get; set; }
+	}
 }
 
 #region [ License information          ]

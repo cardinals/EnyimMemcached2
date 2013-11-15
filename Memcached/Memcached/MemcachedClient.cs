@@ -2,7 +2,7 @@
 
 namespace Enyim.Caching.Memcached
 {
-	public partial class MemcachedClient : IDisposable, IMemcachedClientWithResults, IMemcachedClient
+	public partial class MemcachedClient : IMemcachedClient, IMemcachedClientWithResults, IDisposable
 	{
 		private ICluster cluster;
 		private bool owns;
@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached
 
 		public MemcachedClient(IMemcachedClientConfiguration configuration, ICluster cluster) : this(configuration, cluster, false) { }
 
-		private MemcachedClient(IMemcachedClientConfiguration configuration, ICluster cluster, bool owns)
+		protected MemcachedClient(IMemcachedClientConfiguration configuration, ICluster cluster, bool owns)
 		{
 			this.cluster = cluster;
 			this.configuration = configuration;

@@ -58,8 +58,11 @@
     <Compile Include="Contracts\IRequest.cs" />
     <Compile Include="Contracts\IResponse.cs" />
     <Compile Include="FastActivator.cs" />
-    <Compile Include="Memcached\Configuration\ClientConfiguration.cs" />
+    <Compile Include="Memcached\Configuration\AppSettingsClientConfiguration.cs" />
+    <Compile Include="Memcached\Configuration\ProviderElementExtensions.cs" />
+    <Compile Include="Memcached\Configuration\DefaultClientConfiguration.cs" />
     <Compile Include="Memcached\Configuration\ClientConfigurationSection.cs" />
+    <Compile Include="Memcached\Contracts\ICanBeSilent.cs" />
     <Compile Include="Memcached\Contracts\IHaveResult.cs" />
     <Compile Include="Memcached\Contracts\IGetOperation.cs" />
     <Compile Include="Memcached\Contracts\IMemcachedClientConfiguration.cs" />
@@ -75,6 +78,8 @@
     <Compile Include="Memcached\Contracts\ITranscoder.cs" />
     <Compile Include="Memcached\Contracts\IMemcachedClientWithResults.cs" />
     <Compile Include="Memcached\Contracts\IMemcachedClient.cs" />
+    <Compile Include="Memcached\Results\MutateOperationResult.cs" />
+    <Compile Include="Memcached\Results\StatusCode.cs" />
     <Compile Include="Memcached\SystemTime.cs" />
     <Compile Include="Memcached\MemcachedClientExtensions.cs" />
     <Compile Include="Memcached\MemcachedClient.Perform.cs">
@@ -102,7 +107,6 @@
     </Compile>
     <Compile Include="Memcached\Operations\StoreOperation.cs" />
     <Compile Include="Memcached\Results\BinaryOperationResult.cs" />
-    <Compile Include="Memcached\Results\ConcatOperationResult.cs" />
     <Compile Include="Memcached\Results\GetOperationResult.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -112,11 +116,10 @@
     <Compile Include="Memcached\Results\IGetOperationResult.cs" />
     <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
     <Compile Include="Memcached\Results\IOperationResult.cs" />
-    <Compile Include="Memcached\Results\OperationResultBase.cs" />
     <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
     <Compile Include="NodeBase.cs" />
-    <Compile Include="Memcached\Configuration\MemcachedClusterFactory.cs" />
-    <Compile Include="Memcached\Configuration\AppSettingsConfiguration.cs" />
+    <Compile Include="Memcached\Configuration\DefaultClusterFactory.cs" />
+    <Compile Include="Memcached\Configuration\AppSettingsClusterFactory.cs" />
     <Compile Include="Contracts\IClusterFactory.cs" />
     <Compile Include="Contracts\ISocket.cs" />
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />

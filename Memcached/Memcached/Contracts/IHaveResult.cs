@@ -1,8 +1,4 @@
 using System;
-using System.Net;
-using System.Collections.Generic;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
