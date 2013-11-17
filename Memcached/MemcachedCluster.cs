@@ -17,7 +17,6 @@ namespace Enyim.Caching
 
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy policy;
-		private readonly IKeyTransformer keyTransformer;
 		private readonly Func<IPEndPoint, INode> nodeFactory;
 
 		private readonly CancellationTokenSource shutdownToken;
@@ -32,7 +31,6 @@ namespace Enyim.Caching
 		public DefaultCluster(IEnumerable<IPEndPoint> endpoints,
 								INodeLocator locator, 
 								IReconnectPolicy policy, 
-								IKeyTransformer keyTransformer,
 								Func<IPEndPoint, INode> nodeFactory)
 		{
 			this.allNodes = endpoints.Select(nodeFactory).ToArray();
@@ -40,7 +38,6 @@ namespace Enyim.Caching
 
 			this.locator = locator;
 			this.policy = policy;
-			this.keyTransformer = keyTransformer;
 			this.nodeFactory = nodeFactory;
 
 			this.worker = new Thread(Worker) { Name = "The Worker" };
@@ -89,8 +86,7 @@ namespace Enyim.Caching
 
 		public virtual Task Execute(ISingleKeyOperation op)
 		{
-			var opKey = keyTransformer.Transform(op.Key);
-			var node = locator.Locate(opKey);
+			var node = locator.Locate(op.Key);
 
 			if (node.IsAlive)
 			{

@@ -14,9 +14,10 @@ namespace Enyim.Caching.Memcached.Configuration
 		{
 			container = new Funq.Container();
 
-			container.Register<IOperationFactory>(c => new MemcachedOperationFactory());
-			container.Register<ITranscoder>(c => new DefaultTranscoder());
+			container.AutoWireAs<IOperationFactory, MemcachedOperationFactory>();
+			container.AutoWireAs<ITranscoder, DefaultTranscoder>();
 			container.AutoWireAs<IPerformanceMonitor, NullPerformanceMonitor>();
+			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
 		}
 
 		public Container Container { get { return container; } }
@@ -34,6 +35,11 @@ namespace Enyim.Caching.Memcached.Configuration
 		public IPerformanceMonitor PerformanceMonitor
 		{
 			get { return container.Resolve<IPerformanceMonitor>(); }
+		}
+
+		public IKeyTransformer KeyTransformer
+		{
+			get { return container.Resolve<IKeyTransformer>(); }
 		}
 	}
 }

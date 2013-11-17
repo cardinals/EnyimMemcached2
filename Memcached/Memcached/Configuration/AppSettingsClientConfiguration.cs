@@ -27,6 +27,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			section.OperationFactory.RegisterInto(innerConfig.Container);
 			section.Transcoder.RegisterInto(innerConfig.Container);
 			section.PerformanceMonitor.RegisterInto(innerConfig.Container);
+			section.KeyTransformer.RegisterInto(innerConfig.Container);
 
 			this.innerConfig = innerConfig;
 		}
@@ -44,6 +45,11 @@ namespace Enyim.Caching.Memcached.Configuration
 		public IPerformanceMonitor PerformanceMonitor
 		{
 			get { return innerConfig.PerformanceMonitor; }
+		}
+
+		public IKeyTransformer KeyTransformer
+		{
+			get { return innerConfig.KeyTransformer; }
 		}
 	}
 }

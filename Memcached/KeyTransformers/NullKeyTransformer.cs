@@ -8,9 +8,9 @@ namespace Enyim.Caching
 {
 	public class NullKeyTransformer : IKeyTransformer
 	{
-		public byte[] Transform(byte[] key)
+		public virtual byte[] Transform(string key)
 		{
-			return key;
+			return Encoding.UTF8.GetBytes(key);
 		}
 	}
 }

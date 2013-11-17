@@ -35,10 +35,9 @@ namespace Enyim.Caching.Memcached.Configuration
 					ConnectionTimeout = section.Connection.Timeout
 				};
 
-				RegisterProviderElement(config, section.FailurePolicy);
-				RegisterProviderElement(config, section.ReconnectPolicy);
-				RegisterProviderElement(config, section.NodeLocator);
-				RegisterProviderElement(config, section.KeyTransformer);
+				section.FailurePolicy.RegisterInto(config.Container);
+				section.ReconnectPolicy.RegisterInto(config.Container);
+				section.NodeLocator.RegisterInto(config.Container);
 
 				config.AddNodes(section.Nodes.ToIPEndPoints());
 
@@ -46,22 +45,6 @@ namespace Enyim.Caching.Memcached.Configuration
 			}
 
 			return innerConfig.Create();
-		}
-
-		private static IRegistration<TContract> RegisterProviderElement<TContract>(DefaultClusterFactory config, ProviderElement<TContract> element)
-			where TContract : class
-		{
-			if (element == null) return null;
-
-			var type = element.Type;
-			if (type == null) return null;
-
-			var reg = config.Container.AutoWireAs<TContract>(type);
-
-			if (typeof(ISupportInitialize).IsAssignableFrom(type))
-				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
-
-			return reg;
 		}
 	}
 }

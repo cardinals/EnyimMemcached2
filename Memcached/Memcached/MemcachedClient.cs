@@ -9,6 +9,7 @@ namespace Enyim.Caching.Memcached
 		private IMemcachedClientConfiguration configuration;
 		private IOperationFactory opFactory;
 		private ITranscoder transcoder;
+		private IKeyTransformer keyTransformer;
 
 		protected MemcachedClient() { }
 
@@ -21,6 +22,7 @@ namespace Enyim.Caching.Memcached
 			this.owns = owns;
 
 			this.opFactory = configuration.OperationFactory;
+			this.keyTransformer = configuration.KeyTransformer;
 			this.transcoder = configuration.Transcoder;
 		}
 

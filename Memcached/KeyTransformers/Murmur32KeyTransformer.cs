@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching
 {
-	public class Murmur32KeyTransformer : IKeyTransformer
+	public class Murmur32KeyTransformer : NullKeyTransformer
 	{
-		public byte[] Transform(byte[] key)
+		public override byte[] Transform(string key)
 		{
-			return BitConverter.GetBytes(Murmur32.ComputeHash(key));
+			var retval = new byte[4];
+			BinaryConverter.EncodeUInt32(Murmur32.ComputeHash(base.Transform(key)), retval, 0);
+
+			return retval;
 		}
 	}
 }
