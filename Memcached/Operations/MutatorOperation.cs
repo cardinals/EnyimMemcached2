@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached.Operations
 		private ulong delta;
 		private uint expires;
 
-		public MutateOperation(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
+		public MutateOperation(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, uint expires)
 			: base(key)
 		{
 			Require.Value("delta", delta >= 0, "delta must be a positive integer");

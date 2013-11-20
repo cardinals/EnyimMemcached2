@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Operations
 	/// </summary>
 	public class ConcatOperation : BinarySingleItemOperation<IOperationResult>, IConcatOperation
 	{
-		public ConcatOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		public ConcatOperation(ConcatenationMode mode, byte[] key, ArraySegment<byte> data)
 			: base(key)
 		{
 			Data = data;

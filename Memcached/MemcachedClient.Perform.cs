@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached
 
 			foreach (var key in keys)
 			{
-				var op = opFactory.Get(key);
+				var op = opFactory.Get(keyTransformer.Transform(key));
 				tasks.Add(cluster.Execute(op));
 				ops[key] = op;
 			}
@@ -32,7 +32,7 @@ namespace Enyim.Caching.Memcached
 
 		protected virtual async Task<IGetOperationResult> PerformGetCore(string key)
 		{
-			var op = opFactory.Get(key);
+			var op = opFactory.Get(keyTransformer.Transform(key));
 			await cluster.Execute(op);
 
 			return op.Result;
@@ -65,7 +65,7 @@ namespace Enyim.Caching.Memcached
 		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires, ulong cas)
 		{
 			var ci = transcoder.Serialize(value);
-			var op = opFactory.Store(mode, key, ci, cas, expires);
+			var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
 			await cluster.Execute(op);
 
 			return op.Result;
@@ -73,7 +73,7 @@ namespace Enyim.Caching.Memcached
 
 		protected async Task<IOperationResult> PerformRemove(string key, ulong cas)
 		{
-			var op = opFactory.Delete(key, cas);
+			var op = opFactory.Delete(keyTransformer.Transform(key), cas);
 			await cluster.Execute(op);
 
 			return op.Result;
@@ -81,7 +81,7 @@ namespace Enyim.Caching.Memcached
 
 		protected async Task<IOperationResult> PerformConcate(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			var op = opFactory.Concat(mode, key, cas, data);
+			var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
 			await cluster.Execute(op);
 
 			return op.Result;
@@ -89,7 +89,7 @@ namespace Enyim.Caching.Memcached
 
 		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
-			var op = opFactory.Mutate(mode, key, defaultValue, delta, cas, expires);
+			var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
 			await cluster.Execute(op);
 
 			return op.Result;

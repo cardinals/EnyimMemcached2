@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached.Results
@@ -32,7 +33,7 @@ namespace Enyim.Caching.Memcached.Results
 			self.Success = false;
 			self.Cas = op.Cas;
 			self.Message = "NOT_FOUND";
-			self.Exception = new KeyNotFoundException(op.Key);
+			self.Exception = new KeyNotFoundException(Encoding.UTF8.GetString(op.Key));
 			self.StatusCode = 1;
 
 			return self;

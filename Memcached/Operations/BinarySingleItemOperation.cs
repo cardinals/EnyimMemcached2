@@ -5,18 +5,13 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public abstract class BinarySingleItemOperation<TResult> : MemcachedOperationBase<TResult>, ISingleKeyOperation
 	{
-		protected BinarySingleItemOperation(string key)
+		protected BinarySingleItemOperation(byte[] key)
 		{
 			Key = key;
 		}
 
-		public string Key { get; private set; }
+		public byte[] Key { get; private set; }
 		public ulong Cas { get; set; }
-
-		byte[] ISingleKeyOperation.Key
-		{
-			get { return Encoding.UTF8.GetBytes(Key); }
-		}
 	}
 }
 

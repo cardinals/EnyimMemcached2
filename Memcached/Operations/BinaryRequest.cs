@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BinaryRequest: IRequest
+	public class BinaryRequest : IRequest
 	{
 		private static int InstanceCounter;
 
@@ -18,8 +18,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		public IReadOnlyList<ArraySegment<byte>> CreateBuffer()
 		{
-			var key = BinaryConverter.EncodeKey(Key);
-			var keyLength = key == null ? 0 : key.Length;
+			var keyLength = Key == null ? 0 : Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
 			var extra = Extra;
@@ -71,7 +70,7 @@ namespace Enyim.Caching.Memcached.Operations
 			var retval = new List<ArraySegment<byte>>(4) { new ArraySegment<byte>(header) };
 
 			if (extraLength > 0) retval.Add(extra);
-			if (keyLength > 0) retval.Add(new ArraySegment<byte>(key));
+			if (keyLength > 0) retval.Add(new ArraySegment<byte>(Key));
 			if (bodyLength > 0) retval.Add(body);
 
 			return retval;
@@ -79,7 +78,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 		public readonly byte Operation;
 		public readonly uint CorrelationId;
-		public string Key;
+		public byte[] Key;
 		public ulong Cas;
 		//public ushort Reserved;
 		public ArraySegment<byte> Extra;

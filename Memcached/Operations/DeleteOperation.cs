@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(DeleteOperation));
 
-		public DeleteOperation(string key)
+		public DeleteOperation(byte[] key)
 			: base(key)
 		{
 			Silent = true;

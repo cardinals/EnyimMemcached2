@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Operations
 		private CacheItem value;
 		private uint expires;
 
-		public StoreOperation(StoreMode mode, string key, CacheItem value, uint expires) :
+		public StoreOperation(StoreMode mode, byte[] key, CacheItem value, uint expires) :
 			base(key)
 		{
 			Mode = mode;
