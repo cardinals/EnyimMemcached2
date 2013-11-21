@@ -49,21 +49,9 @@ namespace Enyim.Caching.Memcached
 			return ((IMemcachedClientWithResults)this).Store(mode, key, value, cas, expiresAt).Success;
 		}
 
-		public bool Store(StoreMode mode, string key, object value, ulong cas, TimeSpan validFor)
-		{
-			return ((IMemcachedClientWithResults)this).Store(mode, key, value, cas, validFor).Success;
-		}
-
 		public async Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
 			var result = await ((IMemcachedClientWithResults)this).StoreAsync(mode, key, value, cas, expiresAt);
-
-			return result.Success;
-		}
-
-		public async Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, TimeSpan validFor)
-		{
-			var result = await ((IMemcachedClientWithResults)this).StoreAsync(mode, key, value, cas, validFor);
 
 			return result.Success;
 		}
@@ -97,21 +85,9 @@ namespace Enyim.Caching.Memcached
 			return ((IMemcachedClientWithResults)this).Mutate(mode, key, defaultValue, delta, cas, expiresAt).Value;
 		}
 
-		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, TimeSpan validFor)
-		{
-			return ((IMemcachedClientWithResults)this).Mutate(mode, key, defaultValue, delta, cas, validFor).Value;
-		}
-
 		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
 		{
 			var result = await ((IMemcachedClientWithResults)this).MutateAsync(mode, key, defaultValue, delta, cas, expiresAt);
-
-			return result.Value;
-		}
-
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, TimeSpan validFor)
-		{
-			var result = await ((IMemcachedClientWithResults)this).MutateAsync(mode, key, defaultValue, delta, cas, validFor);
 
 			return result.Value;
 		}

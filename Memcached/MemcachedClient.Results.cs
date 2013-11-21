@@ -49,19 +49,9 @@ namespace Enyim.Caching.Memcached
 			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas).Result;
 		}
 
-		IOperationResult IMemcachedClientWithResults.Store(StoreMode mode, string key, object value, ulong cas, TimeSpan validFor)
-		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(validFor), cas).Result;
-		}
-
 		Task<IOperationResult> IMemcachedClientWithResults.StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
 			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas);
-		}
-
-		Task<IOperationResult> IMemcachedClientWithResults.StoreAsync(StoreMode mode, string key, object value, ulong cas, TimeSpan validFor)
-		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(validFor), cas);
 		}
 
 		IOperationResult IMemcachedClientWithResults.Remove(string key, ulong cas)
@@ -89,19 +79,9 @@ namespace Enyim.Caching.Memcached
 			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt)).Result;
 		}
 
-		IMutateOperationResult IMemcachedClientWithResults.Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, TimeSpan validFor)
-		{
-			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(validFor)).Result;
-		}
-
 		Task<IMutateOperationResult> IMemcachedClientWithResults.MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
 		{
 			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
-		}
-
-		Task<IMutateOperationResult> IMemcachedClientWithResults.MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, TimeSpan validFor)
-		{
-			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(validFor));
 		}
 	}
 }
