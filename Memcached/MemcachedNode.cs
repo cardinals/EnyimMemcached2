@@ -35,7 +35,7 @@ namespace Enyim.Caching.Memcached
 		protected override void BeforeWriteOp(SegmentListCopier copier, WriteBuffer writeBuffer, IOperation op)
 		{
 			// TODO handle manual NoOp
-			if (copier.Length > writeBuffer.Remaining - NoOp.BufferSize)
+			if (copier.Length > writeBuffer.Length - writeBuffer.Position - NoOp.BufferSize)
 			{
 				IntroduceNoOp();
 				didNoop = true;

@@ -2,22 +2,22 @@
 
 namespace Enyim.Caching
 {
+	// TODO change this to a Stream
 	public class WriteBuffer
 	{
-		private int capacity;
+		private int length;
 		private int position;
 		private readonly byte[] writeBuffer;
 
 		public WriteBuffer(int capacity)
 		{
-			this.capacity = capacity;
+			this.length = capacity;
 			this.writeBuffer = new byte[capacity];
 		}
 
-		public int Capacity { get { return capacity; } }
+		public int Length { get { return length; } }
 		public int Position { get { return position; } }
-		public int Remaining { get { return capacity - position; } }
-		public bool IsFull { get { return capacity == position; } }
+		public bool IsFull { get { return length == position; } }
 
 		public int Append(ArraySegment<byte> buffer)
 		{
@@ -26,7 +26,7 @@ namespace Enyim.Caching
 
 		public int Append(byte[] buffer, int offset, int count)
 		{
-			var canWrite = capacity - position;
+			var canWrite = length - position;
 
 			if (canWrite <= 0) return 0;
 			if (canWrite > count) canWrite = count;

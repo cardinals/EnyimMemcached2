@@ -4,11 +4,11 @@ using System.Threading;
 
 namespace Enyim.Caching
 {
-	public interface ISocket: IDisposable
+	public interface ISocket : IDisposable
 	{
 		void Connect(IPEndPoint endpoint, CancellationToken token);
 		int Receive(byte[] buffer, int offset, int count);
-		void Send(WriteBuffer buffer);
+		void Send(byte[] buffer, int offset, int count);
 
 		bool IsAlive { get; }
 		int BufferSize { get; set; }

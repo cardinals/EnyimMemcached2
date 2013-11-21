@@ -103,15 +103,6 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Sends the data.
 		/// </summary>
-		public void Send(WriteBuffer buffer)
-		{
-			Send(buffer.GetBuffer(), 0, buffer.Position);
-			buffer.Reset();
-		}
-
-		/// <summary>
-		/// Sends the data.
-		/// </summary>
 		public void Send(byte[] buffer, int offset, int count)
 		{
 			if (count < 1) return;

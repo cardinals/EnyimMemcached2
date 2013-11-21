@@ -217,7 +217,8 @@ namespace Enyim.Caching
 			{
 				FinalizeWriteBuffer(writeBuffer);
 
-				socket.Send(writeBuffer);
+				var data = writeBuffer.GetBuffer();
+				socket.Send(data, 0, writeBuffer.Length);
 
 				if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
 				if (log.IsTraceEnabled) log.Trace("Flush write buffer");
