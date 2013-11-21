@@ -20,19 +20,6 @@ namespace Enyim.Caching.Memcached
 			return self.Mutate(MutationMode.Increment, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
 		}
 
-		private static DateTime MakeExpiration(TimeSpan? validFor, DateTime? expiresAt)
-		{
-			if (validFor != null)
-			{
-				if (expiresAt != null)
-					throw new ArgumentException("Cannot specify both validFor and expiresAt");
-
-				return DateTime.Now + validFor.Value;
-			}
-
-			return expiresAt ?? DateTime.MaxValue;
-		}
-
 		public static ulong Decrement(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
 			return self.Mutate(MutationMode.Decrement, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
@@ -86,6 +73,19 @@ namespace Enyim.Caching.Memcached
 		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
 			return self.StoreAsync(StoreMode.Set, key, value, cas, MakeExpiration(validFor, expiresAt));
+		}
+
+		internal static DateTime MakeExpiration(TimeSpan? validFor, DateTime? expiresAt)
+		{
+			if (validFor != null)
+			{
+				if (expiresAt != null)
+					throw new ArgumentException("Cannot specify both validFor and expiresAt");
+
+				return DateTime.Now + validFor.Value;
+			}
+
+			return expiresAt ?? DateTime.MaxValue;
 		}
 	}
 }

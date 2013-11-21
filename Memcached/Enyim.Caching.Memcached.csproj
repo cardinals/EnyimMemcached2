@@ -86,19 +86,13 @@
     <Compile Include="Contracts\ITranscoder.cs" />
     <Compile Include="Contracts\IMemcachedClientWithResults.cs" />
     <Compile Include="Contracts\IMemcachedClient.cs" />
+    <Compile Include="MemcachedClientBase.cs" />
+    <Compile Include="MemcachedClientWithResults.cs" />
+    <Compile Include="MemcachedClientWithResultsExtensions.cs" />
     <Compile Include="Results\MutateOperationResult.cs" />
     <Compile Include="Results\StatusCode.cs" />
     <Compile Include="SystemTime.cs" />
     <Compile Include="MemcachedClientExtensions.cs" />
-    <Compile Include="MemcachedClient.Perform.cs">
-      <DependentUpon>MemcachedClient.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClient.Operations.cs">
-      <DependentUpon>MemcachedClient.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClient.Results.cs">
-      <DependentUpon>MemcachedClient.cs</DependentUpon>
-    </Compile>
     <Compile Include="MemcachedOperationFactory.cs" />
     <Compile Include="MutationMode.cs" />
     <Compile Include="NullPerformanceMonitor.cs" />

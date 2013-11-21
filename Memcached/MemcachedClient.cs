@@ -1,102 +1,102 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Enyim.Caching.Integrations.Funq;
 using Funq;
 
 namespace Enyim.Caching.Memcached
 {
-	public partial class MemcachedClient : IMemcachedClient, IMemcachedClientWithResults, IDisposable
+	public partial class MemcachedClient : MemcachedClientBase, IMemcachedClient
 	{
-		public const string ClusterSection = "enyim.com/memcached/cluster";
-		public const string ClientSection = "enyim.com/memcached/client";
+		private IMemcachedClientWithResults withResults;
 
-		private ICluster cluster;
-		private bool owns;
-		private IOperationFactory opFactory;
-		private ITranscoder transcoder;
-		private IKeyTransformer keyTransformer;
-
-		public MemcachedClient()
-			: this(DefaultContainer) { }
-
-		public MemcachedClient(IContainer container)
-			: this
-			(
-				container.Resolve<ICluster>(),
-				container.Resolve<IOperationFactory>(),
-				container.Resolve<IKeyTransformer>(),
-				container.Resolve<ITranscoder>()
-			) { }
-
+		public MemcachedClient() : base() { }
+		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
+			: base(cluster, opFactory, keyTransformer, transcoder) { }
+
+		public IMemcachedClientWithResults WithResults
 		{
-			this.cluster = cluster;
-			this.opFactory = opFactory;
-			this.keyTransformer = keyTransformer;
-			this.transcoder = transcoder;
+			get { return withResults ?? (withResults = new MemcachedClientWithResults(Cluster, OpFactory, KeyTransformer, Transcoder)); }
 		}
 
-		~MemcachedClient()
+		public T Get<T>(string key)
 		{
-			Dispose();
+			return GetAsync<T>(key).Result;
 		}
 
-		public void Dispose()
+		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			GC.SuppressFinalize(this);
+			return GetAsync(keys).Result;
+		}
 
-			if (owns && cluster != null)
+		public async Task<T> GetAsync<T>(string key)
+		{
+			var result = await PerformGetCore(key);
+			var converted = ConvertToValue(result);
+
+			return (T)converted;
+		}
+
+		public async Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys)
+		{
+			var ops = await MultiGetCore(keys);
+			var retval = new Dictionary<string, object>();
+
+			foreach (var kvp in ops)
 			{
-				cluster.Dispose();
-				cluster = null;
+				retval[kvp.Key] = ConvertToValue(kvp.Value.Result);
 			}
+
+			return retval;
 		}
 
-		#region [ Expiration helper            ]
-
-		protected const int MaxSeconds = 60 * 60 * 24 * 30;
-		protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-		protected static uint GetExpiration(TimeSpan validFor)
+		public bool Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			// infinity
-			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
-
-			var seconds = (uint)validFor.TotalSeconds;
-			if (seconds < MaxSeconds) return seconds;
-
-			return GetExpiration(SystemTime.Now() + validFor);
+			return ((IMemcachedClientWithResults)this).Store(mode, key, value, cas, expiresAt).Success;
 		}
 
-		protected static uint GetExpiration(DateTime expiresAt)
+		public async Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
-			if (expiresAt <= UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
+			var result = await ((IMemcachedClientWithResults)this).StoreAsync(mode, key, value, cas, expiresAt);
 
-			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
+			return result.Success;
 		}
 
-		#endregion
-
-#if !STANDALONE
-		private static readonly Funq.Container rootContainer;
-		public static readonly IContainer DefaultContainer;
-
-		static MemcachedClient()
+		public bool Remove(string key, ulong cas)
 		{
-			rootContainer = new Funq.Container();
-			DefaultContainer = new ContainerWrapper(rootContainer);
-
-			rootContainer.AddDefaultServices();
-			rootContainer.RegisterClusterFromConfig(ClusterSection);
+			return ((IMemcachedClientWithResults)this).Remove(key, cas).Success;
 		}
 
-		public static IContainer WithCluster(string sectionName)
+		public async Task<bool> RemoveAsync(string key, ulong cas)
 		{
-			var container = rootContainer.CreateChildContainer();
-			container.RegisterClusterFromConfig(sectionName);
+			var result = await ((IMemcachedClientWithResults)this).RemoveAsync(key, cas);
 
-			return new ContainerWrapper(container);
+			return result.Success;
 		}
-#endif
+
+		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
+		{
+			return ((IMemcachedClientWithResults)this).Concate(mode, key, data, cas).Success;
+		}
+
+		public async Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
+		{
+			var result = await ((IMemcachedClientWithResults)this).ConcateAsync(mode, key, data, cas);
+
+			return result.Success;
+		}
+
+		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
+		{
+			return ((IMemcachedClientWithResults)this).Mutate(mode, key, defaultValue, delta, cas, expiresAt).Value;
+		}
+
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
+		{
+			var result = await ((IMemcachedClientWithResults)this).MutateAsync(mode, key, defaultValue, delta, cas, expiresAt);
+
+			return result.Value;
+		}
 	}
 }
