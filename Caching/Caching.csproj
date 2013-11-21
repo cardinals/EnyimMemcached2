@@ -48,7 +48,7 @@
     <Compile Include="Configuration\ProviderElement.cs" />
     <Compile Include="Configuration\TextElement.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
-    <Compile Include="Contracts\FastActivator.cs" />
+    <Compile Include="FastActivator.cs" />
     <Compile Include="Contracts\ICluster.cs" />
     <Compile Include="Contracts\IClusterFactory.cs" />
     <Compile Include="Contracts\IContainer.cs" />
@@ -64,8 +64,8 @@
     <Compile Include="Contracts\ISingleKeyOperation.cs" />
     <Compile Include="Contracts\ISocket.cs" />
     <Compile Include="Contracts\ISupportInitialize.cs" />
-    <Compile Include="Contracts\LogManager.cs" />
-    <Compile Include="Contracts\WriteBuffer.cs" />
+    <Compile Include="LogManager.cs" />
+    <Compile Include="WriteBuffer.cs" />
     <Compile Include="DefaultCluster.cs" />
     <Compile Include="DefaultNodeLocator.cs" />
     <Compile Include="Extensions.cs" />
