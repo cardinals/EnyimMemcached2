@@ -24,7 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -35,7 +35,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
@@ -43,6 +43,9 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Funq">
+      <HintPath>..\Integrations\Funq\Funq.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -54,214 +57,95 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration\ClusterFactoryBase.cs" />
-    <Compile Include="Contracts\IRequest.cs" />
-    <Compile Include="Contracts\IResponse.cs" />
-    <Compile Include="FastActivator.cs" />
-    <Compile Include="Memcached\Configuration\AppSettingsClientConfiguration.cs" />
-    <Compile Include="Memcached\Configuration\ProviderElementExtensions.cs" />
-    <Compile Include="Memcached\Configuration\DefaultClientConfiguration.cs" />
-    <Compile Include="Memcached\Configuration\ClientConfigurationSection.cs" />
-    <Compile Include="Memcached\Contracts\ICanBeSilent.cs" />
-    <Compile Include="Memcached\Contracts\IHaveResult.cs" />
-    <Compile Include="Memcached\Contracts\IGetOperation.cs" />
-    <Compile Include="Memcached\Contracts\IMemcachedClientConfiguration.cs" />
-    <Compile Include="Memcached\Contracts\IOperationFactory.cs" />
-    <Compile Include="Memcached\Contracts\IPerformanceMonitor.cs" />
-    <Compile Include="Memcached\Contracts\IStoreOperation.cs" />
-    <Compile Include="Memcached\Contracts\IDeleteOperation.cs" />
-    <Compile Include="Memcached\Contracts\IConcatOperation.cs" />
-    <Compile Include="Memcached\Contracts\IMutatorOperation.cs" />
-    <Compile Include="Memcached\Contracts\IStatsOperation.cs" />
-    <Compile Include="Memcached\Contracts\IFlushOperation.cs" />
-    <Compile Include="Memcached\CacheItem.cs" />
-    <Compile Include="Memcached\Contracts\ITranscoder.cs" />
-    <Compile Include="Memcached\Contracts\IMemcachedClientWithResults.cs" />
-    <Compile Include="Memcached\Contracts\IMemcachedClient.cs" />
-    <Compile Include="Memcached\Results\MutateOperationResult.cs" />
-    <Compile Include="Memcached\Results\StatusCode.cs" />
-    <Compile Include="Memcached\SystemTime.cs" />
-    <Compile Include="Memcached\MemcachedClientExtensions.cs" />
-    <Compile Include="Memcached\MemcachedClient.Perform.cs">
+    <Compile Include="..\Integrations\Funq\FunqContainerWrapper.cs">
+      <Link>Integrations\FunqContainerWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\Integrations\Funq\FunqExtensions.cs">
+      <Link>Integrations\FunqExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Integrations\Funq\ProviderElementExtensions.cs">
+      <Link>Integrations\ProviderElementExtensions.cs</Link>
+    </Compile>
+    <Compile Include="Configuration\AppSettingsClientConfiguration.cs" />
+    <Compile Include="Configuration\DefaultClientConfiguration.cs" />
+    <Compile Include="Configuration\ClientConfigurationSection.cs" />
+    <Compile Include="Contracts\ICanBeSilent.cs" />
+    <Compile Include="Contracts\IHaveResult.cs" />
+    <Compile Include="Contracts\IGetOperation.cs" />
+    <Compile Include="Contracts\IKeyTransformer.cs" />
+    <Compile Include="Contracts\IMemcachedClientConfiguration.cs" />
+    <Compile Include="Contracts\IOperationFactory.cs" />
+    <Compile Include="Contracts\IPerformanceMonitor.cs" />
+    <Compile Include="Contracts\IStoreOperation.cs" />
+    <Compile Include="Contracts\IDeleteOperation.cs" />
+    <Compile Include="Contracts\IConcatOperation.cs" />
+    <Compile Include="Contracts\IMutatorOperation.cs" />
+    <Compile Include="Contracts\IStatsOperation.cs" />
+    <Compile Include="Contracts\IFlushOperation.cs" />
+    <Compile Include="CacheItem.cs" />
+    <Compile Include="Contracts\ITranscoder.cs" />
+    <Compile Include="Contracts\IMemcachedClientWithResults.cs" />
+    <Compile Include="Contracts\IMemcachedClient.cs" />
+    <Compile Include="Results\MutateOperationResult.cs" />
+    <Compile Include="Results\StatusCode.cs" />
+    <Compile Include="SystemTime.cs" />
+    <Compile Include="MemcachedClientExtensions.cs" />
+    <Compile Include="MemcachedClient.Perform.cs">
       <DependentUpon>MemcachedClient.cs</DependentUpon>
     </Compile>
-    <Compile Include="Memcached\MemcachedClient.Operations.cs">
+    <Compile Include="MemcachedClient.Operations.cs">
       <DependentUpon>MemcachedClient.cs</DependentUpon>
     </Compile>
-    <Compile Include="Memcached\MemcachedClient.Results.cs">
+    <Compile Include="MemcachedClient.Results.cs">
       <DependentUpon>MemcachedClient.cs</DependentUpon>
     </Compile>
-    <Compile Include="Memcached\MemcachedOperationFactory.cs" />
-    <Compile Include="Memcached\MutationMode.cs" />
-    <Compile Include="Memcached\NullPerformanceMonitor.cs" />
-    <Compile Include="Memcached\Operations\ConcatOperation.cs">
+    <Compile Include="MemcachedOperationFactory.cs" />
+    <Compile Include="MutationMode.cs" />
+    <Compile Include="NullPerformanceMonitor.cs" />
+    <Compile Include="Operations\ConcatOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\DeleteOperation.cs">
+    <Compile Include="Operations\DeleteOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\ConcatenationMode.cs" />
-    <Compile Include="Memcached\Operations\FlushOperation.cs" />
-    <Compile Include="Memcached\Operations\MutatorOperation.cs">
+    <Compile Include="ConcatenationMode.cs" />
+    <Compile Include="Operations\FlushOperation.cs" />
+    <Compile Include="Operations\MutatorOperation.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Operations\StoreOperation.cs" />
-    <Compile Include="Memcached\Results\BinaryOperationResult.cs" />
-    <Compile Include="Memcached\Results\GetOperationResult.cs">
+    <Compile Include="Operations\StoreOperation.cs" />
+    <Compile Include="Results\BinaryOperationResult.cs" />
+    <Compile Include="Results\GetOperationResult.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Memcached\Results\OperationResultExtensions.cs" />
-    <Compile Include="Memcached\Results\GetOperationResult`1.cs" />
-    <Compile Include="Memcached\Results\IMutateOperationResult.cs" />
-    <Compile Include="Memcached\Results\IGetOperationResult.cs" />
-    <Compile Include="Memcached\Results\IGetOperationResult`1.cs" />
-    <Compile Include="Memcached\Results\IOperationResult.cs" />
-    <Compile Include="Memcached\Transcoders\DefaultTranscoder.cs" />
-    <Compile Include="NodeBase.cs" />
-    <Compile Include="Memcached\Configuration\DefaultClusterFactory.cs" />
-    <Compile Include="Memcached\Configuration\AppSettingsClusterFactory.cs" />
-    <Compile Include="Contracts\IClusterFactory.cs" />
-    <Compile Include="Contracts\ISocket.cs" />
+    <Compile Include="Results\OperationResultExtensions.cs" />
+    <Compile Include="Results\GetOperationResult`1.cs" />
+    <Compile Include="Results\IMutateOperationResult.cs" />
+    <Compile Include="Results\IGetOperationResult.cs" />
+    <Compile Include="Results\IGetOperationResult`1.cs" />
+    <Compile Include="Results\IOperationResult.cs" />
+    <Compile Include="Transcoders\DefaultTranscoder.cs" />
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />
     <Compile Include="KeyTransformers\NullKeyTransformer.cs" />
-    <Compile Include="Contracts\ISingleKeyOperation.cs" />
-    <Compile Include="Require.cs" />
-    <Compile Include="PeriodicReconnectPolicy.cs" />
-    <Compile Include="ThrottlingFailurePolicy.cs" />
-    <Compile Include="Contracts\ISupportInitialize.cs" />
-    <Compile Include="ImmediateFailurePolicy.cs" />
-    <Compile Include="Memcached\MemcachedClient.cs" />
-    <Compile Include="Configuration\ConnectionElement.cs" />
-    <Compile Include="Configuration\ProviderElement.cs" />
-    <Compile Include="Configuration\TextElement.cs" />
-    <Compile Include="Configuration\ConfigurationHelper.cs" />
-    <Compile Include="Configuration\NodeElementCollection.cs" />
-    <Compile Include="Configuration\NodeElement.cs" />
-    <Compile Include="Configuration\ClusterConfigurationSection.cs" />
-    <Compile Include="ClusterManager.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Contracts\IKeyTransformer.cs" />
-    <Compile Include="Contracts\IFailurePolicy.cs" />
-    <Compile Include="Logging\LogManager.cs" />
-    <Compile Include="Logging\ConsoleLoggerFactory.cs" />
-    <Compile Include="Logging\ILogFactory.cs" />
-    <Compile Include="Logging\ILog.cs" />
-    <Compile Include="DefaultNodeLocator.cs" />
-    <Compile Include="Contracts\INode.cs" />
-    <Compile Include="Contracts\IReconnectPolicy.cs" />
-    <Compile Include="Memcached\Operations\Protocol.cs" />
-    <Compile Include="Murmur32.cs" />
-    <Compile Include="Contracts\INodeLocator.cs" />
-    <Compile Include="Contracts\ICluster.cs" />
-    <Compile Include="Contracts\IOperation.cs" />
-    <Compile Include="Memcached\Operations\NoOp.cs" />
-    <Compile Include="ReceiveBuffer.cs" />
-    <Compile Include="SegmentListCopier.cs" />
-    <Compile Include="Memcached\MemcachedNode.cs" />
-    <Compile Include="WriteBuffer.cs" />
-    <Compile Include="SafeSocket.cs" />
-    <Compile Include="MemcachedCluster.cs" />
-    <Compile Include="Funq\FunqExtensions.cs" />
-    <Compile Include="Funq\Container.cs" />
-    <Compile Include="Funq\Container.LazyResolve.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Container.LazyResolve.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Container.Register.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Container.Register.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Container.Resolve.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Container.Resolve.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Container.ResolveImpl.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Container.ResolveImpl.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Container.TryResolve.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Container.TryResolve.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Header.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Header.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\Helpers.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Helpers.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\IFluentInterface.cs" />
-    <Compile Include="Funq\IFunqlet.cs" />
-    <Compile Include="Funq\Owner.cs" />
-    <Compile Include="Memcached\Operations\BinaryConverter.cs" />
-    <Compile Include="Memcached\Operations\MemcachedOperationBase.cs" />
-    <Compile Include="Memcached\Operations\BinaryRequest.cs" />
-    <Compile Include="Memcached\Operations\BinaryResponse.cs" />
-    <Compile Include="Memcached\Operations\BinarySingleItemOperation.cs" />
-    <Compile Include="Memcached\Operations\GetOperation.cs" />
-    <Compile Include="Memcached\OpCode.cs" />
-    <Compile Include="Memcached\OperationInterfaces.cs" />
-    <Compile Include="Memcached\StoreMode.cs" />
+    <Compile Include="MemcachedClient.cs" />
+    <Compile Include="Operations\Protocol.cs" />
+    <Compile Include="Operations\NoOp.cs" />
+    <Compile Include="MemcachedNode.cs" />
+    <Compile Include="Operations\BinaryConverter.cs" />
+    <Compile Include="Operations\MemcachedOperationBase.cs" />
+    <Compile Include="Operations\BinaryRequest.cs" />
+    <Compile Include="Operations\BinaryResponse.cs" />
+    <Compile Include="Operations\BinarySingleItemOperation.cs" />
+    <Compile Include="Operations\GetOperation.cs" />
+    <Compile Include="OpCode.cs" />
+    <Compile Include="OperationInterfaces.cs" />
+    <Compile Include="StoreMode.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Funq\ResolutionException.cs" />
-    <Compile Include="Funq\ReuseScope.cs" />
-    <Compile Include="Funq\ServiceEntry.cs" />
-    <Compile Include="Funq\ServiceEntry.Generic.cs" />
-    <Compile Include="Funq\ServiceKey.cs" />
-    <Compile Include="Funq\Syntax.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Funq\Container.LazyResolve.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Container.Register.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Container.Register.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Container.Resolve.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Container.Resolve.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Container.ResolveImpl.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Container.ResolveImpl.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Container.TryResolve.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Container.TryResolve.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Funq.Overloads.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Funq.Overloads.xdoc</LastGenOutput>
-    </None>
-    <None Include="Funq\Funq.Overloads.xdoc">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Funq.Overloads.tt</DependentUpon>
-    </None>
-    <None Include="Funq\Funq.xdoc" />
-    <None Include="Funq\Header.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Header.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\Helpers.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Helpers.cs</LastGenOutput>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
@@ -271,6 +155,12 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Caching\Caching.csproj">
+      <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
+      <Name>Caching</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

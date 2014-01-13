@@ -14,6 +14,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EB8F34
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caching", "Caching\Caching.csproj", "{B7258196-67ED-4135-B06F-F6F68C4176F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Integrations.Funq", "Integrations\Funq\Integrations.Funq.csproj", "{6252275D-0A19-4BF1-A114-381264D8D6FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integrations", "Integrations", "{046F6CFA-097C-4183-A2EB-12D64A88D3DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,8 +34,19 @@ Global
 		{D26418C0-BA05-4067-8F68-2493DA3E0E11}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D26418C0-BA05-4067-8F68-2493DA3E0E11}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D26418C0-BA05-4067-8F68-2493DA3E0E11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6252275D-0A19-4BF1-A114-381264D8D6FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6252275D-0A19-4BF1-A114-381264D8D6FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6252275D-0A19-4BF1-A114-381264D8D6FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6252275D-0A19-4BF1-A114-381264D8D6FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6252275D-0A19-4BF1-A114-381264D8D6FD} = {046F6CFA-097C-4183-A2EB-12D64A88D3DB}
 	EndGlobalSection
 EndGlobal

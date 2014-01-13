@@ -1,10 +1,12 @@
 ﻿using System;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
-	public interface IKeyTransformer
+	public interface IOperation
 	{
-		byte[] Transform(string key);
+		IRequest CreateRequest();
+		bool Matches(IResponse response);
+		void HandleResponse(IResponse response);
 	}
 }
 

@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Enyim.Caching.Memcached.Operations;
 
-namespace Enyim.Caching
+namespace Enyim.Caching.Memcached.Operations
 {
 	public class Murmur32KeyTransformer : NullKeyTransformer
 	{

@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching
 {
-	public interface IKeyTransformer
+	public interface ICluster: IDisposable
 	{
-		byte[] Transform(string key);
+		void Start();
+
+		Task Execute(ISingleKeyOperation op);
+		Task Broadcast(Func<IOperation> op);
 	}
 }
 

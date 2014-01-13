@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Enyim.Caching
+namespace Enyim.Caching.Memcached
 {
 	public class NullKeyTransformer : IKeyTransformer
 	{
