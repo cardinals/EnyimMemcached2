@@ -2,7 +2,7 @@
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	internal static class Protocol
+	public static class Protocol
 	{
 		public const byte RequestMagic = 0x80;
 		public const byte ResponseMagic = 0x81;
@@ -11,15 +11,20 @@ namespace Enyim.Caching.Memcached.Operations
 		public const int MaxKeyLength = 0xffff;
 		public const int MaxExtraLength = 0xff;
 
-		public const int HEADER_INDEX_MAGIC = 0;
-		public const int HEADER_INDEX_OPCODE = 1;
-		public const int HEADER_INDEX_KEY = 2; // 2-3
-		public const int HEADER_INDEX_EXTRA = 4;
-		public const int HEADER_INDEX_DATATYPE = 5;
-		public const int HEADER_INDEX_STATUS = 6; // 6-7
-		public const int HEADER_INDEX_BODY = 8; // 8-11
-		public const int HEADER_INDEX_OPAQUE = 12; // 12-15
-		public const int HEADER_INDEX_CAS = 16; // 16-23
+		internal const int HEADER_INDEX_MAGIC = 0;
+		internal const int HEADER_INDEX_OPCODE = 1;
+		internal const int HEADER_INDEX_KEY = 2; // 2-3
+		internal const int HEADER_INDEX_EXTRA = 4;
+		internal const int HEADER_INDEX_DATATYPE = 5;
+		internal const int HEADER_INDEX_STATUS = 6; // 6-7
+		internal const int HEADER_INDEX_BODY = 8; // 8-11
+		internal const int HEADER_INDEX_OPAQUE = 12; // 12-15
+		internal const int HEADER_INDEX_CAS = 16; // 16-23
+
+		public static class Status
+		{
+			public const int Success = 0;
+		}
 	}
 }
 

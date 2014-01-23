@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
@@ -7,10 +8,15 @@ namespace Enyim.Caching.Memcached
 {
 	public abstract partial class MemcachedClientBase
 	{
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		public static IContainer DefaultContainer;
+
 		private readonly ICluster cluster;
 		private readonly IOperationFactory opFactory;
 		private readonly ITranscoder transcoder;
 		private readonly IKeyTransformer keyTransformer;
+
+		protected MemcachedClientBase() : this(GetOrThrowContainer()) { }
 
 		protected MemcachedClientBase(IContainer container)
 			: this(container.Resolve<ICluster>(),
@@ -27,31 +33,14 @@ namespace Enyim.Caching.Memcached
 			this.transcoder = transcoder;
 		}
 
-		#region [ Expiration helper            ]
-
-		protected const int MaxSeconds = 60 * 60 * 24 * 30;
-		protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-		protected static uint GetExpiration(TimeSpan validFor)
+		private static IContainer GetOrThrowContainer()
 		{
-			// infinity
-			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
+			var retval = DefaultContainer;
+			if (retval == null)
+				throw new InvalidOperationException("The DefaultContainer must be set before using the default constructor");
 
-			var seconds = (uint)validFor.TotalSeconds;
-			if (seconds < MaxSeconds) return seconds;
-
-			return GetExpiration(SystemTime.Now() + validFor);
+			return retval;
 		}
-
-		protected static uint GetExpiration(DateTime expiresAt)
-		{
-			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
-			if (expiresAt < UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
-
-			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
-		}
-
-		#endregion
 
 		protected virtual async Task<IGetOperationResult> PerformGetCore(string key)
 		{
@@ -61,7 +50,7 @@ namespace Enyim.Caching.Memcached
 			return op.Result;
 		}
 
-		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires, ulong cas)
+		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, ulong cas, uint expires)
 		{
 			var ci = transcoder.Serialize(value);
 			var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
@@ -111,14 +100,62 @@ namespace Enyim.Caching.Memcached
 			return ops;
 		}
 
+		protected async Task<IOperationResult> PerformFlushAll()
+		{
+			var parts = await cluster.Broadcast(n => opFactory.Flush());
+
+			return new BinaryOperationResult { Success = true };
+		}
+
+		protected async Task<IStatsOperationResult> PerformStats(string key)
+		{
+			var ops = new List<Tuple<IStatsOperation, INode>>();
+			await cluster.Broadcast(n =>
+			{
+				var op = opFactory.Stats(key);
+				ops.Add(Tuple.Create(op, n));
+
+				return op;
+			});
+
+			var stats = new ServerStats();
+			StatsOperationResult retval = null;
+
+			foreach (var pair in ops)
+			{
+				var nodeResult = pair.Item1.Result;
+
+				if (retval == null)
+					retval = new StatsOperationResult { Value = stats }.UpdateFrom(nodeResult);
+				else
+					retval.TryFailFrom(nodeResult);
+
+				var nodeStats = nodeResult.Value;
+				if (nodeStats == null || nodeStats.Count == 0)
+					continue;
+
+				stats.Append(pair.Item2.EndPoint, nodeStats);
+			}
+
+			return retval ?? new StatsOperationResult { Value = new ServerStats() }.Fail();
+		}
+
+		#region [ Value helpers                ]
+
 		protected IGetOperationResult<T> ConvertToResult<T>(IGetOperationResult result)
 		{
-			var retval = result.Combine(new GetOperationResult<T>());
+			var retval = new GetOperationResult<T>().UpdateFrom(result);
 
 			if (retval.Success)
 			{
-				var value = transcoder.Deserialize(result.Value);
-				retval.Value = (T)value;
+				try { retval.Value = (T)transcoder.Deserialize(result.Value); }
+				catch (Exception e)
+				{
+					if (log.IsErrorEnabled) log.Error("Failed to convert result to " + typeof(T), e);
+
+					retval.Value = default(T);
+					retval.Fail(e);
+				}
 			}
 
 			return retval;
@@ -128,11 +165,41 @@ namespace Enyim.Caching.Memcached
 		{
 			if (result.Success)
 			{
-				var value = transcoder.Deserialize(result.Value);
-				return value;
+				try { return transcoder.Deserialize(result.Value); }
+				catch (Exception e)
+				{
+					if (log.IsErrorEnabled) log.Error("Failed to deserialize value.", e);
+				}
 			}
 
 			return null;
 		}
+
+		#endregion
+		#region [ Expiration helpers           ]
+
+		protected const int MaxSeconds = 60 * 60 * 24 * 30;
+		protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+		protected static uint GetExpiration(TimeSpan validFor)
+		{
+			// infinity
+			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
+
+			var seconds = (uint)validFor.TotalSeconds;
+			if (seconds < MaxSeconds) return seconds;
+
+			return GetExpiration(SystemTime.Now() + validFor);
+		}
+
+		protected static uint GetExpiration(DateTime expiresAt)
+		{
+			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
+			if (expiresAt < UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
+
+			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
+		}
+
+		#endregion
 	}
 }

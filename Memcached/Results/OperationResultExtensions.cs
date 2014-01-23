@@ -27,6 +27,21 @@ namespace Enyim.Caching.Memcached.Results
 			return self;
 		}
 
+		public static T Fail<T>(this T self, Exception exception = null)
+			where T : IOperationResult
+		{
+			self.Success = false;
+			self.StatusCode = (int)StatusCode.InternalError;
+
+			if (exception != null)
+			{
+				self.Message = exception.Message;
+				self.Exception = exception;
+			}
+
+			return self;
+		}
+
 		public static T NotFound<T>(this T self, BinarySingleItemOperation<T> op)
 			where T : IOperationResult
 		{
@@ -72,17 +87,36 @@ namespace Enyim.Caching.Memcached.Results
 		/// Combine will attempt to minimize the depth of InnerResults and maintain status codes
 		/// </summary>
 		/// <param name="target"></param>
-		public static T Combine<T>(this IOperationResult source, T target)
+		public static T TryFailFrom<T>(this T target, IOperationResult source)
 			where T : IOperationResult
 		{
-			target.Message = source.Message;
-			target.Success = source.Success;
-			target.Exception = source.Exception;
-			target.StatusCode = source.StatusCode ?? target.StatusCode;
-			target.InnerResult = source.InnerResult ?? source;
+			if (!source.Success)
+			{
+				target.Message = source.Message;
+				target.Success = source.Success;
+				target.Exception = source.Exception;
+				target.StatusCode = source.StatusCode ?? target.StatusCode;
+				target.InnerResult = source.InnerResult ?? source;
+			}
 
 			return target;
 		}
+
+		///// <summary>
+		///// Combine will attempt to minimize the depth of InnerResults and maintain status codes
+		///// </summary>
+		///// <param name="target"></param>
+		//public static T Combine<T>(this IOperationResult source, T target)
+		//	where T : IOperationResult
+		//{
+		//	target.Message = source.Message;
+		//	target.Success = source.Success;
+		//	target.Exception = source.Exception;
+		//	target.StatusCode = source.StatusCode ?? target.StatusCode;
+		//	target.InnerResult = source.InnerResult ?? source;
+
+		//	return target;
+		//}
 	}
 }
 

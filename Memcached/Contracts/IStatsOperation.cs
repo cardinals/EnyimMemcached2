@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IStatsOperation : IOperation
+	public interface IStatsOperation : IOperation, IHaveResult<INodeStatsOperationResult>
 	{
-		Dictionary<string, string> Result { get; }
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

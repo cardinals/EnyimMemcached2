@@ -110,11 +110,11 @@ namespace Enyim.Caching
 		private class AlreadyFailedNode : INode
 		{
 			public static readonly INode Instance;
-			private static readonly TaskCompletionSource<bool> FailedTask;
+			private static readonly TaskCompletionSource<IOperation> FailedTask;
 
 			static AlreadyFailedNode()
 			{
-				FailedTask = new TaskCompletionSource<bool>();
+				FailedTask = new TaskCompletionSource<IOperation>();
 				FailedTask.SetException(new IOException("AlwaysDead"));
 				Instance = new AlreadyFailedNode();
 			}
@@ -134,7 +134,7 @@ namespace Enyim.Caching
 				get { return null; }
 			}
 
-			public Task Enqueue(IOperation op)
+			public Task<IOperation> Enqueue(IOperation op)
 			{
 				return FailedTask.Task;
 			}

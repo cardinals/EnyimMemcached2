@@ -25,7 +25,7 @@ namespace Enyim.Caching
 		private ReceiveBuffer readStream;
 
 		private SegmentListCopier currentWriteCopier;
-		private IResponse currentResponse;
+		private IResponse inprogressResponse;
 		private IFailurePolicy failurePolicy;
 
 		private bool mustReconnect;
@@ -43,6 +43,7 @@ namespace Enyim.Caching
 			this.bufferQueue = new Queue<Data>();
 
 			this.mustReconnect = true;
+			IsAlive = true;
 		}
 
 		public int BufferSize { get; set; } // TODO throw after it's connected
@@ -69,7 +70,7 @@ namespace Enyim.Caching
 			readStream = new ReceiveBuffer(BufferSize);
 
 			Debug.Assert(currentWriteCopier == null);
-			Debug.Assert(currentResponse == null);
+			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 			Debug.Assert(bufferQueue.Count == 0);
 
@@ -79,6 +80,7 @@ namespace Enyim.Caching
 				writeBuffer.Reset();
 			}
 
+			mustReconnect = false;
 			IsAlive = true;
 		}
 
@@ -93,9 +95,9 @@ namespace Enyim.Caching
 			}
 		}
 
-		public Task Enqueue(IOperation op)
+		public Task<IOperation> Enqueue(IOperation op)
 		{
-			var tcs = new TaskCompletionSource<bool>();
+			var tcs = new TaskCompletionSource<IOperation>();
 
 			if (!IsAlive)
 			{
@@ -164,7 +166,7 @@ namespace Enyim.Caching
 			writeBuffer.Reset();
 			readStream.Reset();
 			currentWriteCopier = null;
-			currentResponse = null;
+			inprogressResponse = null;
 		}
 
 		protected void AddToBuffer(IOperation op)
@@ -220,7 +222,8 @@ namespace Enyim.Caching
 				FinalizeWriteBuffer(writeBuffer);
 
 				var data = writeBuffer.GetBuffer();
-				socket.Send(data, 0, writeBuffer.Length);
+				socket.Send(data, 0, writeBuffer.Position);
+				writeBuffer.Reset();
 
 				if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
 				if (log.IsTraceEnabled) log.Trace("Flush write buffer");
@@ -274,27 +277,32 @@ namespace Enyim.Caching
 
 			while (readQueue.Count > 0)
 			{
-				var response = currentResponse ?? CreateResponse();
+				var response = inprogressResponse ?? CreateResponse();
 
-				if (response.Read(readStream)) // response is not read fully
+				if (response.Read(readStream)) // is IO pending? (if response is not read fully)
 				{
-					currentResponse = response;
+					inprogressResponse = response;
 					return true;
 				}
 
-				currentResponse = null;
+				inprogressResponse = null;
 				var matching = false;
 
 				while (!matching && readQueue.Count > 0)
 				{
-					var data = readQueue.Dequeue();
+					var data = readQueue.Peek();
 					matching = data.Op.Matches(response);
 
 					// null is a response to a successful quiet op
-					data.Op.HandleResponse(matching ? response : null);
+					// we have to feed the responses to the current op
+					// until it returns false
+					if (!data.Op.ProcessResponse(matching ? response : null))
+					{
+						readQueue.Dequeue();
 
-					if (data.Task != null)
-						data.Task.TrySetResult(true);
+						if (data.Task != null)
+							data.Task.TrySetResult(data.Op);
+					}
 				}
 			}
 
@@ -304,8 +312,7 @@ namespace Enyim.Caching
 		private struct Data
 		{
 			public IOperation Op;
-			//public uint CorrelationId;
-			public TaskCompletionSource<bool> Task;
+			public TaskCompletionSource<IOperation> Task;
 		}
 	}
 }

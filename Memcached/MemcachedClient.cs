@@ -7,21 +7,14 @@ namespace Enyim.Caching.Memcached
 {
 	public partial class MemcachedClient : MemcachedClientBase, IMemcachedClient
 	{
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+
 		public static IContainer DefaultContainer;
 
-		public MemcachedClient() : this(GetOrThrowContainer()) { }
+		public MemcachedClient() : base() { }
 		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
 			: base(cluster, opFactory, keyTransformer, transcoder) { }
-
-		private static IContainer GetOrThrowContainer()
-		{
-			var retval = DefaultContainer;
-			if (retval == null)
-				throw new InvalidOperationException("Default container must be defined before using the default constructor");
-
-			return retval;
-		}
 
 		public T Get<T>(string key)
 		{
@@ -35,71 +28,147 @@ namespace Enyim.Caching.Memcached
 
 		public async Task<T> GetAsync<T>(string key)
 		{
-			var result = await PerformGetCore(key);
-			var converted = ConvertToValue(result);
+			try
+			{
+				var result = await PerformGetCore(key);
+				var converted = ConvertToValue(result);
 
-			return (T)converted;
+				return (T)converted;
+			}
+			catch (Exception e)
+			{
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return default(T);
+			}
 		}
 
 		public async Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys)
 		{
-			var ops = await MultiGetCore(keys);
-			var retval = new Dictionary<string, object>();
-
-			foreach (var kvp in ops)
+			try
 			{
-				retval[kvp.Key] = ConvertToValue(kvp.Value.Result);
-			}
+				var ops = await MultiGetCore(keys);
+				var retval = new Dictionary<string, object>();
 
-			return retval;
+				foreach (var kvp in ops)
+				{
+					try
+					{
+						retval[kvp.Key] = ConvertToValue(kvp.Value.Result);
+					}
+					catch (Exception e)
+					{
+						if (log.IsErrorEnabled) log.Error(e);
+					}
+				}
+
+				return retval;
+			}
+			catch (Exception e)
+			{
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return new Dictionary<string, object>();
+			}
 		}
 
 		public bool Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			return ((IMemcachedClientWithResults)this).Store(mode, key, value, cas, expiresAt).Success;
+			return StoreAsync(mode, key, value, cas, expiresAt).Result;
 		}
 
-		public async Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
+		public Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			var result = await ((IMemcachedClientWithResults)this).StoreAsync(mode, key, value, cas, expiresAt);
-
-			return result.Success;
+			return HandleErrors(PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt)));
 		}
 
 		public bool Remove(string key, ulong cas)
 		{
-			return ((IMemcachedClientWithResults)this).Remove(key, cas).Success;
+			return RemoveAsync(key, cas).Result;
 		}
 
-		public async Task<bool> RemoveAsync(string key, ulong cas)
+		public Task<bool> RemoveAsync(string key, ulong cas)
 		{
-			var result = await ((IMemcachedClientWithResults)this).RemoveAsync(key, cas);
-
-			return result.Success;
+			return HandleErrors(PerformRemove(key, cas));
 		}
 
 		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
 		{
-			return ((IMemcachedClientWithResults)this).Concate(mode, key, data, cas).Success;
+			return ConcateAsync(mode, key, data, cas).Result;
 		}
 
-		public async Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
+		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
 		{
-			var result = await ((IMemcachedClientWithResults)this).ConcateAsync(mode, key, data, cas);
-
-			return result.Success;
+			return HandleErrors(PerformConcate(mode, key, cas, data));
 		}
 
 		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
 		{
-			return ((IMemcachedClientWithResults)this).Mutate(mode, key, defaultValue, delta, cas, expiresAt).Value;
+			return MutateAsync(mode, key, defaultValue, delta, cas, expiresAt).Result;
 		}
 
 		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
 		{
-			var result = await ((IMemcachedClientWithResults)this).MutateAsync(mode, key, defaultValue, delta, cas, expiresAt);
+			try
+			{
+				var result = await PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
 
-			return result.Value;
+				return result.Value;
+			}
+			catch (Exception e)
+			{
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return 0;
+			}
 		}
+
+		public ServerStats Stats(string key)
+		{
+			return PerformStats(key).Result.Value;
+		}
+
+		public async Task<ServerStats> StatsAsync(string key)
+		{
+			try
+			{
+				var result = await PerformStats(key);
+
+				return result.Value;
+			}
+			catch (Exception e)
+			{
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return ServerStats.Empty;
+			}
+		}
+
+		public bool FlushAll()
+		{
+			return FlushAllAsync().Result;
+		}
+
+		public Task<bool> FlushAllAsync()
+		{
+			return HandleErrors(PerformFlushAll());
+		}
+
+		private static async Task<bool> HandleErrors(Task<Results.IOperationResult> task)
+		{
+			try
+			{
+				var result = await task;
+
+				return result.Success;
+			}
+			catch (Exception e)
+			{
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return false;
+			}
+		}
+
 	}
 }

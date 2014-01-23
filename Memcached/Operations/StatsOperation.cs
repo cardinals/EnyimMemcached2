@@ -3,63 +3,52 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net;
 using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Extensions;
 
-namespace Enyim.Caching.Memcached.Protocol.Binary
+namespace Enyim.Caching.Memcached.Operations
 {
-	public class StatsOperation : BinaryOperation, IStatsOperation
+	public class StatsOperation : MemcachedOperationBase<INodeStatsOperationResult>, IStatsOperation
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
 
 		private string type;
-		private Dictionary<string, string> result;
+		private Dictionary<string, string> stats;
 
 		public StatsOperation(string type)
 		{
 			this.type = type;
 		}
 
-		protected override BinaryRequest Build()
+		protected override BinaryRequest CreateRequest()
 		{
 			var request = new BinaryRequest(OpCode.Stat);
-			if (!String.IsNullOrEmpty(this.type))
-				request.Key = this.type;
+			if (!String.IsNullOrEmpty(type))
+				request.Key = BinaryConverter.EncodeKey(type);
 
 			return request;
 		}
 
-		protected internal override IOperationResult ReadResponse(PooledSocket socket)
+		protected override INodeStatsOperationResult CreateResult(BinaryResponse response)
 		{
-			var response = new BinaryResponse();
-			var serverData = new Dictionary<string, string>();
-			var retval = false;
+			if (stats == null)
+				stats = new Dictionary<string, string>();
 
-			while (response.Read(socket) && response.KeyLength > 0)
+			var data = response.Data;
+
+			// if empty key (last response packet response)
+			// or if error
+			// return the response object to break the loop and let the node process the next op.
+			if (response.KeyLength == 0 || !response.Success)
 			{
-				retval = true;
-
-				var data = response.Data;
-				var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-				var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
-
-				serverData[key] = value;
+				return new NodeStatsOperationResult { Value = stats }.WithResponse(response);
 			}
 
-			this.result = serverData;
-			this.StatusCode = response.StatusCode;
+			// decode stat key/value
+			var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+			var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
 
-			var result = new BinaryOperationResult()
-			{
-				StatusCode = StatusCode
-			};
+			stats[key] = value;
 
-			result.PassOrFail(retval, "Failed to read response");
-			return result;
-		}
-
-		Dictionary<string, string> IStatsOperation.Result
-		{
-			get { return this.result; }
+			return null; // we expect more response packets
 		}
 	}
 }

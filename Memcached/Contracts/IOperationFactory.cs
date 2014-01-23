@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached
 		IMutateOperation Mutate(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, ulong cas, uint expires);
 		IConcatOperation Concat(ConcatenationMode mode, byte[] key, ulong cas, ArraySegment<byte> data);
 
-		//IStatsOperation Stats(string type);
+		IStatsOperation Stats(string type);
 		IFlushOperation Flush();
 	}
 }

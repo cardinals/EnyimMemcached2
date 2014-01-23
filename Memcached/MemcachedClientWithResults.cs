@@ -43,12 +43,12 @@ namespace Enyim.Caching.Memcached
 
 		public IOperationResult Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas).Result;
+			return PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt)).Result;
 		}
 
 		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
 		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas);
+			return PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt));
 		}
 
 		public IOperationResult Remove(string key, ulong cas)
@@ -79,6 +79,27 @@ namespace Enyim.Caching.Memcached
 		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
 		{
 			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
+		}
+
+
+		public IOperationResult FlushAll()
+		{
+			return PerformFlushAll().Result;
+		}
+
+		public Task<IOperationResult> FlushAllAsync()
+		{
+			return PerformFlushAll();
+		}
+
+		public IStatsOperationResult Stats(string key)
+		{
+			return PerformStats(key).Result;
+		}
+
+		public Task<IStatsOperationResult> StatsAsync(string key)
+		{
+			return PerformStats(key);
 		}
 	}
 }

@@ -22,5 +22,11 @@ namespace Enyim.Caching.Memcached
 		Task<IOperationResult> RemoveAsync(string key, ulong cas);
 		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas);
 		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt);
+
+		IOperationResult FlushAll();
+		Task<IOperationResult> FlushAllAsync();
+
+		IStatsOperationResult Stats(string key);
+		Task<IStatsOperationResult> StatsAsync(string key);
 	}
 }

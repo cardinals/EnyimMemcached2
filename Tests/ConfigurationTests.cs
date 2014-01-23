@@ -127,6 +127,12 @@ namespace Tests
 		{
 			throw new NotImplementedException();
 		}
+
+
+		public IStatsOperation Stats(string type)
+		{
+			throw new NotImplementedException();
+		}
 	}
 
 }

@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public interface ICluster: IDisposable
+	public interface ICluster : IDisposable
 	{
 		void Start();
 
 		Task Execute(ISingleKeyOperation op);
-		Task Broadcast(Func<IOperation> op);
+		Task<IOperation[]> Broadcast(Func<INode, IOperation> createOp);
 	}
 }
 

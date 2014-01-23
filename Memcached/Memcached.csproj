@@ -79,7 +79,11 @@
     <Compile Include="MemcachedClientBase.cs" />
     <Compile Include="MemcachedClientWithResults.cs" />
     <Compile Include="MemcachedClientWithResultsExtensions.cs" />
+    <Compile Include="Operations\StatsOperation.cs" />
+    <Compile Include="Results\IStatsResult.cs" />
     <Compile Include="Results\MutateOperationResult.cs" />
+    <Compile Include="Results\ServerStats.cs" />
+    <Compile Include="Results\StatItem.cs" />
     <Compile Include="Results\StatusCode.cs" />
     <Compile Include="SystemTime.cs" />
     <Compile Include="MemcachedClientExtensions.cs" />

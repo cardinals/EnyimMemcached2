@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BinaryResponse: IResponse
+	public class BinaryResponse : IResponse
 	{
 		private const int STATE_NEED_HEADER = 1;
 		private const int STATE_NEED_BODY = 2;
@@ -29,13 +29,6 @@ namespace Enyim.Caching.Memcached.Operations
 			state = STATE_NEED_HEADER;
 		}
 
-		public string GetStatusMessage()
-		{
-			return this.Data.Array == null
-					? null
-					: (this.responseMessage ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
-		}
-
 		public byte OpCode;
 		public int KeyLength;
 		public byte DataType;
@@ -46,6 +39,15 @@ namespace Enyim.Caching.Memcached.Operations
 
 		public ArraySegment<byte> Extra;
 		public ArraySegment<byte> Data;
+
+		public bool Success { get { return StatusCode == Protocol.Status.Success; } }
+
+		public string GetStatusMessage()
+		{
+			return this.Data.Array == null
+					? null
+					: (this.responseMessage ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
+		}
 
 		public bool Read(Stream stream)
 		{

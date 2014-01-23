@@ -12,7 +12,8 @@ namespace Enyim.Caching
 	public class DefaultCluster : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private static readonly TaskCompletionSource<bool> fail;
+		private static readonly TaskCompletionSource<IOperation> failSingle;
+		private static readonly TaskCompletionSource<KeyValuePair<IOperation, INode>[]> failBroadcast;
 
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy policy;
@@ -52,8 +53,11 @@ namespace Enyim.Caching
 
 		static DefaultCluster()
 		{
-			fail = new TaskCompletionSource<bool>();
-			fail.SetException(new IOException("All nodes are dead."));
+			failSingle = new TaskCompletionSource<IOperation>();
+			failSingle.SetException(new IOException("All nodes are dead."));
+
+			failBroadcast = new TaskCompletionSource<KeyValuePair<IOperation, INode>[]>();
+			failBroadcast.SetException(new IOException("All nodes are dead."));
 		}
 
 		public virtual void Start()
@@ -99,30 +103,30 @@ namespace Enyim.Caching
 				return retval;
 			}
 
-			return fail.Task;
+			return failSingle.Task;
 		}
 
-		public virtual Task Broadcast(Func<IOperation> op)
+		public virtual Task<IOperation[]> Broadcast(Func<INode, IOperation> createOp)
 		{
-			// create local copy of the reference
+			// create local "copy" of the reference
 			// workingNodes is never changed but replaced
 			var nodes = workingNodes;
-			var tasks = new List<Task>(nodes.Length);
+			var tasks = new List<Task<IOperation>>(nodes.Length);
 
 			foreach (var node in nodes)
 			{
 				if (node.IsAlive)
-					tasks.Add(node.Enqueue(op()));
+				{
+					var op = createOp(node);
+					tasks.Add(node.Enqueue(op));
+				}
 			}
 
-			if (tasks.Count > 0)
-			{
-				hasWork.Set();
+			if (tasks.Count == 0)
+				throw new IOException("All nodes are dead");
 
-				return tasks.Count == 1 ? tasks[0] : Task.WhenAll(tasks);
-			}
-
-			return fail.Task;
+			hasWork.Set();
+			return Task.WhenAll(tasks);
 		}
 
 		private void Worker()

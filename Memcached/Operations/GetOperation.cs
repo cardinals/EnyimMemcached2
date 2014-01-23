@@ -9,11 +9,7 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
 
-		public GetOperation(byte[] key)
-			: base(key)
-		{
-			Silent = true;
-		}
+		public GetOperation(byte[] key) : base(key) { }
 
 		public bool Silent { get; set; }
 

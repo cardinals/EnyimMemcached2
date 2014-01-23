@@ -4,9 +4,23 @@ namespace Enyim.Caching
 {
 	public interface IOperation
 	{
+		/// <summary>
+		/// Builds a request object.
+		/// </summary>
+		/// <returns>a request object which can be sent on the wire</returns>
 		IRequest CreateRequest();
+		/// <summary>
+		/// Determines whether the request read from the wire is handled by this operation instance.
+		/// </summary>
+		/// <param name="response"></param>
+		/// <returns>true if the response is matching the request of this operation</returns>
 		bool Matches(IResponse response);
-		void HandleResponse(IResponse response);
+		/// <summary>
+		/// Processes the response read from the wire.
+		/// </summary>
+		/// <param name="response"></param>
+		/// <returns>returns true if more responses must be retrieved to complete this operaton (i.e. IO is pending); false otherwise</returns>
+		bool ProcessResponse(IResponse response);
 	}
 }
 

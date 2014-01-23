@@ -34,6 +34,12 @@ namespace Enyim.Caching.Memcached.Results
 
 		ulong Cas { get; set; }
 	}
+
+	public interface IOperationResult<T> : IOperationResult
+	{
+		T Value { get; }
+	}
+
 }
 
 #region [ License information          ]

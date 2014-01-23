@@ -31,6 +31,12 @@ namespace Enyim.Caching.Memcached.Results
 			return retval;
 		}
 	}
+
+	public class BinaryOperationResult<T> : BinaryOperationResult, IOperationResult<T>
+	{
+		public T Value { get; set; }
+	}
+
 }
 
 #region [ License information          ]

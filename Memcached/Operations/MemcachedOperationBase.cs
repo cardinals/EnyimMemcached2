@@ -21,9 +21,12 @@ namespace Enyim.Caching.Memcached.Operations
 			return CorrelationId == ((BinaryResponse)response).CorrelationId;
 		}
 
-		void IOperation.HandleResponse(IResponse response)
+		bool IOperation.ProcessResponse(IResponse response)
 		{
-			Result = CreateResult((BinaryResponse)response);
+			var result = CreateResult((BinaryResponse)response);
+			Result = result;
+
+			return result == null;
 		}
 
 		protected abstract BinaryRequest CreateRequest();

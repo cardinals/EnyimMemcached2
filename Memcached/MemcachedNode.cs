@@ -15,14 +15,14 @@ namespace Enyim.Caching.Memcached
 	public class MemcachedNode : NodeBase
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private bool didNoop;
+		private bool needNoop;
 
 		public MemcachedNode(IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 			: base(endpoint, failurePolicy, socket) { }
 
 		public override bool Send()
 		{
-			didNoop = false;
+			needNoop = false;
 
 			return base.Send();
 		}
@@ -34,17 +34,23 @@ namespace Enyim.Caching.Memcached
 
 		protected override void BeforeWriteOp(SegmentListCopier copier, WriteBuffer writeBuffer, IOperation op)
 		{
-			// TODO handle manual NoOp
-			if (copier.Length > writeBuffer.Length - writeBuffer.Position - NoOp.BufferSize)
+			var silent = op as ICanBeSilent;
+			needNoop = silent != null && silent.Silent;
+
+			if (needNoop)
 			{
-				IntroduceNoOp();
-				didNoop = true;
+				// TODO handle manual NoOp
+				if (copier.Length > writeBuffer.Length - writeBuffer.Position - NoOp.BufferSize)
+				{
+					IntroduceNoOp();
+					needNoop = false;
+				}
 			}
 		}
 
 		protected override void FinalizeWriteBuffer(WriteBuffer writeBuffer)
 		{
-			if (!didNoop)
+			if (needNoop)
 				IntroduceNoOp();
 		}
 
