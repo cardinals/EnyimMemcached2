@@ -3,7 +3,7 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IDeleteOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
+	public interface IDeleteOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 	}
 }

@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached.Operations
 			return retval;
 		}
 
-		bool IOperation.Matches(IResponse response)
+		bool IOperation.Handles(IResponse response)
 		{
 			return CorrelationId == ((BinaryResponse)response).CorrelationId;
 		}

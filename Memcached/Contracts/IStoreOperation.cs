@@ -3,7 +3,7 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IStoreOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
+	public interface IStoreOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 		StoreMode Mode { get; }
 	}

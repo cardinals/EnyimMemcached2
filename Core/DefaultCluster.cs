@@ -91,7 +91,7 @@ namespace Enyim.Caching
 			}
 		}
 
-		public virtual Task Execute(ISingleKeyOperation op)
+		public virtual Task Execute(IItemOperation op)
 		{
 			var node = locator.Locate(op.Key);
 

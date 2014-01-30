@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching
 {
-	public interface ISingleKeyOperation : IOperation
+	public interface IItemOperation : IOperation
 	{
 		byte[] Key { get; }
 	}

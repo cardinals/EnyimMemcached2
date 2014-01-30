@@ -291,7 +291,7 @@ namespace Enyim.Caching
 				while (!matching && readQueue.Count > 0)
 				{
 					var data = readQueue.Peek();
-					matching = data.Op.Matches(response);
+					matching = data.Op.Handles(response);
 
 					// null is a response to a successful quiet op
 					// we have to feed the responses to the current op

@@ -49,7 +49,6 @@
     <Compile Include="Configuration\ProviderElement.cs" />
     <Compile Include="Configuration\TextElement.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
-    <Compile Include="FastActivator.cs" />
     <Compile Include="Contracts\ICluster.cs" />
     <Compile Include="Contracts\IContainer.cs" />
     <Compile Include="Contracts\IFailurePolicy.cs" />
@@ -61,7 +60,7 @@
     <Compile Include="Contracts\IReconnectPolicy.cs" />
     <Compile Include="Contracts\IRequest.cs" />
     <Compile Include="Contracts\IResponse.cs" />
-    <Compile Include="Contracts\ISingleKeyOperation.cs" />
+    <Compile Include="Contracts\IItemOperation.cs" />
     <Compile Include="Contracts\ISocket.cs" />
     <Compile Include="Contracts\ISupportInitialize.cs" />
     <Compile Include="LogManager.cs" />

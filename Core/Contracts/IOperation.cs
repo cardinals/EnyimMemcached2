@@ -9,12 +9,14 @@ namespace Enyim.Caching
 		/// </summary>
 		/// <returns>a request object which can be sent on the wire</returns>
 		IRequest CreateRequest();
+
 		/// <summary>
 		/// Determines whether the request read from the wire is handled by this operation instance.
 		/// </summary>
 		/// <param name="response"></param>
 		/// <returns>true if the response is matching the request of this operation</returns>
-		bool Matches(IResponse response);
+		bool Handles(IResponse response);
+
 		/// <summary>
 		/// Processes the response read from the wire.
 		/// </summary>

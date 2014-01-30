@@ -3,7 +3,7 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IConcatOperation : ISingleKeyOperation, IHaveResult<IOperationResult>, ICanBeSilent
+	public interface IConcatOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
 		ConcatenationMode Mode { get; }
 		ArraySegment<byte> Data { get; }
