@@ -9,65 +9,60 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public class DefaultCluster : ICluster
+	public abstract class BasicCluster : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly TaskCompletionSource<IOperation> failSingle;
-		private static readonly TaskCompletionSource<KeyValuePair<IOperation, INode>[]> failBroadcast;
+		private static readonly TaskCompletionSource<IOperation[]> failBroadcast;
 
+		private readonly IPEndPoint[] endpoints;
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy policy;
-		private readonly Func<IPEndPoint, INode> nodeFactory;
 
 		private readonly CancellationTokenSource shutdownToken;
 
 		private readonly Thread worker;
 		private readonly ManualResetEventSlim workerIsDone;
-		private readonly ManualResetEventSlim hasWork;
-		private readonly INode[] allNodes;
 		private readonly ConcurrentQueue<INode> reconnectedNodes;
 
+		private INode[] allNodes;
 		private INode[] workingNodes;
+		private NodeQueue ioQueue;
 
-		public DefaultCluster(IEnumerable<IPEndPoint> endpoints,
-								INodeLocator locator,
-								IReconnectPolicy policy,
-								Func<IPEndPoint, INode> nodeFactory)
+		protected BasicCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy policy)
 		{
-			this.allNodes = endpoints.Select(nodeFactory).ToArray();
-			this.workingNodes = allNodes.ToArray();
-
+			this.endpoints = endpoints.ToArray();
 			this.locator = locator;
 			this.policy = policy;
-			this.nodeFactory = nodeFactory;
 
-			this.worker = new Thread(Worker) { Name = "The Worker" };
+			this.worker = new Thread(Worker);
+#if DEBUG
+			this.worker.Name = "worker";
+#endif
 
 			this.shutdownToken = new CancellationTokenSource();
-			this.hasWork = new ManualResetEventSlim();
 			this.workerIsDone = new ManualResetEventSlim(false);
 			this.reconnectedNodes = new ConcurrentQueue<INode>();
-
-			locator.Initialize(allNodes);
 		}
 
-		static DefaultCluster()
+		static BasicCluster()
 		{
-			failSingle = new TaskCompletionSource<IOperation>();
-			failSingle.SetException(new IOException("All nodes are dead."));
+			var allDead = new IOException("All nodes are dead.");
 
-			failBroadcast = new TaskCompletionSource<KeyValuePair<IOperation, INode>[]>();
-			failBroadcast.SetException(new IOException("All nodes are dead."));
+			failSingle = new TaskCompletionSource<IOperation>();
+			failBroadcast = new TaskCompletionSource<IOperation[]>();
+			failSingle.SetException(allDead);
+			failBroadcast.SetException(allDead);
 		}
+
+		protected abstract INode CreateNode(IPEndPoint endpoint);
 
 		public virtual void Start()
 		{
-			//// TODO nodes should connect lazily (the first time they start processing ops)
-			//Parallel.ForEach(allNodes, n =>
-			//{
-			//	try { n.Connect(true, shutdownToken.Token); }
-			//	catch (Exception e) { FailNode(n, e); }
-			//});
+			allNodes = endpoints.Select(CreateNode).ToArray();
+			ioQueue = new NodeQueue(allNodes);
+			workingNodes = allNodes.ToArray();
+			locator.Initialize(allNodes);
 
 			worker.Start();
 		}
@@ -91,19 +86,17 @@ namespace Enyim.Caching
 			}
 		}
 
-		public virtual Task Execute(IItemOperation op)
+		public virtual Task<IOperation> Execute(IItemOperation op)
 		{
 			var node = locator.Locate(op.Key);
 
-			if (node.IsAlive)
-			{
-				var retval = node.Enqueue(op);
-				hasWork.Set();
+			if (!node.IsAlive)
+				return failSingle.Task;
 
-				return retval;
-			}
+			var retval = node.Enqueue(op);
+			ioQueue.Add(node);
 
-			return failSingle.Task;
+			return retval;
 		}
 
 		public virtual Task<IOperation[]> Broadcast(Func<INode, IOperation> createOp)
@@ -117,15 +110,14 @@ namespace Enyim.Caching
 			{
 				if (node.IsAlive)
 				{
-					var op = createOp(node);
-					tasks.Add(node.Enqueue(op));
+					tasks.Add(node.Enqueue(createOp(node)));
+					ioQueue.Add(node);
 				}
 			}
 
 			if (tasks.Count == 0)
-				throw new IOException("All nodes are dead");
+				return failBroadcast.Task;
 
-			hasWork.Set();
 			return Task.WhenAll(tasks);
 		}
 
@@ -133,50 +125,38 @@ namespace Enyim.Caching
 		{
 			while (!shutdownToken.IsCancellationRequested)
 			{
-				hasWork.Reset();
+				var requeue = false;
 
-				var pendingIO = false;
-
-				if (RunOnNodes(n => n.Send())) pendingIO = true;
-				if (shutdownToken.IsCancellationRequested) break;
-				if (RunOnNodes(n => n.Receive())) pendingIO = true;
-
-				if (!pendingIO)
+				try
 				{
-					if (log.IsTraceEnabled) log.Trace("No pending IO, waiting");
+					var node = ioQueue.Take(shutdownToken.Token);
 
-					try { hasWork.Wait(shutdownToken.Token); }
-					catch (OperationCanceledException) { break; }
+					try
+					{
+						if (node.Send()) requeue = true;
+						if (shutdownToken.IsCancellationRequested) break;
+						if (node.Receive()) requeue = true;
+
+						if (requeue)
+						{
+							if (log.IsTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
+							ioQueue.Add(node);
+						}
+					}
+					catch (Exception e)
+					{
+						FailNode(node, e);
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					break;
 				}
 			}
 
 			if (log.IsDebugEnabled) log.Debug("shutdownToken was cancelled, finishing work");
 
 			workerIsDone.Set();
-		}
-
-		protected virtual bool RunOnNodes(Func<INode, bool> what)
-		{
-			var pendingIO = false;
-			var runOn = workingNodes;
-
-			foreach (var node in runOn)
-			{
-				try
-				{
-					if (what(node))
-					{
-						if (log.IsTraceEnabled) log.Trace(node + " has pending IO.");
-						pendingIO = true;
-					}
-				}
-				catch (Exception e)
-				{
-					FailNode(node, e);
-				}
-			}
-
-			return pendingIO;
 		}
 
 		protected virtual void ScheduleReconnect(INode node)
@@ -244,7 +224,7 @@ namespace Enyim.Caching
 			}
 
 			locator.Initialize(existing);
-			hasWork.Set();
+			ioQueue.Add(node); // trigger IO on this node
 		}
 
 		private void FailNode(INode node, Exception e)
@@ -268,6 +248,11 @@ namespace Enyim.Caching
 			}
 
 			ScheduleReconnect(node);
+		}
+
+		public void NeedsIO(INode node)
+		{
+			ioQueue.Add(node);
 		}
 	}
 }

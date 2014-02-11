@@ -14,17 +14,20 @@ namespace Enyim.Caching.Memcached
 {
 	public class MemcachedNode : NodeBase
 	{
+		private const int SilentCountThreshold = 50;
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private bool needNoop;
 
-		public MemcachedNode(IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
-			: base(endpoint, failurePolicy, socket) { }
+		private int silentCount;
+		private bool lasWasSilent = false;
 
-		public override bool Send()
+		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
+			: base(owner, endpoint, failurePolicy, socket) { }
+
+		public override void Connect(bool reset, CancellationToken token)
 		{
-			needNoop = false;
+			silentCount = 0;
 
-			return base.Send();
+			base.Connect(reset, token);
 		}
 
 		protected override IResponse CreateResponse()
@@ -32,38 +35,64 @@ namespace Enyim.Caching.Memcached
 			return new BinaryResponse();
 		}
 
-		protected override void BeforeWriteOp(SegmentListCopier copier, WriteBuffer writeBuffer, IOperation op)
+		public override Task<IOperation> Enqueue(IOperation op)
 		{
-			var silent = op as ICanBeSilent;
-			needNoop = silent != null && silent.Silent;
+			EnqueueNoOpIfNeeded(op);
 
-			if (needNoop)
-			{
-				// TODO handle manual NoOp
-				if (copier.Length > writeBuffer.Length - writeBuffer.Position - NoOp.BufferSize)
-				{
-					IntroduceNoOp();
-					needNoop = false;
-				}
-			}
-		}
-
-		protected override void FinalizeWriteBuffer(WriteBuffer writeBuffer)
-		{
-			if (needNoop)
-				IntroduceNoOp();
+			return base.Enqueue(op);
 		}
 
 		/// <summary>
-		/// Terminates the write buffer with a noop to force a response after a series of Quiet ops.
+		///  Add a NoOp after every 50th continous silent op
 		/// </summary>
-		private void IntroduceNoOp()
+		/// <param name="op"></param>
+		private void EnqueueNoOpIfNeeded(IOperation op)
 		{
-			var noop = new NoOp();
-			AddToBuffer(noop);
+			if (IsSilent(op))
+			{
+				log.Trace("Got a silent op " + op + " count: " + silentCount);
 
-			if (log.IsTraceEnabled)
-				log.Trace("Adding Noop to the write buffer");
+				if (++silentCount < SilentCountThreshold)
+					return;
+
+				log.Trace("Got to threshold, injecting NoOp");
+
+				base.Enqueue(new NoOp());
+			}
+
+			silentCount = 0;
+		}
+
+		private static bool IsSilent(IOperation op)
+		{
+			var silent = op as ICanBeSilent;
+
+			return silent != null && silent.Silent;
+		}
+
+		protected override void WriteOp(Data data)
+		{
+			// remember of the last op was silent so that when we
+			// run out of ops we'll know if we have to emit an additional NoOp
+			// ***SSSSS<EOF>
+			// * = normal
+			// S = Silent
+			// noop should be at <EOF> otherwise we won't get responses to the last
+			// commands until we get a new op queued up
+			lasWasSilent = IsSilent(data.Op);
+
+			base.WriteOp(data);
+		}
+
+		protected override Data GetNextOp()
+		{
+			var data = base.GetNextOp();
+
+			// we've temporarily ran out of commands
+			if (data.IsEmpty && lasWasSilent)
+				return new Data { Op = new NoOp() };
+
+			return data;
 		}
 	}
 }

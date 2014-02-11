@@ -9,8 +9,6 @@ namespace Enyim.Caching.Memcached
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
-		public static IContainer DefaultContainer;
-
 		public MemcachedClient() : base() { }
 		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)

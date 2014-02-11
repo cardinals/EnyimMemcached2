@@ -13,7 +13,6 @@ namespace Enyim.Caching
 		bool IsAlive { get; }
 
 		IPEndPoint EndPoint { get; }
-		int BufferSize { get; set; }
 
 		Task<IOperation> Enqueue(IOperation op);
 		bool Send();

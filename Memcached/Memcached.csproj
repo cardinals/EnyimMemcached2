@@ -79,6 +79,7 @@
     <Compile Include="MemcachedClientBase.cs" />
     <Compile Include="MemcachedClientWithResults.cs" />
     <Compile Include="MemcachedClientWithResultsExtensions.cs" />
+    <Compile Include="MemcachedCluster.cs" />
     <Compile Include="Operations\StatsOperation.cs" />
     <Compile Include="Results\IStatsResult.cs" />
     <Compile Include="Results\MutateOperationResult.cs" />

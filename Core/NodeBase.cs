@@ -13,27 +13,29 @@ namespace Enyim.Caching
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
+		private readonly ICluster owner;
 		private readonly IPEndPoint endpoint;
-		private ISocket socket;
+		private readonly IFailurePolicy failurePolicy;
 
-		private int state;
+		private readonly ISocket socket;
+
 		private readonly ConcurrentQueue<Data> writeQueue;
 		private readonly Queue<Data> readQueue;
 		private readonly Queue<Data> bufferQueue;
 
-		private WriteBuffer writeBuffer;
-		private ReceiveBuffer readStream;
+		private readonly WriteBuffer writeBuffer;
+		private readonly ReceiveBuffer readStream;
 
+		private int state;
 		private SegmentListCopier currentWriteCopier;
+		private Data currentWriteOp;
 		private IResponse inprogressResponse;
-		private IFailurePolicy failurePolicy;
 
 		private bool mustReconnect;
 
-		protected NodeBase(IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
+		protected NodeBase(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 		{
-			this.BufferSize = 16384;
-
+			this.owner = owner;
 			this.endpoint = endpoint;
 			this.socket = socket;
 			this.failurePolicy = failurePolicy;
@@ -42,11 +44,14 @@ namespace Enyim.Caching
 			this.readQueue = new Queue<Data>();
 			this.bufferQueue = new Queue<Data>();
 
+			this.writeBuffer = new WriteBuffer(CONSTS.BufferSize);
+			this.readStream = new ReceiveBuffer(CONSTS.BufferSize);
+
 			this.mustReconnect = true;
 			IsAlive = true;
 		}
 
-		public int BufferSize { get; set; } // TODO throw after it's connected
+		protected WriteBuffer WriteBuffer { get { return writeBuffer; } }
 		public IPEndPoint EndPoint { get { return endpoint; } }
 
 		public bool IsAlive
@@ -60,25 +65,17 @@ namespace Enyim.Caching
 			Connect(true, CancellationToken.None);
 		}
 
-		public void Connect(bool reset, CancellationToken token)
+		public virtual void Connect(bool reset, CancellationToken token)
 		{
-			if (log.IsDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
-
-			socket.Connect(endpoint, token);
-
-			writeBuffer = new WriteBuffer(BufferSize);
-			readStream = new ReceiveBuffer(BufferSize);
-
 			Debug.Assert(currentWriteCopier == null);
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 			Debug.Assert(bufferQueue.Count == 0);
 
-			if (reset)
-			{
-				writeQueue.Clear();
-				writeBuffer.Reset();
-			}
+			if (log.IsDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
+
+			socket.Connect(endpoint, token);
+			if (reset) writeQueue.Clear();
 
 			mustReconnect = false;
 			IsAlive = true;
@@ -91,28 +88,18 @@ namespace Enyim.Caching
 			if (socket != null)
 			{
 				socket.Dispose();
-				socket = null;
+				//socket = null;
 			}
 		}
 
-		public Task<IOperation> Enqueue(IOperation op)
+		public virtual Task<IOperation> Enqueue(IOperation op)
 		{
 			var tcs = new TaskCompletionSource<IOperation>();
 
-			if (!IsAlive)
-			{
-				tcs.SetException(new IOException(endpoint + " is not alive"));
-			}
+			if (IsAlive)
+				writeQueue.Enqueue(new Data { Op = op, Task = tcs });
 			else
-			{
-				var data = new Data
-				{
-					Op = op,
-					Task = tcs
-				};
-
-				writeQueue.Enqueue(data);
-			}
+				tcs.SetException(new IOException(endpoint + " is not alive"));
 
 			return tcs.Task;
 		}
@@ -124,7 +111,7 @@ namespace Enyim.Caching
 
 		public virtual bool Receive()
 		{
-			return Run(PerformReceive);
+			return Run(PerformReceive2);
 		}
 
 		private bool Run(Func<bool> work)
@@ -149,84 +136,75 @@ namespace Enyim.Caching
 			}
 		}
 
-		private void HandleIOFail(Exception e)
+		protected virtual void HandleIOFail(Exception e)
 		{
-			while (bufferQueue.Count > 0)
-			{
-				var data = bufferQueue.Dequeue();
-				data.Task.SetException(new IOException("fail fast", e));
-			}
+			var fail = new IOException("io fail; see inner exception", e);
 
-			while (readQueue.Count > 0)
-			{
-				var data = readQueue.Dequeue();
-				data.Task.SetException(new IOException("fail fast", e));
-			}
+			FailQueue(bufferQueue, fail);
+			FailQueue(readQueue, fail);
+			if (currentWriteOp.Task != null) currentWriteOp.Task.SetException(fail);
 
-			writeBuffer.Reset();
+			// data read previously cannot be trusted
 			readStream.Reset();
+			// write buffer may start with a partial op when a previous send fails
+			writeBuffer.Reset();
+
+			currentWriteOp = Data.Empty;
 			currentWriteCopier = null;
 			inprogressResponse = null;
 		}
 
-		protected void AddToBuffer(IOperation op)
+		private void FailQueue(Queue<Data> queue, Exception e)
 		{
-			var request = op.CreateRequest();
-			new SegmentListCopier(request.CreateBuffer()).WriteTo(writeBuffer);
+			foreach (var data in queue)
+				data.Task.SetException(e);
 
-			bufferQueue.Enqueue(new Data { Op = op });
+			queue.Clear();
+		}
+
+		/// <summary>
+		/// Sends the current chunked op (its data could not fit the write buffer in one pass)
+		/// </summary>
+		/// <returns>returns true if further IO is required; false if no inprogress op present or the last chunk was successfully added to the buffer</returns>
+		private bool SendInProgressOp()
+		{
+			// check if we have an op in progress
+			if (currentWriteCopier == null) return false;
+
+			if (!currentWriteCopier.WriteTo(writeBuffer))
+			{
+				// last chunk was sent
+				if (log.IsTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
+
+				// finished writing, clean up
+				bufferQueue.Enqueue(currentWriteOp);
+				currentWriteCopier = null;
+				currentWriteOp = Data.Empty;
+
+				return false;
+			}
+
+			return true;
 		}
 
 		private bool PerformSend()
 		{
 			Debug.Assert(IsAlive);
 
-			if (currentWriteCopier != null)
+			if (!SendInProgressOp())
 			{
-				if (!currentWriteCopier.WriteTo(writeBuffer))
-				{
-					var data = DequeueWriteOp();
-					bufferQueue.Enqueue(data);
-					currentWriteCopier = null;
-
-					if (log.IsTraceEnabled) log.Trace("Sent & finished " + data.Op);
-				}
+				// no in progress op (or just finished), try filling up the buffer
+				while (!writeBuffer.IsFull && DequeueAndWrite()) ;
+				//{
+				//	if (!DequeueAndWrite()) 
+				//		break;
+				//}
 			}
 
-			if (currentWriteCopier == null)
-			{
-				while (!writeBuffer.IsFull && !writeQueue.IsEmpty)
-				{
-					var data = PeekWriteOp();
-					var request = data.Op.CreateRequest();
-					var copier = new SegmentListCopier(request.CreateBuffer());
-
-					BeforeWriteOp(copier, writeBuffer, data.Op);
-
-					if (copier.WriteTo(writeBuffer))
-					{
-						currentWriteCopier = copier;
-						if (log.IsTraceEnabled) log.Trace("Partial send of " + data.Op);
-						break;
-					}
-
-					DequeueWriteOp();
-					bufferQueue.Enqueue(data);
-
-					if (log.IsTraceEnabled) log.Trace("Full send of " + data.Op);
-				}
-			}
-
+			// did we write anything?
 			if (writeBuffer.Position > 0)
 			{
-				FinalizeWriteBuffer(writeBuffer);
-
-				var data = writeBuffer.GetBuffer();
-				socket.Send(data, 0, writeBuffer.Position);
-				writeBuffer.Reset();
-
-				if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
-				if (log.IsTraceEnabled) log.Trace("Flush write buffer");
+				FlushWriteBuffer();
 
 				return true;
 			}
@@ -236,32 +214,60 @@ namespace Enyim.Caching
 			return false;
 		}
 
-		protected virtual void BeforeWriteOp(SegmentListCopier copier, WriteBuffer writeBuffer, IOperation op)
+		protected virtual void FlushWriteBuffer()
 		{
+			var data = writeBuffer.GetBuffer();
+			socket.Send(data, 0, writeBuffer.Position);
+			writeBuffer.Reset();
+
+			if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
+			if (log.IsTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
 		}
 
-		protected virtual void FinalizeWriteBuffer(WriteBuffer buffer)
-		{
-		}
+		private uint bufferCounter;
 
-		private Data PeekWriteOp()
+		protected virtual Data GetNextOp()
 		{
 			Data data;
 
-			if (!writeQueue.TryPeek(out data))
-				throw new InvalidOperationException("Write queue is empty and should not be.");
-
-			return data;
+			return writeQueue.TryDequeue(out data)
+					? data
+					: Data.Empty;
 		}
 
-		private Data DequeueWriteOp()
+		private bool DequeueAndWrite()
 		{
-			Data data;
+			var data = GetNextOp();
 
-			if (!writeQueue.TryDequeue(out data))
-				throw new InvalidOperationException("Write queue is empty and should not be.");
+			if (data.IsEmpty)
+				return false;
 
-			return data;
+			WriteOp(data);
+
+			return true;
+		}
+
+		protected virtual void WriteOp(Data data)
+		{
+			if (currentWriteCopier != null)
+				throw new InvalidOperationException("Cannot write operation while another is in progress.");
+
+			var request = data.Op.CreateRequest();
+			var copier = new SegmentListCopier(request.CreateBuffer());
+
+			if (!copier.WriteTo(writeBuffer)) // fully written
+			{
+				bufferQueue.Enqueue(data);
+				if (log.IsTraceEnabled) log.Trace("Full send of " + data.Op);
+			}
+			else
+			{
+				// it did not fit into the writeBuffer, so save the current op
+				// as "in-progress"; PerformSend will loop until it's fully sent
+				currentWriteOp = data;
+				currentWriteCopier = copier;
+				if (log.IsTraceEnabled) log.Trace("Partial send of " + data.Op);
+			}
 		}
 
 		protected abstract IResponse CreateResponse();
@@ -309,10 +315,70 @@ namespace Enyim.Caching
 			return false;
 		}
 
-		private struct Data
+		private bool receiveInProgress;
+
+		private bool PerformReceive2()
 		{
+			Debug.Assert(IsAlive);
+
+			if (readQueue.Count == 0 || receiveInProgress) return false;
+
+		fill:
+			if (readStream.EOF)
+			{
+				receiveInProgress = true;
+				readStream.FillAsync(socket, () =>
+				{
+					receiveInProgress = false;
+					owner.NeedsIO(this);
+				});
+
+				return false;
+			}
+
+			while (readQueue.Count > 0)
+			{
+				var response = inprogressResponse ?? CreateResponse();
+
+				if (response.Read(readStream)) // is IO pending? (if response is not read fully)
+				{
+					inprogressResponse = response;
+					goto fill;
+					//return true;
+				}
+
+				inprogressResponse = null;
+				var matching = false;
+
+				while (!matching && readQueue.Count > 0)
+				{
+					var data = readQueue.Peek();
+					matching = data.Op.Handles(response);
+
+					// null is a response to a successful quiet op
+					// we have to feed the responses to the current op
+					// until it returns false
+					if (!data.Op.ProcessResponse(matching ? response : null))
+					{
+						readQueue.Dequeue();
+
+						if (data.Task != null)
+							data.Task.TrySetResult(data.Op);
+					}
+				}
+			}
+
+			return false;
+		}
+
+		protected struct Data
+		{
+			public static readonly Data Empty = new Data();
+
 			public IOperation Op;
 			public TaskCompletionSource<IOperation> Task;
+
+			public bool IsEmpty { get { return Op == null; } }
 		}
 	}
 }

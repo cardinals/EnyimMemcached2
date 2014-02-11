@@ -44,7 +44,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			// such uglies
 			container
-				.Register<ICluster>(c => new DefaultCluster(endpoints,
+				.Register<ICluster>(c => new MemcachedCluster(endpoints,
 															c.Resolve<INodeLocator>(),
 															c.Resolve<IReconnectPolicy>(),
 															c.LazyResolve<INode, System.Net.IPEndPoint>()))

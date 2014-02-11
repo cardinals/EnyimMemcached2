@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Enyim.Caching
 {
 	internal class ReceiveBuffer : Stream
 	{
+		private readonly byte[] readBuffer;
+
 		private int length;
 		private int position;
-		private readonly byte[] readBuffer;
 
 		public ReceiveBuffer(int bufferSize)
 		{
@@ -30,10 +32,22 @@ namespace Enyim.Caching
 
 		public void Fill(ISocket socket)
 		{
-			var didRead = socket.Receive(readBuffer, 0, readBuffer.Length);
+			Debug.Assert(!socket.ReceiveInProgress);
 
+			length = socket.Receive(readBuffer, 0, readBuffer.Length);
 			position = 0;
-			length = didRead;
+		}
+
+		public void FillAsync(ISocket socket, Action whenDone)
+		{
+			Debug.Assert(!socket.ReceiveInProgress);
+
+			socket.ReceiveAsync(readBuffer, 0, readBuffer.Length, (read) =>
+			{
+				position = 0;
+				length = read;
+				whenDone();
+			});
 		}
 
 		public void Reset()

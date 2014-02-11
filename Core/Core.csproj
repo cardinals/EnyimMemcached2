@@ -63,9 +63,10 @@
     <Compile Include="Contracts\IItemOperation.cs" />
     <Compile Include="Contracts\ISocket.cs" />
     <Compile Include="Contracts\ISupportInitialize.cs" />
+    <Compile Include="NodeQueue.cs" />
     <Compile Include="LogManager.cs" />
     <Compile Include="WriteBuffer.cs" />
-    <Compile Include="DefaultCluster.cs" />
+    <Compile Include="BasicCluster.cs" />
     <Compile Include="DefaultNodeLocator.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ImmediateFailurePolicy.cs" />

@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached.Operations
 		private int remainingHeader;
 		private int remainingData;
 
-		public BinaryResponse()
+		internal BinaryResponse()
 		{
 			StatusCode = -1;
 			header = new byte[Protocol.HeaderLength];
@@ -49,7 +49,7 @@ namespace Enyim.Caching.Memcached.Operations
 					: (this.responseMessage ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
 		}
 
-		public bool Read(Stream stream)
+		bool IResponse.Read(Stream stream)
 		{
 			if (state == STATE_NEED_HEADER)
 			{

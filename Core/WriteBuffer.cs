@@ -38,6 +38,11 @@ namespace Enyim.Caching
 			return canWrite;
 		}
 
+		public bool CanWrite(int count)
+		{
+			return length - position >= count;
+		}
+
 		public byte[] GetBuffer()
 		{
 			return writeBuffer;

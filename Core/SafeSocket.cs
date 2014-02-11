@@ -7,6 +7,11 @@ using System.Threading;
 
 namespace Enyim.Caching
 {
+	public class CONSTS
+	{
+		public const int BufferSize = 8 * 1024;
+	}
+
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
 	public class SafeSocket : ISocket
 	{
@@ -25,7 +30,10 @@ namespace Enyim.Caching
 		{
 			receiveTimeout = TimeSpan.FromSeconds(10);
 			ConnectionTimeout = TimeSpan.FromSeconds(10);
-			BufferSize = 16 * 1024;
+			BufferSize = CONSTS.BufferSize;
+
+			sendArgs = new SocketAsyncEventArgs();
+			sendArgs.Completed += sendArgs_Completed;
 		}
 
 		~SafeSocket()
@@ -210,6 +218,42 @@ namespace Enyim.Caching
 		private void ThrowIOE(string message)
 		{
 			throw new IOException(endpoint + " has failed. " + message);
+		}
+
+		SocketAsyncEventArgs sendArgs;
+		private int asyncSendState = 0;
+		const int STATE_TRUE = 1;
+		const int STATE_FALSE = 0;
+
+		public bool ReceiveInProgress { get { return Interlocked.CompareExchange(ref asyncSendState, -1, -1) == STATE_TRUE; } }
+
+		void ISocket.ReceiveAsync(byte[] buffer, int offset, int count, Action<int> result)
+		{
+			if (Interlocked.CompareExchange(ref asyncSendState, STATE_TRUE, STATE_FALSE) != STATE_FALSE)
+				throw new InvalidOperationException("Async send is already in progress.");
+
+			// we'll always be called with the same buffer (per socket instance)
+			// so first call will pin the buffer, subsequent calls will do nothing
+			sendArgs.SetBuffer(buffer, 0, count);
+			sendArgs.UserToken = result;
+
+			if (!socket.ReceiveAsync(sendArgs))
+				sendArgs_Completed(null, sendArgs);
+		}
+
+		void sendArgs_Completed(object sender, SocketAsyncEventArgs e)
+		{
+			var callback = (Action<int>)e.UserToken;
+			var status = e.SocketError;
+			var count = e.BytesTransferred;
+
+			if (Interlocked.CompareExchange(ref asyncSendState, STATE_FALSE, STATE_TRUE) != STATE_TRUE)
+				throw new InvalidOperationException("Async send is not in progress??");
+
+			if (status != SocketError.Success || count < 1)
+				callback(-1);
+			else
+				callback(count);
 		}
 	}
 }

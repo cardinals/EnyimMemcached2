@@ -14,5 +14,8 @@ namespace Enyim.Caching
 		int BufferSize { get; set; }
 		TimeSpan ConnectionTimeout { get; set; }
 		TimeSpan ReceiveTimeout { get; set; }
+
+		void ReceiveAsync(byte[] buffer, int offset, int count, Action<int> whenDone);
+		bool ReceiveInProgress { get; }
 	}
 }
