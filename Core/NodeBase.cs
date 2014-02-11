@@ -32,7 +32,7 @@ namespace Enyim.Caching
 
 		protected NodeBase(IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 		{
-			BufferSize = 16384;
+			this.BufferSize = 16384;
 
 			this.endpoint = endpoint;
 			this.socket = socket;
@@ -41,6 +41,8 @@ namespace Enyim.Caching
 			this.writeQueue = new ConcurrentQueue<Data>();
 			this.readQueue = new Queue<Data>();
 			this.bufferQueue = new Queue<Data>();
+
+			this.mustReconnect = true;
 		}
 
 		public int BufferSize { get; set; } // TODO throw after it's connected

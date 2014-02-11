@@ -2,8 +2,8 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Tests")]
-[assembly: AssemblyProduct("Tests")]
+[assembly: AssemblyTitle("Enyim.Caching.Core")]
+[assembly: AssemblyProduct("Enyim.Caching.Core")]
 [assembly: AssemblyDescription("")]
 [assembly: ComVisible(false)]
-[assembly: Guid("db2e4886-5706-4576-a925-cbd56ffcda66")]
+[assembly: Guid("b7258196-67ed-4135-b06f-f6f68c4176f4")]

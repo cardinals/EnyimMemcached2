@@ -1,39 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Enyim.Caching.Integrations.Funq;
 using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public abstract partial class MemcachedClientBase
 	{
-		public const string ClusterSection = "enyim.com/memcached/cluster";
-		public const string ClientSection = "enyim.com/memcached/client";
-
-		protected readonly ICluster Cluster;
-		protected readonly IOperationFactory OpFactory;
-		protected readonly ITranscoder Transcoder;
-		protected readonly IKeyTransformer KeyTransformer;
-
-		protected MemcachedClientBase()
-			: this(DefaultContainer) { }
+		private readonly ICluster cluster;
+		private readonly IOperationFactory opFactory;
+		private readonly ITranscoder transcoder;
+		private readonly IKeyTransformer keyTransformer;
 
 		protected MemcachedClientBase(IContainer container)
-			: this
-			(
-				container.Resolve<ICluster>(),
-				container.Resolve<IOperationFactory>(),
-				container.Resolve<IKeyTransformer>(),
-				container.Resolve<ITranscoder>()
-			) { }
+			: this(container.Resolve<ICluster>(),
+					container.Resolve<IOperationFactory>(),
+					container.Resolve<IKeyTransformer>(),
+					container.Resolve<ITranscoder>())
+		{ }
 
 		protected MemcachedClientBase(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
 		{
-			this.Cluster = cluster;
-			this.OpFactory = opFactory;
-			this.KeyTransformer = keyTransformer;
-			this.Transcoder = transcoder;
+			this.cluster = cluster;
+			this.opFactory = opFactory;
+			this.keyTransformer = keyTransformer;
+			this.transcoder = transcoder;
 		}
 
 		#region [ Expiration helper            ]
@@ -55,72 +46,50 @@ namespace Enyim.Caching.Memcached
 		protected static uint GetExpiration(DateTime expiresAt)
 		{
 			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
-			if (expiresAt <= UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
+			if (expiresAt < UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
 
 			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
 		}
 
 		#endregion
 
-#if !STANDALONE
-		private static readonly Funq.Container rootContainer;
-		private static readonly IContainer DefaultContainer;
-
-		static MemcachedClientBase()
-		{
-			rootContainer = new Funq.Container();
-			DefaultContainer = new ContainerWrapper(rootContainer);
-
-			rootContainer.AddDefaultServices();
-			rootContainer.RegisterClusterFromConfig(ClusterSection);
-		}
-
-		public static IContainer WithCluster(string sectionName)
-		{
-			var container = rootContainer.CreateChildContainer();
-			container.RegisterClusterFromConfig(sectionName);
-
-			return new ContainerWrapper(container);
-		}
-#endif
-
 		protected virtual async Task<IGetOperationResult> PerformGetCore(string key)
 		{
-			var op = OpFactory.Get(KeyTransformer.Transform(key));
-			await Cluster.Execute(op);
+			var op = opFactory.Get(keyTransformer.Transform(key));
+			await cluster.Execute(op);
 
 			return op.Result;
 		}
 
 		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires, ulong cas)
 		{
-			var ci = Transcoder.Serialize(value);
-			var op = OpFactory.Store(mode, KeyTransformer.Transform(key), ci, cas, expires);
-			await Cluster.Execute(op);
+			var ci = transcoder.Serialize(value);
+			var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
+			await cluster.Execute(op);
 
 			return op.Result;
 		}
 
 		protected async Task<IOperationResult> PerformRemove(string key, ulong cas)
 		{
-			var op = OpFactory.Delete(KeyTransformer.Transform(key), cas);
-			await Cluster.Execute(op);
+			var op = opFactory.Delete(keyTransformer.Transform(key), cas);
+			await cluster.Execute(op);
 
 			return op.Result;
 		}
 
 		protected async Task<IOperationResult> PerformConcate(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			var op = OpFactory.Concat(mode, KeyTransformer.Transform(key), cas, data);
-			await Cluster.Execute(op);
+			var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
+			await cluster.Execute(op);
 
 			return op.Result;
 		}
 
 		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
-			var op = OpFactory.Mutate(mode, KeyTransformer.Transform(key), defaultValue, delta, cas, expires);
-			await Cluster.Execute(op);
+			var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
+			await cluster.Execute(op);
 
 			return op.Result;
 		}
@@ -132,8 +101,8 @@ namespace Enyim.Caching.Memcached
 
 			foreach (var key in keys)
 			{
-				var op = OpFactory.Get(KeyTransformer.Transform(key));
-				tasks.Add(Cluster.Execute(op));
+				var op = opFactory.Get(keyTransformer.Transform(key));
+				tasks.Add(cluster.Execute(op));
 				ops[key] = op;
 			}
 
@@ -148,7 +117,7 @@ namespace Enyim.Caching.Memcached
 
 			if (retval.Success)
 			{
-				var value = Transcoder.Deserialize(result.Value);
+				var value = transcoder.Deserialize(result.Value);
 				retval.Value = (T)value;
 			}
 
@@ -159,7 +128,7 @@ namespace Enyim.Caching.Memcached
 		{
 			if (result.Success)
 			{
-				var value = Transcoder.Deserialize(result.Value);
+				var value = transcoder.Deserialize(result.Value);
 				return value;
 			}
 

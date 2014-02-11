@@ -7,8 +7,6 @@ namespace Enyim.Caching.Memcached
 {
 	public partial class MemcachedClientWithResults : MemcachedClientBase, IMemcachedClientWithResults
 	{
-		public MemcachedClientWithResults() : base() { }
-		public MemcachedClientWithResults(IContainer container) : base(container) { }
 		public MemcachedClientWithResults(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
 			: base(cluster, opFactory, keyTransformer, transcoder) { }
 

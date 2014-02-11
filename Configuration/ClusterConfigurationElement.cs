@@ -1,10 +1,19 @@
 ﻿using System;
+using System.Linq;
 using System.Configuration;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Configuration
 {
-	public class ClusterConfigurationSection : ConfigurationSection
+	public class ClusterConfigurationElement : ConfigurationElement
 	{
+		[ConfigurationProperty("name", IsKey = true, DefaultValue = "")]
+		public string Name
+		{
+			get { return (string)base["name"]; }
+			set { base["name"] = value; }
+		}
+
 		[ConfigurationProperty("locator")]
 		public ProviderElement<INodeLocator> NodeLocator
 		{
@@ -18,7 +27,7 @@ namespace Enyim.Caching.Configuration
 			get { return (ProviderElement<IReconnectPolicy>)base["reconnectPolicy"]; }
 			set { base["reconnectPolicy"] = value; }
 		}
-				
+
 		[ConfigurationProperty("failurePolicy")]
 		public ProviderElement<IFailurePolicy> FailurePolicy
 		{

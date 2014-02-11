@@ -57,23 +57,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Integrations\Funq\FunqContainerWrapper.cs">
-      <Link>Integrations\FunqContainerWrapper.cs</Link>
+    <Compile Include="..\Copyright.cs">
+      <Link>Properties\Copyright.cs</Link>
     </Compile>
-    <Compile Include="..\Integrations\Funq\FunqExtensions.cs">
-      <Link>Integrations\FunqExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\Integrations\Funq\ProviderElementExtensions.cs">
-      <Link>Integrations\ProviderElementExtensions.cs</Link>
-    </Compile>
-    <Compile Include="Configuration\AppSettingsClientConfiguration.cs" />
-    <Compile Include="Configuration\DefaultClientConfiguration.cs" />
-    <Compile Include="Configuration\ClientConfigurationSection.cs" />
     <Compile Include="Contracts\ICanBeSilent.cs" />
     <Compile Include="Contracts\IHaveResult.cs" />
     <Compile Include="Contracts\IGetOperation.cs" />
     <Compile Include="Contracts\IKeyTransformer.cs" />
-    <Compile Include="Contracts\IMemcachedClientConfiguration.cs" />
     <Compile Include="Contracts\IOperationFactory.cs" />
     <Compile Include="Contracts\IPerformanceMonitor.cs" />
     <Compile Include="Contracts\IStoreOperation.cs" />
@@ -151,12 +141,14 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Caching\Caching.csproj">
+    <ProjectReference Include="..\Core\Core.csproj">
       <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
-      <Name>Caching</Name>
+      <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Import Project="$(SolutionDir)\VersionInfo.targets" Condition="Exists('$(SolutionDir)\VersionInfo.targets')" />

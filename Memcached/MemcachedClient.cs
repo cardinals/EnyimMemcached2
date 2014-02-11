@@ -1,23 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Enyim.Caching.Integrations.Funq;
 using Funq;
 
 namespace Enyim.Caching.Memcached
 {
 	public partial class MemcachedClient : MemcachedClientBase, IMemcachedClient
 	{
-		private IMemcachedClientWithResults withResults;
+		public static IContainer DefaultContainer;
 
-		public MemcachedClient() : base() { }
+		public MemcachedClient() : this(GetOrThrowContainer()) { }
 		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
 			: base(cluster, opFactory, keyTransformer, transcoder) { }
 
-		public IMemcachedClientWithResults WithResults
+		private static IContainer GetOrThrowContainer()
 		{
-			get { return withResults ?? (withResults = new MemcachedClientWithResults(Cluster, OpFactory, KeyTransformer, Transcoder)); }
+			var retval = DefaultContainer;
+			if (retval == null)
+				throw new InvalidOperationException("Default container must be defined before using the default constructor");
+
+			return retval;
 		}
 
 		public T Get<T>(string key)

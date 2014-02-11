@@ -1,12 +1,12 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Enyim.Caching.Memcached")]
-[assembly: AssemblyProduct("Enyim.Caching.Memcached")]
-[assembly: AssemblyDescription("")]
-[assembly: ComVisible(false)]
-[assembly: Guid("934f5e21-0a76-4edd-a6df-e66379fa2e4c")]
+[assembly: AssemblyCompany("enyim.com")]
+[assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó")]
+
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
 
 #region [ License information          ]
 

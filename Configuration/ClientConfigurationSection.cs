@@ -1,13 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Configuration;
 using Enyim.Caching.Configuration;
-using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
 	public class ClientConfigurationSection : ConfigurationSection
 	{
+		[ConfigurationProperty("cluster")]
+		public string Cluster
+		{
+			get { return (string)base["cluster"]; }
+			set { base["cluster"] = value; }
+		}
+
 		[ConfigurationProperty("operationFactory")]
 		public ProviderElement<IOperationFactory> OperationFactory
 		{

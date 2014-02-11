@@ -4,6 +4,8 @@ namespace Enyim.Caching
 {
 	public static class Require
 	{
+		private static readonly Func<string> Empty = () => null;
+
 		public static void Value(string name, bool valid, string message)
 		{
 			if (!valid)

@@ -20,16 +20,17 @@ namespace Enyim.Caching
 
 		private readonly CancellationTokenSource shutdownToken;
 
-		private Thread worker;
-		private ManualResetEventSlim workerIsDone;
-		private ManualResetEventSlim hasWork;
-		private INode[] allNodes;
+		private readonly Thread worker;
+		private readonly ManualResetEventSlim workerIsDone;
+		private readonly ManualResetEventSlim hasWork;
+		private readonly INode[] allNodes;
+		private readonly ConcurrentQueue<INode> reconnectedNodes;
+
 		private INode[] workingNodes;
-		private ConcurrentQueue<INode> reconnectedNodes;
 
 		public DefaultCluster(IEnumerable<IPEndPoint> endpoints,
-								INodeLocator locator, 
-								IReconnectPolicy policy, 
+								INodeLocator locator,
+								IReconnectPolicy policy,
 								Func<IPEndPoint, INode> nodeFactory)
 		{
 			this.allNodes = endpoints.Select(nodeFactory).ToArray();
@@ -57,12 +58,12 @@ namespace Enyim.Caching
 
 		public virtual void Start()
 		{
-			// TODO nodes should connect lazily (the first time they start processing ops)
-			Parallel.ForEach(allNodes, n =>
-			{
-				try { n.Connect(true, shutdownToken.Token); }
-				catch (Exception e) { FailNode(n, e); }
-			});
+			//// TODO nodes should connect lazily (the first time they start processing ops)
+			//Parallel.ForEach(allNodes, n =>
+			//{
+			//	try { n.Connect(true, shutdownToken.Token); }
+			//	catch (Exception e) { FailNode(n, e); }
+			//});
 
 			worker.Start();
 		}
@@ -103,7 +104,9 @@ namespace Enyim.Caching
 
 		public virtual Task Broadcast(Func<IOperation> op)
 		{
-			var nodes = workingNodes; // create local "copy"
+			// create local copy of the reference
+			// workingNodes is never changed but replaced
+			var nodes = workingNodes;
 			var tasks = new List<Task>(nodes.Length);
 
 			foreach (var node in nodes)
