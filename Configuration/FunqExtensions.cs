@@ -161,12 +161,8 @@ namespace Funq
 			funcArgs.AddRange(openArgs);
 			funcArgs.Add(serviceType);
 
-			// IRegistration<TService> Register<TService, TArg>(Func<Container, TArg, TService> factory)
-			var funcType = Type
-								.GetType("System.Func`" + (openArgs.Length + 2) + ", mscorlib")
-								.MakeGenericType(funcArgs.ToArray());
-
-			return funcType;
+			// IRegistration<TService> Register<TService, TArg, TArg, ...>(Func<Container, TArg, TArg, ..., TService> factory)
+			return X.GetFuncType(funcArgs.ToArray());
 		}
 
 		/// <summary>
