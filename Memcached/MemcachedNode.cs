@@ -50,12 +50,12 @@ namespace Enyim.Caching.Memcached
 		{
 			if (IsSilent(op))
 			{
-				log.Trace("Got a silent op " + op + " count: " + silentCount);
+				if (log.IsTraceEnabled) log.Trace("Got a silent op " + op + " count: " + silentCount);
 
 				if (++silentCount < SilentCountThreshold)
 					return;
 
-				log.Trace("Got to threshold, injecting NoOp");
+				if (log.IsTraceEnabled) log.Trace("Got to threshold, injecting NoOp");
 
 				base.Enqueue(new NoOp());
 			}
