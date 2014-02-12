@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.ServiceModel.Channels;
 using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -8,12 +11,20 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		private static int InstanceCounter;
 
-		public BinaryRequest(OpCode operation) : this((byte)operation) { }
+		private byte[] header;
 
-		public BinaryRequest(byte commandCode)
+		public BinaryRequest(OpCode operation) : this((byte)operation, 0) { }
+		public BinaryRequest(OpCode operation, byte extraLength) : this((byte)operation, extraLength) { }
+
+		public BinaryRequest(byte commandCode, byte extraLength)
 		{
 			this.Operation = commandCode;
 			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // session id
+
+			this.header = new byte[Protocol.HeaderLength + extraLength];
+			this.Extra = extraLength == 0
+							? new ArraySegment<byte>()
+							: new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
 		}
 
 		public IReadOnlyList<ArraySegment<byte>> CreateBuffer()
@@ -21,21 +32,22 @@ namespace Enyim.Caching.Memcached.Operations
 			var keyLength = Key == null ? 0 : Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
-			var extra = Extra;
-			var extraLength = extra.Array == null ? 0 : extra.Count;
-			if (extraLength > Protocol.MaxExtraLength) throw new InvalidOperationException("ExtraTooLong");
+			//var extra = Extra;
+			//var extraLength = extra.Array == null ? 0 : extra.Count;
+			//if (extraLength > Protocol.MaxExtraLength) throw new InvalidOperationException("ExtraTooLong");
 
 			var body = Data;
 			var bodyLength = body.Array == null ? 0 : body.Count; // body size
-			var totalLength = extraLength + keyLength + bodyLength; // total payload size
-			var header = new byte[Protocol.HeaderLength]; //build the header
+			var totalLength = Extra.Count + keyLength + bodyLength; // total payload size
+
+			var header = this.header;
 
 			header[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic; // magic
 			header[Protocol.HEADER_INDEX_OPCODE] = Operation;
 
 			header[Protocol.HEADER_INDEX_KEY + 0] = (byte)(keyLength >> 8);
 			header[Protocol.HEADER_INDEX_KEY + 1] = (byte)(keyLength & 255);
-			header[Protocol.HEADER_INDEX_EXTRA] = (byte)(extraLength);
+			header[Protocol.HEADER_INDEX_EXTRA] = (byte)(Extra.Count);
 
 			// 5 -- data type, 0 (RAW)
 			// 6,7 -- reserved, always 0
@@ -69,7 +81,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 			var retval = new List<ArraySegment<byte>>(4) { new ArraySegment<byte>(header) };
 
-			if (extraLength > 0) retval.Add(extra);
+			//if (extraLength > 0) retval.Add(extra);
 			if (keyLength > 0) retval.Add(new ArraySegment<byte>(Key));
 			if (bodyLength > 0) retval.Add(body);
 
@@ -81,9 +93,79 @@ namespace Enyim.Caching.Memcached.Operations
 		public byte[] Key;
 		public ulong Cas;
 		//public ushort Reserved;
-		public ArraySegment<byte> Extra;
+		public readonly ArraySegment<byte> Extra;
 		public ArraySegment<byte> Data;
 	}
+
+
+
+
+
+	public class BufferPool : IDisposable
+	{
+		private readonly BufferManager pool;
+
+		public BufferPool(long maxBufferPoolSize, int maxBufferSize)
+		{
+			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
+		}
+
+		public void Dispose()
+		{
+			pool.Clear();
+		}
+
+		public byte[] TakeBuffer(int size)
+		{
+			var buffer = pool.TakeBuffer(size);
+#if DEBUG
+			trackedBuffers.GetOrCreateValue(buffer).Remember();
+#endif
+			return buffer;
+		}
+
+		public void ReturnBuffer(byte[] buffer)
+		{
+#if DEBUG
+			Tracker value;
+			if (trackedBuffers.TryGetValue(buffer, out value))
+				value.Forget();
+#endif
+			pool.ReturnBuffer(buffer);
+		}
+
+		#region Leak detection
+
+#if DEBUG
+
+		private ConditionalWeakTable<byte[], Tracker> trackedBuffers = new ConditionalWeakTable<byte[], Tracker>();
+
+		public class Tracker
+		{
+			private StackTrace stackTrace;
+
+			public void Remember()
+			{
+				ThrowIfLeaking();
+
+				stackTrace = new StackTrace(true);
+			}
+
+			public void Forget()
+			{
+				stackTrace = null;
+			}
+
+			private void ThrowIfLeaking()
+			{
+				if (stackTrace != null)
+					throw new InvalidOperationException("Buffer leak: " + stackTrace);
+			}
+		}
+#endif
+		#endregion
+	}
+
 }
 
 #region [ License information          ]

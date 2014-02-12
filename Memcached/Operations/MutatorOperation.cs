@@ -5,6 +5,9 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class MutateOperation : BinarySingleItemOperation<IMutateOperationResult>, IMutateOperation
 	{
+		protected const int ExtraLength = 20;
+		protected const int ResultLength = 8;
+
 		private ulong defaultValue;
 		private ulong delta;
 		private uint expires;
@@ -22,37 +25,30 @@ namespace Enyim.Caching.Memcached.Operations
 		}
 
 		public MutationMode Mode { get; private set; }
+		public bool Silent { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
 			OpCode op;
 
-			switch (Mode)
-			{
-				case MutationMode.Increment: op = OpCode.IncrementQ; break;
-				case MutationMode.Decrement: op = OpCode.DecrementQ; break;
-				default: throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
-			}
+			// figure out the op code
+			if (Mode == MutationMode.Increment) op = OpCode.Increment;
+			else if (Mode == MutationMode.Decrement) op = OpCode.Decrement;
+			else throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
 
-			var request = new BinaryRequest(op)
-			{
-				Key = Key,
-				Cas = Cas,
-				Extra = CreateExtra()
-			};
+			// make it silent
+			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);
+
+			var request = new BinaryRequest(op, ExtraLength) { Key = Key, Cas = Cas };
+			var extra = request.Extra.Array;
+			var offset = request.Extra.Offset;
+
+			// store the extra values
+			BinaryConverter.EncodeUInt64(this.delta, extra, offset);
+			BinaryConverter.EncodeUInt64(this.defaultValue, extra, offset + 8);
+			BinaryConverter.EncodeUInt32(this.expires, extra, offset + 16);
 
 			return request;
-		}
-
-		protected ArraySegment<byte> CreateExtra()
-		{
-			var extra = new byte[20];
-
-			BinaryConverter.EncodeUInt64(this.delta, extra, 0);
-			BinaryConverter.EncodeUInt64(this.defaultValue, extra, 8);
-			BinaryConverter.EncodeUInt32(this.expires, extra, 16);
-
-			return new ArraySegment<byte>(extra);
 		}
 
 		protected override IMutateOperationResult CreateResult(BinaryResponse response)
@@ -62,11 +58,11 @@ namespace Enyim.Caching.Memcached.Operations
 			if (response == null)
 				return retval.NotFound(this);
 
-			if (response.StatusCode == 0)
+			if (response.Success)
 			{
 				var data = response.Data;
-				if (data.Count != 8)
-					return retval.Fail(this, new InvalidOperationException("Result must be 8 bytes long, received: " + data.Count));
+				if (data.Count != ResultLength)
+					return retval.Fail(this, new InvalidOperationException("Result must be " + ResultLength + " bytes long, received: " + data.Count));
 
 				retval.Value = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
 			}

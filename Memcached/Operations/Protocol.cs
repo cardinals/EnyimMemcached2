@@ -21,6 +21,10 @@ namespace Enyim.Caching.Memcached.Operations
 		internal const int HEADER_INDEX_OPAQUE = 12; // 12-15
 		internal const int HEADER_INDEX_CAS = 16; // 16-23
 
+		internal const int MUTATE_EXTRA_LENGTH = 20;
+
+		internal const int SILENT_MASK = 0x10;
+
 		public static class Status
 		{
 			public const int Success = 0;

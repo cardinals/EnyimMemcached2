@@ -3,7 +3,7 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMutateOperation : IItemOperation, IHaveResult<IMutateOperationResult>
+	public interface IMutateOperation : IItemOperation, IHaveResult<IMutateOperationResult>, ICanBeSilent
 	{
 		MutationMode Mode { get; }
 	}

@@ -5,8 +5,6 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class NoOp : MemcachedOperationBase<IOperationResult>
 	{
-		internal const int BufferSize = Protocol.HeaderLength;
-
 		protected override BinaryRequest CreateRequest()
 		{
 			return new BinaryRequest(OpCode.NoOp);

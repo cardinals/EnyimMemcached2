@@ -6,6 +6,7 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class StoreOperation : BinarySingleItemOperation<IOperationResult>, IStoreOperation
 	{
+		protected const int ExtraLength = 8;
 		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StoreOperation));
 
 		private CacheItem value;
@@ -25,26 +26,29 @@ namespace Enyim.Caching.Memcached.Operations
 		protected override BinaryRequest CreateRequest()
 		{
 			OpCode op;
-			switch (Mode)
-			{
-				case StoreMode.Add: op = Silent ? OpCode.AddQ : OpCode.Add; break;
-				case StoreMode.Set: op = Silent ? OpCode.SetQ : OpCode.Set; break;
-				case StoreMode.Replace: op = Silent ? OpCode.ReplaceQ : OpCode.Replace; break;
-				default: throw new ArgumentOutOfRangeException("mode", Mode + " is not supported");
-			}
 
-			var extra = new byte[8];
+			// figure out the op code
+			if (Mode == StoreMode.Add) op = OpCode.Add;
+			else if (Mode == StoreMode.Replace) op = OpCode.Replace;
+			else if (Mode == StoreMode.Set) op = OpCode.Set;
+			else throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
 
-			BinaryConverter.EncodeUInt32((uint)value.Flags, extra, 0);
-			BinaryConverter.EncodeUInt32(expires, extra, 4);
+			// make it silent
+			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);
 
-			var request = new BinaryRequest(op)
+			var request = new BinaryRequest(op, ExtraLength)
 			{
 				Key = Key,
 				Cas = Cas,
-				Extra = new ArraySegment<byte>(extra),
 				Data = value.Data
 			};
+
+			var extra = request.Extra.Array;
+			var offset = request.Extra.Offset;
+
+			// store the extra values
+			BinaryConverter.EncodeUInt32((uint)value.Flags, extra, offset);
+			BinaryConverter.EncodeUInt32(expires, extra, offset + 4);
 
 			return request;
 		}
