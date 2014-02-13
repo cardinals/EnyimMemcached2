@@ -53,7 +53,6 @@
     <Compile Include="ClusterConfigurationCollection.cs" />
     <Compile Include="ClusterConfigurationElement.cs" />
     <Compile Include="ClustersSection.cs" />
-    <Compile Include="ClusterConfigurationSection.cs" />
     <Compile Include="ConfigurationManager.cs" />
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
