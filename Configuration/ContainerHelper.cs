@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	{
 		public static void RegisterInto(this ClientConfigurationSection section, Funq.Container container)
 		{
-			container.AutoWireAs<INode, MemcachedNode, IPEndPoint>();
+			container.AutoWireAs<INode, MemcachedNode, IPEndPoint>().ReusedWithin(ReuseScope.None);
 
 			section.OperationFactory.RegisterInto(container, typeof(MemcachedOperationFactory));
 			section.Transcoder.RegisterInto(container, typeof(DefaultTranscoder));
