@@ -27,6 +27,9 @@ namespace Enyim.Caching.Memcached.Operations
 
 		private int state;
 		private int writeOffset;
+		private int writeShift;
+		private int writeLength;
+		private byte[] writeArray;
 
 		public BinaryRequest(OpCode operation) : this((byte)operation, 0) { }
 		public BinaryRequest(OpCode operation, byte extraLength) : this((byte)operation, extraLength) { }
@@ -49,7 +52,132 @@ namespace Enyim.Caching.Memcached.Operations
 			bufferPool.Release(header);
 		}
 
+		SegmentListCopier slc;
+
 		bool IRequest.WriteTo(WriteBuffer buffer)
+		{
+			// 0. init header
+			// 1. loop on header
+			// 2. loop on Key, if any
+			// 3. loop on Data, if any
+			// 4. done
+
+			switch (state)
+			{
+				case STATE_INITIAL: goto init;
+				case STATE_WRITE_HEADER: goto write_header;
+				case STATE_WRITE_KEY: goto write_key;
+				case STATE_WRITE_BODY: goto write_body;
+				default: return false;
+			}
+
+		init:
+			PrepareHeader();
+			state = STATE_WRITE_HEADER;
+
+		write_header:
+			writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
+			if (writeOffset < headerLength) return true;
+
+			if (Key != null && Key.Length > 0)
+			{
+				writeOffset = 0;
+				state = STATE_WRITE_KEY;
+			}
+			else goto pre_body;
+
+		write_key:
+			writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
+			if (writeOffset < Key.Length) return true;
+
+		pre_body:
+			if (Data.Count > 0)
+			{
+				writeOffset = 0;
+				state = STATE_WRITE_BODY;
+			}
+			else goto done;
+
+		write_body:
+			writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
+			if (writeOffset < Data.Count) return true;
+
+		done:
+			state = STATE_DONE;
+
+			return false;
+		}
+
+		#region [ WriteTo v4                   ]
+
+		bool WriteTo_4(WriteBuffer buffer)
+		{
+			if (slc == null)
+			{
+				PrepareHeader();
+				slc = new SegmentListCopier(new[] { new ArraySegment<byte>(header, 0, headerLength), Key == null ? new ArraySegment<byte>() : new ArraySegment<byte>(Key), Data });
+			}
+
+			return slc.WriteTo(buffer);
+		}
+
+		#endregion
+		#region [ WriteTo v3                   ]
+
+		bool WriteTo_3(WriteBuffer buffer)
+		{
+			// 0. init header
+			// 1. loop on header
+			// 2. loop on Key, if any
+			// 3. loop on Data, if any
+			// 4. done
+
+			if (state == STATE_INITIAL)
+			{
+				PrepareHeader();
+				writeLength = -1;
+			}
+
+		move_next:
+			while (writeLength < 1 || writeArray == null)
+			{
+				state++;
+				writeShift = 0;
+
+				switch (state)
+				{
+					case STATE_WRITE_HEADER:
+						writeArray = header;
+						writeLength = headerLength;
+						break;
+
+					case STATE_WRITE_BODY:
+						writeArray = Data.Array;
+						writeLength = Data.Count;
+						writeShift = Data.Offset;
+						break;
+
+					case STATE_WRITE_KEY:
+						writeArray = Key;
+						writeLength = Key == null ? -1 : Key.Length;
+						break;
+
+					default: return false;
+				}
+			}
+
+			writeOffset += buffer.Append(writeArray, writeOffset + writeShift, writeLength - writeOffset);
+			if (writeOffset < writeLength) return true;
+			writeArray = null;
+			writeOffset = 0;
+
+			goto move_next;
+		}
+
+		#endregion
+		#region [ WriteTo v2                   ]
+
+		bool WriteTo_2(WriteBuffer buffer)
 		{
 			// 0. init header
 			// 1. loop on header
@@ -59,7 +187,61 @@ namespace Enyim.Caching.Memcached.Operations
 			switch (state)
 			{
 				case STATE_INITIAL:
-					InitHeader();
+					PrepareHeader();
+					state = STATE_WRITE_HEADER;
+					goto case STATE_WRITE_HEADER;
+
+				case STATE_WRITE_HEADER:
+					writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
+					if (writeOffset < headerLength) return true;
+
+					if (Key != null && Key.Length > 0)
+					{
+						writeOffset = 0;
+						state = STATE_WRITE_KEY;
+						goto case STATE_WRITE_KEY;
+					}
+					goto end_key;
+
+				case STATE_WRITE_KEY:
+					writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
+					if (writeOffset < Key.Length) return true;
+
+				end_key:
+					if (Data.Count > 0)
+					{
+						writeOffset = 0;
+						state = STATE_WRITE_BODY;
+						goto case STATE_WRITE_BODY;
+					}
+					goto end_body;
+
+				case STATE_WRITE_BODY:
+					writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
+					if (writeOffset < Data.Count) return true;
+
+				end_body:
+					state = STATE_DONE;
+					break;
+			}
+
+			return false;
+		}
+
+		#endregion
+		#region [ WriteTo v1                   ]
+
+		bool WriteTo_1(WriteBuffer buffer)
+		{
+			// 0. init header
+			// 1. loop on header
+			// 2. loop on Key, if any
+			// 3. loop on Data, if any
+			// 4. done
+			switch (state)
+			{
+				case STATE_INITIAL:
+					PrepareHeader();
 
 					writeOffset = 0;
 					state = STATE_WRITE_HEADER;
@@ -78,7 +260,7 @@ namespace Enyim.Caching.Memcached.Operations
 						goto end_key;
 
 					writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
-					if (writeOffset < headerLength) return true;
+					if (writeOffset < Key.Length) return true;
 
 				end_key:
 					writeOffset = 0;
@@ -99,7 +281,9 @@ namespace Enyim.Caching.Memcached.Operations
 			return false;
 		}
 
-		private void InitHeader()
+		#endregion
+
+		private void PrepareHeader()
 		{
 			var keyLength = Key == null ? 0 : Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
@@ -146,14 +330,6 @@ namespace Enyim.Caching.Memcached.Operations
 				header[Protocol.HEADER_INDEX_CAS + 6] = (byte)(cas >> 8);
 				header[Protocol.HEADER_INDEX_CAS + 7] = (byte)(cas & 255);
 			}
-
-			//var retval = new ArraySegment<byte>[3];
-
-			//retval[0] = new ArraySegment<byte>(header, 0, headerLength);
-			//if (keyLength > 0) retval[1] = new ArraySegment<byte>(Key);
-			//if (bodyLength > 0) retval[2] = body;
-
-			//return retval;
 		}
 
 		public readonly byte Operation;
