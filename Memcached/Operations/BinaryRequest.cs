@@ -27,9 +27,6 @@ namespace Enyim.Caching.Memcached.Operations
 
 		private int state;
 		private int writeOffset;
-		private int writeShift;
-		private int writeLength;
-		private byte[] writeArray;
 
 		public BinaryRequest(OpCode operation) : this((byte)operation, 0) { }
 		public BinaryRequest(OpCode operation, byte extraLength) : this((byte)operation, extraLength) { }
@@ -49,10 +46,13 @@ namespace Enyim.Caching.Memcached.Operations
 
 		void IDisposable.Dispose()
 		{
-			bufferPool.Release(header);
+			if (header != null)
+			{
+				GC.SuppressFinalize(this);
+				bufferPool.Release(header);
+				header = null;
+			}
 		}
-
-		SegmentListCopier slc;
 
 		bool IRequest.WriteTo(WriteBuffer buffer)
 		{
@@ -62,6 +62,8 @@ namespace Enyim.Caching.Memcached.Operations
 			// 3. loop on Data, if any
 			// 4. done
 
+			// this is a loop-unrolled version of the preious algorithms
+			// it's not significantly faster but has the least GC pressure
 			switch (state)
 			{
 				case STATE_INITIAL: goto init;
@@ -108,190 +110,12 @@ namespace Enyim.Caching.Memcached.Operations
 			return false;
 		}
 
-		#region [ WriteTo v4                   ]
-
-		bool WriteTo_4(WriteBuffer buffer)
-		{
-			if (slc == null)
-			{
-				PrepareHeader();
-				slc = new SegmentListCopier(new[] { new ArraySegment<byte>(header, 0, headerLength), Key == null ? new ArraySegment<byte>() : new ArraySegment<byte>(Key), Data });
-			}
-
-			return slc.WriteTo(buffer);
-		}
-
-		#endregion
-		#region [ WriteTo v3                   ]
-
-		bool WriteTo_3(WriteBuffer buffer)
-		{
-			// 0. init header
-			// 1. loop on header
-			// 2. loop on Key, if any
-			// 3. loop on Data, if any
-			// 4. done
-
-			if (state == STATE_INITIAL)
-			{
-				PrepareHeader();
-				writeLength = -1;
-			}
-
-		move_next:
-			while (writeLength < 1 || writeArray == null)
-			{
-				state++;
-				writeShift = 0;
-
-				switch (state)
-				{
-					case STATE_WRITE_HEADER:
-						writeArray = header;
-						writeLength = headerLength;
-						break;
-
-					case STATE_WRITE_BODY:
-						writeArray = Data.Array;
-						writeLength = Data.Count;
-						writeShift = Data.Offset;
-						break;
-
-					case STATE_WRITE_KEY:
-						writeArray = Key;
-						writeLength = Key == null ? -1 : Key.Length;
-						break;
-
-					default: return false;
-				}
-			}
-
-			writeOffset += buffer.Append(writeArray, writeOffset + writeShift, writeLength - writeOffset);
-			if (writeOffset < writeLength) return true;
-			writeArray = null;
-			writeOffset = 0;
-
-			goto move_next;
-		}
-
-		#endregion
-		#region [ WriteTo v2                   ]
-
-		bool WriteTo_2(WriteBuffer buffer)
-		{
-			// 0. init header
-			// 1. loop on header
-			// 2. loop on Key, if any
-			// 3. loop on Data, if any
-			// 4. done
-			switch (state)
-			{
-				case STATE_INITIAL:
-					PrepareHeader();
-					state = STATE_WRITE_HEADER;
-					goto case STATE_WRITE_HEADER;
-
-				case STATE_WRITE_HEADER:
-					writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
-					if (writeOffset < headerLength) return true;
-
-					if (Key != null && Key.Length > 0)
-					{
-						writeOffset = 0;
-						state = STATE_WRITE_KEY;
-						goto case STATE_WRITE_KEY;
-					}
-					goto end_key;
-
-				case STATE_WRITE_KEY:
-					writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
-					if (writeOffset < Key.Length) return true;
-
-				end_key:
-					if (Data.Count > 0)
-					{
-						writeOffset = 0;
-						state = STATE_WRITE_BODY;
-						goto case STATE_WRITE_BODY;
-					}
-					goto end_body;
-
-				case STATE_WRITE_BODY:
-					writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
-					if (writeOffset < Data.Count) return true;
-
-				end_body:
-					state = STATE_DONE;
-					break;
-			}
-
-			return false;
-		}
-
-		#endregion
-		#region [ WriteTo v1                   ]
-
-		bool WriteTo_1(WriteBuffer buffer)
-		{
-			// 0. init header
-			// 1. loop on header
-			// 2. loop on Key, if any
-			// 3. loop on Data, if any
-			// 4. done
-			switch (state)
-			{
-				case STATE_INITIAL:
-					PrepareHeader();
-
-					writeOffset = 0;
-					state = STATE_WRITE_HEADER;
-					goto case STATE_WRITE_HEADER;
-
-				case STATE_WRITE_HEADER:
-					writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
-					if (writeOffset < headerLength) return true;
-
-					writeOffset = 0;
-					state = STATE_WRITE_KEY;
-					goto case STATE_WRITE_KEY;
-
-				case STATE_WRITE_KEY:
-					if (Key == null || Key.Length == 0)
-						goto end_key;
-
-					writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
-					if (writeOffset < Key.Length) return true;
-
-				end_key:
-					writeOffset = 0;
-					state = STATE_WRITE_BODY;
-					goto case STATE_WRITE_BODY;
-
-				case STATE_WRITE_BODY:
-					if (Data.Count == 0) goto end_body;
-
-					writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
-					if (writeOffset < Data.Count) return true;
-
-				end_body:
-					state = STATE_DONE;
-					break;
-			}
-
-			return false;
-		}
-
-		#endregion
-
 		private void PrepareHeader()
 		{
 			var keyLength = Key == null ? 0 : Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
-			var body = Data;
-			var bodyLength = body.Array == null ? 0 : body.Count; // body size
-			var totalLength = Extra.Count + keyLength + bodyLength; // total payload size
-
+			var totalLength = Extra.Count + keyLength + Data.Count; // total payload size
 			var header = this.header;
 
 			header[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic; // magic
