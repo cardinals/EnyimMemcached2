@@ -27,7 +27,7 @@ namespace Enyim.Caching
 		private readonly ReceiveBuffer readStream;
 
 		private int state;
-		private SegmentListCopier currentWriteCopier;
+		private IRequest currentWriteCopier;
 		private Data currentWriteOp;
 		private IResponse inprogressResponse;
 
@@ -170,21 +170,18 @@ namespace Enyim.Caching
 		{
 			// check if we have an op in progress
 			if (currentWriteCopier == null) return false;
+			if (currentWriteCopier.WriteTo(writeBuffer)) return true;
 
-			if (!currentWriteCopier.WriteTo(writeBuffer))
-			{
-				// last chunk was sent
-				if (log.IsTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
+			// last chunk was sent
+			if (log.IsTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
 
-				// finished writing, clean up
-				bufferQueue.Enqueue(currentWriteOp);
-				currentWriteCopier = null;
-				currentWriteOp = Data.Empty;
+			// finished writing, clean up
+			bufferQueue.Enqueue(currentWriteOp);
+			currentWriteCopier.Dispose();
+			currentWriteCopier = null;
+			currentWriteOp = Data.Empty;
 
-				return false;
-			}
-
-			return true;
+			return false;
 		}
 
 		private bool PerformSend()
@@ -253,11 +250,12 @@ namespace Enyim.Caching
 				throw new InvalidOperationException("Cannot write operation while another is in progress.");
 
 			var request = data.Op.CreateRequest();
-			var copier = new SegmentListCopier(request.CreateBuffer());
 
-			if (!copier.WriteTo(writeBuffer)) // fully written
+			if (!request.WriteTo(writeBuffer)) // fully written
 			{
 				bufferQueue.Enqueue(data);
+				request.Dispose();
+
 				if (log.IsTraceEnabled) log.Trace("Full send of " + data.Op);
 			}
 			else
@@ -265,65 +263,22 @@ namespace Enyim.Caching
 				// it did not fit into the writeBuffer, so save the current op
 				// as "in-progress"; PerformSend will loop until it's fully sent
 				currentWriteOp = data;
-				currentWriteCopier = copier;
+				currentWriteCopier = request;
 				if (log.IsTraceEnabled) log.Trace("Partial send of " + data.Op);
 			}
 		}
 
 		protected abstract IResponse CreateResponse();
 
-		private bool PerformReceive()
-		{
-			Debug.Assert(IsAlive);
-
-			if (readQueue.Count == 0) return false;
-
-			//? TODO check for availability?
-			if (readStream.EOF) readStream.Fill(socket);
-
-			while (readQueue.Count > 0)
-			{
-				var response = inprogressResponse ?? CreateResponse();
-
-				if (response.Read(readStream)) // is IO pending? (if response is not read fully)
-				{
-					inprogressResponse = response;
-					return true;
-				}
-
-				inprogressResponse = null;
-				var matching = false;
-
-				while (!matching && readQueue.Count > 0)
-				{
-					var data = readQueue.Peek();
-					matching = data.Op.Handles(response);
-
-					// null is a response to a successful quiet op
-					// we have to feed the responses to the current op
-					// until it returns false
-					if (!data.Op.ProcessResponse(matching ? response : null))
-					{
-						readQueue.Dequeue();
-
-						if (data.Task != null)
-							data.Task.TrySetResult(data.Op);
-					}
-				}
-			}
-
-			return false;
-		}
-
 		private bool receiveInProgress;
 
 		private bool PerformReceive2()
 		{
 			Debug.Assert(IsAlive);
-
 			if (readQueue.Count == 0 || receiveInProgress) return false;
 
 		fill:
+			// no data to process => read the socket
 			if (readStream.EOF)
 			{
 				receiveInProgress = true;
@@ -342,12 +297,21 @@ namespace Enyim.Caching
 
 				if (response.Read(readStream)) // is IO pending? (if response is not read fully)
 				{
+					// the ony reason to need data should be an empty receive buffer
+					Debug.Assert(readStream.EOF);
+					Debug.Assert(inprogressResponse == null);
+
 					inprogressResponse = response;
 					goto fill;
 					//return true;
 				}
 
-				inprogressResponse = null;
+				if (inprogressResponse != null)
+				{
+					inprogressResponse.Dispose();
+					inprogressResponse = null;
+				}
+
 				var matching = false;
 
 				while (!matching && readQueue.Count > 0)
@@ -366,6 +330,8 @@ namespace Enyim.Caching
 							data.Task.TrySetResult(data.Op);
 					}
 				}
+
+				response.Dispose();
 			}
 
 			return false;

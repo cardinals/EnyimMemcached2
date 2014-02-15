@@ -12,6 +12,10 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_NEED_BODY = 2;
 		private const int STATE_DONE = 3;
 
+		// 128 is the minimum size handled by the BuffferManager
+		private const int ArraySize = 128;
+		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
+
 		private string responseMessage;
 
 		private byte[] header;
@@ -24,9 +28,19 @@ namespace Enyim.Caching.Memcached.Operations
 		internal BinaryResponse()
 		{
 			StatusCode = -1;
-			header = new byte[Protocol.HeaderLength];
+			header = bufferPool.Acquire(Protocol.HeaderLength);// new byte[Protocol.HeaderLength];
 			remainingHeader = Protocol.HeaderLength;
 			state = STATE_NEED_HEADER;
+		}
+
+		void IDisposable.Dispose()
+		{
+			if (header != null)
+			{
+				GC.SuppressFinalize(this);
+				bufferPool.Release(header);
+				header = null;
+			}
 		}
 
 		public byte OpCode;

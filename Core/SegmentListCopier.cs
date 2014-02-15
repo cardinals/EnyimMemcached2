@@ -45,10 +45,18 @@ namespace Enyim.Caching
 		private void MoveToNext()
 		{
 			segmentOffset = 0;
-			segmentIndex++;
 
-			if (segmentIndex == segments.Count)
-				segments = null;
+			// skip empty segments
+			do
+			{
+				segmentIndex++;
+				if (segmentIndex == segments.Count)
+				{
+					segments = null;
+					break;
+				}
+			}
+			while (segments[segmentIndex].Count == 0);
 		}
 	}
 }

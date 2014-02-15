@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching
 {
-	public interface IRequest
+	public interface IRequest: IDisposable
 	{
-		IReadOnlyList<ArraySegment<byte>> CreateBuffer();
+		bool WriteTo(WriteBuffer buffer);
 	}
 }
 

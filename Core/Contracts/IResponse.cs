@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Enyim.Caching
 {
-	public interface IResponse
+	public interface IResponse: IDisposable
 	{
 		bool Read(Stream stream);
 	}
