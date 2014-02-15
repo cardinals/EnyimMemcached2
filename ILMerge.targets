@@ -1,0 +1,27 @@
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<ILMergePath>"$(SolutionDir)packages\ilmerge.2.13.0307\ILMerge.exe"</ILMergePath>
+	</PropertyGroup>
+
+	<Target Name="AfterResolveReferences" Condition=" '$(ILMergeEnabled)' == 'True' ">
+		<ItemGroup>
+			<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition=" '%(ReferenceCopyLocalPaths.ILMerge)' == 'True' " />
+		</ItemGroup>
+	</Target>
+
+	<!-- todo make this incremental -->
+	<Target Name="AfterBuild" Condition=" '$(ILMergeEnabled)' == 'True' ">
+		<GetReferenceAssemblyPaths TargetFrameworkMoniker="$(TargetFrameworkMoniker)" RootPath="$(TargetFrameworkRootPath)">
+			<Output TaskParameter="ReferenceAssemblyPaths" PropertyName="_ReferenceAssemblies"/>
+			<Output TaskParameter="FullFrameworkReferenceAssemblyPaths" PropertyName="_FullFrameworkReferenceAssemblyPaths"/>
+			<Output TaskParameter="TargetFrameworkMonikerDisplayName" PropertyName="TargetFrameworkMonikerDisplayName" Condition="'$(TargetFrameworkMonikerDisplayName)' == ''"/>
+		</GetReferenceAssemblyPaths>
+
+		<CreateItem Include="@(ReferencePath)" Condition=" '%(CopyLocal)' == 'true' And '%(ReferencePath.ILMerge)' == 'True' ">
+			<Output TaskParameter="Include" ItemName="_ToMerge"/>
+		</CreateItem>
+		<Message Text="Merging output with: @(_ToMerge -> '%(Filename)')" Importance="High" />
+		<!-- make sure there is a space before the closing quote so that when _ReferenceAssemblies ends with \ the command still works -->
+		<Exec Command="$(ILMergePath) /targetplatform:&quot;v4,$(_ReferenceAssemblies) &quot; /out:&quot;%(MainAssembly.FullPath)&quot; &quot;@(IntermediateAssembly)&quot; @(_ToMerge -> '&quot;%(FullPath)&quot;', ' ') /lib:&quot;$(OutDir) &quot; $(ILMergeOpts)" />
+	</Target>
+</Project>

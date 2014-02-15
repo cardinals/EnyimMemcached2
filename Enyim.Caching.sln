@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B76
 	ProjectSection(SolutionItems) = preProject
 		Copyright.cs = Copyright.cs
 		footer.txt = footer.txt
+		ILMerge.targets = ILMerge.targets
 		LICENSE = LICENSE
 		SignAssembly.targets = SignAssembly.targets
 		VersionInfo.targets = VersionInfo.targets

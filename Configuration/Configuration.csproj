@@ -35,6 +35,7 @@
     <Reference Include="Funq, Version=1.0.0.0, Culture=neutral, PublicKeyToken=95c13cd3fe8e976a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Funq.1.0.0\lib\net40\Funq.dll</HintPath>
+      <ILMerge>True</ILMerge>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -82,4 +83,9 @@
   </Target>
   <Import Project="$(SolutionDir)\VersionInfo.targets" />
   <Import Project="$(SolutionDir)\SignAssembly.targets" />
+  <PropertyGroup>
+    <ILMergeOpts>/internalize</ILMergeOpts>
+    <ILMergeEnabled>True</ILMergeEnabled>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\ILMerge.targets" />
 </Project>
