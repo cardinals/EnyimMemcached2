@@ -47,7 +47,7 @@ namespace Funq
 		// a strong reference to. 
 		Stack<WeakReference> disposables = new Stack<WeakReference>();
 		// We always hold a strong reference to child containers.
-		Stack<Container> childContainers = new Stack<Container>();
+		List<Container> childContainers = new List<Container>();
 		Container parent;
 
 		/// <include file='Funq.xdoc' path='docs/doc[@for="Container.ctor"]/*'/>
@@ -73,7 +73,7 @@ namespace Funq
 		public Container CreateChildContainer()
 		{
 			var child = new Container { parent = this };
-			childContainers.Push(child);
+			childContainers.Add(child);
 			return child;
 		}
 
@@ -87,10 +87,19 @@ namespace Funq
 				if (wr.IsAlive)
 					disposable.Dispose();
 			}
-			while (childContainers.Count > 0)
-			{
-				childContainers.Pop().Dispose();
-			}
+
+			var children = childContainers;
+			childContainers = null;
+			foreach (var child in children) child.Dispose();
+
+			if (parent != null)
+				parent.ReleaseChild(this);
+		}
+
+		private void ReleaseChild(Container child)
+		{
+			if (childContainers != null)
+				childContainers.Remove(child);
 		}
 
 		/// <include file='Funq.xdoc' path='docs/doc[@for="Container.Register{TService}(factory)"]/*'/>
