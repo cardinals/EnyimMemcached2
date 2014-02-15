@@ -35,7 +35,7 @@
 namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="Owner"]/*'/>
-	public enum Owner
+	internal enum Owner
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="Owner.Container"]/*'/>
 		Container,

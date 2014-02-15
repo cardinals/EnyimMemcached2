@@ -36,7 +36,7 @@
 namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IFunqlet"]/*'/>
-	public interface IFunqlet
+	internal interface IFunqlet
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="IFunqlet.Configure"]/*'/>
 		void Configure(Container container);

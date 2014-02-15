@@ -42,7 +42,7 @@ namespace Funq
 #if !SILVERLIGHT
 	[Serializable]
 #endif
-	public class ResolutionException : Exception
+	internal class ResolutionException : Exception
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="ResolutionException.ctor(Type)"]/*'/>
 		public ResolutionException(Type missingServiceType)

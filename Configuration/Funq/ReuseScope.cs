@@ -35,7 +35,7 @@
 namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="ResolutionException"]/*'/>
-	public enum ReuseScope
+	internal enum ReuseScope
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="ResolutionException"]/*'/>
 		Container,

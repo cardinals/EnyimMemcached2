@@ -39,19 +39,19 @@ namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IRegistration"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IRegistration : IFluentInterface, IReusedOwned
+	internal interface IRegistration : IFluentInterface, IReusedOwned
 	{
 	}
 
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IRegistration"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IRegistration<TService> : IFluentInterface, IRegistration, IInitializable<TService>
+	internal interface IRegistration<TService> : IFluentInterface, IRegistration, IInitializable<TService>
 	{
 	}
 
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IRegistration"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IInitializable<TService> : IFluentInterface
+	internal interface IInitializable<TService> : IFluentInterface
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="IInitializable.InitializedBy"]/*'/>
 		IReusedOwned InitializedBy(Action<Container, TService> initializer);
@@ -59,11 +59,11 @@ namespace Funq
 
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IReusedOwned"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IReusedOwned : IFluentInterface, IReused, IOwned { }
+	internal interface IReusedOwned : IFluentInterface, IReused, IOwned { }
 
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IReused"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IReused : IFluentInterface
+	internal interface IReused : IFluentInterface
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="IReused.ReusedWithin"]/*'/>
 		IOwned ReusedWithin(ReuseScope scope);
@@ -71,7 +71,7 @@ namespace Funq
 
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IOwned"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IOwned : IFluentInterface
+	internal interface IOwned : IFluentInterface
 	{
 		/// <include file='Funq.xdoc' path='docs/doc[@for="IOwned.OwnedBy"]/*'/>
 		void OwnedBy(Owner owner);

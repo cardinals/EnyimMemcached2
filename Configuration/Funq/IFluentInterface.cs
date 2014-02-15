@@ -39,7 +39,7 @@ namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="IFluentInterface"]/*'/>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IFluentInterface
+	internal interface IFluentInterface
 	{
 		/// <summary/>
 		[EditorBrowsable(EditorBrowsableState.Never)]

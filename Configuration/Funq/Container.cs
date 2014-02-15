@@ -40,7 +40,7 @@ using Resources = Enyim.Caching.Memcached.Configuration.Properties.Resources;
 namespace Funq
 {
 	/// <include file='Funq.xdoc' path='docs/doc[@for="Container"]/*'/>
-	public sealed partial class Container : IDisposable
+	internal sealed partial class Container : IDisposable
 	{
 		Dictionary<ServiceKey, ServiceEntry> services = new Dictionary<ServiceKey, ServiceEntry>();
 		// Disposable components include factory-scoped instances that we don't keep 
