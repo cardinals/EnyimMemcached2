@@ -99,7 +99,7 @@ namespace Enyim.Caching
 			var foundIndex = Array.BinarySearch<uint>(keyRing, itemKeyHash);
 
 			if (foundIndex == keyRingLengthComplement) foundIndex = 0;
-			else if (foundIndex == ~0) foundIndex = keyRing.Length;
+			else if (foundIndex == ~0) foundIndex = keyRing.Length - 1;
 			else if (foundIndex < 0) foundIndex = ~foundIndex;
 
 			return keyToServer[keyRing[foundIndex]];
