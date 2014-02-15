@@ -32,11 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Funq, Version=1.0.0.0, Culture=neutral, PublicKeyToken=95c13cd3fe8e976a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Funq.1.0.0\lib\net40\Funq.dll</HintPath>
-      <ILMerge>True</ILMerge>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -58,6 +53,56 @@
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
     <Compile Include="FunqExtensions.cs" />
+    <Compile Include="Funq\Container.cs" />
+    <Compile Include="Funq\Container.LazyResolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.LazyResolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.Register.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.Register.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.Resolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.Resolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.ResolveImpl.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.ResolveImpl.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\Container.TryResolve.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Container.TryResolve.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\IFluentInterface.cs" />
+    <Compile Include="Funq\IFunqlet.cs" />
+    <Compile Include="Funq\Owner.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\ResolutionException.cs" />
+    <Compile Include="Funq\ReuseScope.cs" />
+    <Compile Include="Funq\ServiceEntry.cs" />
+    <Compile Include="Funq\ServiceEntry.Generic.cs" />
+    <Compile Include="Funq\ServiceKey.cs" />
+    <Compile Include="Funq\Syntax.cs" />
+    <Compile Include="Funq\System\Delegates.2.0.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Delegates.2.0.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Funq\System\Delegates.3.x.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Delegates.3.x.tt</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -71,21 +116,60 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Funq\Container.LazyResolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.Register.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.Register.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.Resolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.Resolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.ResolveImpl.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.ResolveImpl.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Container.TryResolve.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Container.TryResolve.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Funq.Overloads.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Funq.Overloads.xdoc</LastGenOutput>
+    </None>
+    <None Include="Funq\Funq.Overloads.xdoc">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Funq.Overloads.tt</DependentUpon>
+    </None>
+    <None Include="Funq\Header.tt">
+      <LastGenOutput>Header.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\Helpers.tt">
+      <LastGenOutput>Helpers.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\System\Delegates.2.0.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Delegates.2.0.cs</LastGenOutput>
+    </None>
+    <None Include="Funq\System\Delegates.3.x.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Delegates.3.x.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
   <Import Project="$(SolutionDir)\VersionInfo.targets" />
   <Import Project="$(SolutionDir)\SignAssembly.targets" />
-  <PropertyGroup>
-    <ILMergeOpts>/internalize</ILMergeOpts>
-    <ILMergeEnabled>True</ILMergeEnabled>
-  </PropertyGroup>
-  <Import Project="$(SolutionDir)\ILMerge.targets" />
 </Project>
