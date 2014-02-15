@@ -52,15 +52,16 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
       <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Import Project="$(SolutionDir)\VersionInfo.targets" Condition="Exists('$(SolutionDir)\VersionInfo.targets')" />
+  <Import Project="$(SolutionDir)\VersionInfo.targets" />
+  <Import Project="$(SolutionDir)\SignAssembly.targets" />
 </Project>

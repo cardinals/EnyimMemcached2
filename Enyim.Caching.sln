@@ -22,6 +22,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configuration", "Configurat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B7653-D6D4-4469-A79E-F142D103E5FC}"
+	ProjectSection(SolutionItems) = preProject
+		Copyright.cs = Copyright.cs
+		footer.txt = footer.txt
+		LICENSE = LICENSE
+		SignAssembly.targets = SignAssembly.targets
+		VersionInfo.targets = VersionInfo.targets
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
