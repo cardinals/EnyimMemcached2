@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	{
 		public static void RegisterInto(this ClientConfigurationSection section, Funq.Container container)
 		{
-			container.AutoWireAs<INode, MemcachedNode, IPEndPoint>().ReusedWithin(ReuseScope.None);
+			container.AutoWireAs<MemcachedNode, MemcachedNode, IPEndPoint>().ReusedWithin(ReuseScope.None);
 
 			section.OperationFactory.RegisterInto(container, typeof(MemcachedOperationFactory));
 			section.Transcoder.RegisterInto(container, typeof(DefaultTranscoder));
@@ -47,7 +47,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				.Register<ICluster>(c => new MemcachedCluster(endpoints,
 															c.Resolve<INodeLocator>(),
 															c.Resolve<IReconnectPolicy>(),
-															c.LazyResolve<INode, System.Net.IPEndPoint>()))
+															c.LazyResolve<MemcachedNode, System.Net.IPEndPoint>()))
 				.InitializedBy((_, c) => c.Start())
 				.ReusedWithin(ReuseScope.Container);
 		}

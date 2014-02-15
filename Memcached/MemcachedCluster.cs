@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached
 	{
 		private readonly Func<IPEndPoint, INode> nodeFactory;
 
-		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy policy, Func<IPEndPoint, INode> nodeFactory)
+		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy policy, Func<IPEndPoint, MemcachedNode> nodeFactory)
 			: base(endpoints, locator, policy)
 		{
 			this.nodeFactory = nodeFactory;
