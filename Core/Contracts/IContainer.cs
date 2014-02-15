@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public interface IContainer
+	public interface IContainer : IDisposable
 	{
 		TService Resolve<TService>();
 	}

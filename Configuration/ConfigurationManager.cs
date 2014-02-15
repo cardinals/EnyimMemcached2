@@ -95,6 +95,11 @@ namespace Enyim.Caching.Memcached.Configuration
 			{
 				return root.Resolve<TService>();
 			}
+
+			public void Dispose()
+			{
+				root.Dispose();
+			}
 		}
 
 		#endregion
