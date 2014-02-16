@@ -1,4 +1,8 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<SignAssembly>false</SignAssembly>
+	</PropertyGroup>
+
 	<UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
 		<ParameterGroup>
 			<Address ParameterType="System.String" Required="true"/>
@@ -12,20 +16,22 @@
 		</Task>
 	</UsingTask>
 
-	<PropertyGroup>
-		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\private_key.snk') ">$(SolutionDir)\private_key.snk</AssemblyOriginatorKeyFile>
-		<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\enyim.snk') ">$(SolutionDir)\enyim.snk</AssemblyOriginatorKeyFile>
-		<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\download.snk') ">$(SolutionDir)\download.snk</AssemblyOriginatorKeyFile>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(AssemblyOriginatorKeyFile)' == '' And Exists('$(SolutionDir)\enyim_public.snk')">
-		<AssemblyOriginatorKeyFile>$(SolutionDir)\enyim_public.snk</AssemblyOriginatorKeyFile>
-		<DelaySign>true</DelaySign>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<BuildDependsOn>DownloadKey;$(BuildDependsOn)</BuildDependsOn>
-	</PropertyGroup>
+	<Choose>
+		<When Condition=" !(!$(SignAssembly)) ">
+			<PropertyGroup>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\private_key.snk') ">$(SolutionDir)\private_key.snk</AssemblyOriginatorKeyFile>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\enyim.snk') ">$(SolutionDir)\enyim.snk</AssemblyOriginatorKeyFile>
+				<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\download.snk') ">$(SolutionDir)\download.snk</AssemblyOriginatorKeyFile>
+			</PropertyGroup>
+			<PropertyGroup Condition=" '$(AssemblyOriginatorKeyFile)' == '' And Exists('$(SolutionDir)\enyim_public.snk')">
+				<AssemblyOriginatorKeyFile>$(SolutionDir)\enyim_public.snk</AssemblyOriginatorKeyFile>
+				<DelaySign>true</DelaySign>
+			</PropertyGroup>
+			<PropertyGroup>
+				<BuildDependsOn>DownloadKey;$(BuildDependsOn)</BuildDependsOn>
+			</PropertyGroup>
+		</When>
+	</Choose>
 
 	<Target Name="DownloadKey" Condition=" '$(REMOTE_KEY)' != '' And !Exists('$(SolutionDir)download.snk') And '$(DelaySign)' == 'true' ">
 		<Message Importance="high" Text="Downloading remote key." />
@@ -33,7 +39,7 @@
 		<CreateProperty Value="$(SolutionDir)download.snk">
 			<Output TaskParameter="Value" PropertyName="AssemblyOriginatorKeyFile" />
 		</CreateProperty>
-		<CreateProperty Value="">
+		<CreateProperty Value="false">
 			<Output TaskParameter="Value" PropertyName="DelaySign" />
 		</CreateProperty>
 	</Target>
