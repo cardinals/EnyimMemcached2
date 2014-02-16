@@ -27,13 +27,15 @@ namespace Enyim.Caching.Memcached.Configuration
 			var to = section.Connection.Timeout;
 
 			container
-				.AutoWireAs<ISocket, SafeSocket>()
+				.AutoWireAs<ISocket, AsyncSocket>()
 				.InitializedBy((c, socket) =>
 				{
-					socket.BufferSize = bs;
-					socket.ConnectionTimeout = to;
+					// TODO fix socket intialization
+					//socket.BufferSize = bs;
+					//socket.ConnectionTimeout = to;
 				})
 				.ReusedWithin(ReuseScope.None);
+
 
 			// TODO figure out component lifetimes
 			section.NodeLocator.RegisterInto(container, typeof(DefaultNodeLocator));
@@ -47,7 +49,9 @@ namespace Enyim.Caching.Memcached.Configuration
 				.Register<ICluster>(c => new MemcachedCluster(endpoints,
 															c.Resolve<INodeLocator>(),
 															c.Resolve<IReconnectPolicy>(),
-															c.LazyResolve<MemcachedNode, System.Net.IPEndPoint>()))
+															c.Resolve<IFailurePolicy>(),
+															c.LazyResolve<ISocket>()
+															))
 				.InitializedBy((_, c) => c.Start())
 				.ReusedWithin(ReuseScope.Container);
 		}

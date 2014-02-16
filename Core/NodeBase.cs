@@ -20,11 +20,8 @@ namespace Enyim.Caching
 		private readonly ISocket socket;
 
 		private readonly ConcurrentQueue<Data> writeQueue;
-		private readonly Queue<Data> readQueue;
-		private readonly Queue<Data> bufferQueue;
-
-		private readonly WriteBuffer writeBuffer;
-		private readonly ReceiveBuffer readStream;
+		private readonly AdvQueue<Data> readQueue;
+		private readonly AdvQueue<Data> bufferQueue;
 
 		private int state;
 		private IRequest currentWriteCopier;
@@ -33,25 +30,38 @@ namespace Enyim.Caching
 
 		private bool mustReconnect;
 
-		protected NodeBase(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
+		private ICounter counterEnqueuePerSec;
+		private ICounter counterDequeuePerSec;
+		private ICounter counterWritePerSec;
+		private ICounter counterErrorPerSec;
+		private ICounter counterItemCount;
+		private ICounter counterQueue;
+		private IGauge gaugeSendSpeed;
+
+		protected NodeBase(IPEndPoint endpoint, ICluster owner, IFailurePolicy failurePolicy, ISocket socket)
 		{
+			counterEnqueuePerSec = Metrics.Meter("node enqueue/sec", endpoint.ToString(), Interval.Seconds);
+			counterDequeuePerSec = Metrics.Meter("node dequeue/sec", endpoint.ToString(), Interval.Seconds);
+			counterWritePerSec = Metrics.Meter("node write/sec", endpoint.ToString(), Interval.Seconds);
+			counterErrorPerSec = Metrics.Meter("node in error/sec", endpoint.ToString(), Interval.Seconds);
+			counterItemCount = Metrics.Counter("commands", endpoint.ToString());
+			counterQueue = Metrics.Counter("queue length", endpoint.ToString());
+			gaugeSendSpeed = Metrics.Gauge("send speed", endpoint.ToString());
+
 			this.owner = owner;
 			this.endpoint = endpoint;
 			this.socket = socket;
 			this.failurePolicy = failurePolicy;
 
 			this.writeQueue = new ConcurrentQueue<Data>();
-			this.readQueue = new Queue<Data>();
-			this.bufferQueue = new Queue<Data>();
-
-			this.writeBuffer = new WriteBuffer(CONSTS.BufferSize);
-			this.readStream = new ReceiveBuffer(CONSTS.BufferSize);
+			this.readQueue = new AdvQueue<Data>();
+			this.bufferQueue = new AdvQueue<Data>();
 
 			this.mustReconnect = true;
 			IsAlive = true;
 		}
 
-		protected WriteBuffer WriteBuffer { get { return writeBuffer; } }
+		protected WriteBuffer WriteBuffer { get { return socket.WriteBuffer; } }
 		public IPEndPoint EndPoint { get { return endpoint; } }
 
 		public bool IsAlive
@@ -95,11 +105,19 @@ namespace Enyim.Caching
 		public virtual Task<IOperation> Enqueue(IOperation op)
 		{
 			var tcs = new TaskCompletionSource<IOperation>();
+			counterItemCount.Increment();
 
 			if (IsAlive)
+			{
 				writeQueue.Enqueue(new Data { Op = op, Task = tcs });
+				counterEnqueuePerSec.Increment();
+				counterQueue.Increment();
+			}
 			else
+			{
+				counterErrorPerSec.Increment();
 				tcs.SetException(new IOException(endpoint + " is not alive"));
+			}
 
 			return tcs.Task;
 		}
@@ -144,18 +162,15 @@ namespace Enyim.Caching
 			FailQueue(readQueue, fail);
 			if (currentWriteOp.Task != null) currentWriteOp.Task.SetException(fail);
 
-			// data read previously cannot be trusted
-			readStream.Reset();
-			// write buffer may start with a partial op when a previous send fails
-			writeBuffer.Reset();
-
 			currentWriteOp = Data.Empty;
 			currentWriteCopier = null;
 			inprogressResponse = null;
 		}
 
-		private void FailQueue(Queue<Data> queue, Exception e)
+		private void FailQueue(AdvQueue<Data> queue, Exception e)
 		{
+			counterErrorPerSec.IncrementBy(queue.Count);
+
 			foreach (var data in queue)
 				data.Task.SetException(e);
 
@@ -170,7 +185,7 @@ namespace Enyim.Caching
 		{
 			// check if we have an op in progress
 			if (currentWriteCopier == null) return false;
-			if (currentWriteCopier.WriteTo(writeBuffer)) return true;
+			if (currentWriteCopier.WriteTo(socket.WriteBuffer)) return true;
 
 			// last chunk was sent
 			if (log.IsTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
@@ -188,37 +203,48 @@ namespace Enyim.Caching
 		{
 			Debug.Assert(IsAlive);
 
+			if (sendInProgress) return false;
+
 			if (!SendInProgressOp())
 			{
 				// no in progress op (or just finished), try filling up the buffer
-				while (!writeBuffer.IsFull && DequeueAndWrite()) ;
-				//{
-				//	if (!DequeueAndWrite()) 
-				//		break;
-				//}
+				while (!socket.WriteBuffer.IsFull && DequeueAndWrite()) ;
 			}
 
 			// did we write anything?
-			if (writeBuffer.Position > 0)
+			if (socket.WriteBuffer.Position > 0)
 			{
 				FlushWriteBuffer();
 
 				return true;
 			}
 
-			Debug.Assert(bufferQueue.Count == 0);
+			//Debug.Assert(bufferQueue.Count == 0);
 
 			return false;
 		}
 
 		protected virtual void FlushWriteBuffer()
 		{
-			var data = writeBuffer.GetBuffer();
-			socket.Send(data, 0, writeBuffer.Position);
-			writeBuffer.Reset();
-
-			if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
 			if (log.IsTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
+
+			counterWritePerSec.Increment();
+			sendInProgress = true;
+
+			var sw = Stopwatch.StartNew();
+
+			socket.ScheduleSend(success =>
+			{
+				if (!success) HandleIOFail(new IOException("send fail"));
+				else
+				{
+					if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
+
+					gaugeSendSpeed.Set(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency);
+					sendInProgress = false;
+					owner.NeedsIO(this);
+				}
+			});
 		}
 
 		private uint bufferCounter;
@@ -227,9 +253,13 @@ namespace Enyim.Caching
 		{
 			Data data;
 
-			return writeQueue.TryDequeue(out data)
-					? data
-					: Data.Empty;
+			if (writeQueue.TryDequeue(out data))
+			{
+				counterQueue.Decrement();
+				return data;
+			}
+
+			return Data.Empty;
 		}
 
 		private bool DequeueAndWrite()
@@ -239,6 +269,7 @@ namespace Enyim.Caching
 			if (data.IsEmpty)
 				return false;
 
+			counterDequeuePerSec.Increment();
 			WriteOp(data);
 
 			return true;
@@ -251,7 +282,7 @@ namespace Enyim.Caching
 
 			var request = data.Op.CreateRequest();
 
-			if (!request.WriteTo(writeBuffer)) // fully written
+			if (!request.WriteTo(socket.WriteBuffer)) // fully written
 			{
 				bufferQueue.Enqueue(data);
 				request.Dispose();
@@ -271,21 +302,26 @@ namespace Enyim.Caching
 		protected abstract IResponse CreateResponse();
 
 		private bool receiveInProgress;
+		private bool sendInProgress;
 
 		private bool PerformReceive2()
 		{
 			Debug.Assert(IsAlive);
-			if (readQueue.Count == 0 || receiveInProgress) return false;
+			if (readQueue.Count == 0 || sendInProgress || receiveInProgress) return false;
 
 		fill:
 			// no data to process => read the socket
-			if (readStream.EOF)
+			if (socket.ReadBuffer.IsEmpty)
 			{
 				receiveInProgress = true;
-				readStream.FillAsync(socket, () =>
+				socket.ScheduleReceive(success =>
 				{
-					receiveInProgress = false;
-					owner.NeedsIO(this);
+					if (!success) HandleIOFail(new IOException("receive fail"));
+					else
+					{
+						receiveInProgress = false;
+						owner.NeedsIO(this);
+					}
 				});
 
 				return false;
@@ -295,10 +331,10 @@ namespace Enyim.Caching
 			{
 				var response = inprogressResponse ?? CreateResponse();
 
-				if (response.Read(readStream)) // is IO pending? (if response is not read fully)
+				if (response.Read(socket.ReadBuffer)) // is IO pending? (if response is not read fully)
 				{
 					// the ony reason to need data should be an empty receive buffer
-					Debug.Assert(readStream.EOF);
+					Debug.Assert(socket.ReadBuffer.IsEmpty);
 					Debug.Assert(inprogressResponse == null);
 
 					inprogressResponse = response;

@@ -9,17 +9,21 @@ namespace Enyim.Caching.Memcached
 {
 	public class MemcachedCluster : BasicCluster
 	{
-		private readonly Func<IPEndPoint, INode> nodeFactory;
+		private readonly IFailurePolicy failurePolicy;
+		private readonly Func<ISocket> socketFactory;
 
-		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy policy, Func<IPEndPoint, MemcachedNode> nodeFactory)
-			: base(endpoints, locator, policy)
+		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints,
+								INodeLocator locator, IReconnectPolicy reconnectPolicy, IFailurePolicy failurePolicy,
+								Func<ISocket> socketFactory)
+			: base(endpoints, locator, reconnectPolicy)
 		{
-			this.nodeFactory = nodeFactory;
+			this.failurePolicy = failurePolicy;
+			this.socketFactory = socketFactory;
 		}
 
 		protected override INode CreateNode(IPEndPoint endpoint)
 		{
-			return nodeFactory(endpoint);
+			return new MemcachedNode(this, endpoint, failurePolicy, socketFactory());
 		}
 	}
 }

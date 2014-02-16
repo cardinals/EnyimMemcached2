@@ -1,4 +1,4 @@
-﻿#define _TRACK_ALLOCATIONS
+﻿#if USE_BUFFER_POOL
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -41,7 +41,7 @@ namespace Enyim.Caching.Memcached.Operations
 			pool.ReturnBuffer(buffer);
 		}
 
-		#region Leak detection
+#region Leak detection
 
 #if TRACK_ALLOCATIONS
 
@@ -79,6 +79,8 @@ namespace Enyim.Caching.Memcached.Operations
 	}
 
 }
+
+#endif
 
 #region [ License information          ]
 

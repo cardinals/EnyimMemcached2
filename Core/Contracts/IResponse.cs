@@ -3,9 +3,9 @@ using System.IO;
 
 namespace Enyim.Caching
 {
-	public interface IResponse: IDisposable
+	public interface IResponse : IDisposable
 	{
-		bool Read(Stream stream);
+		bool Read(ReadBuffer stream);
 	}
 }
 

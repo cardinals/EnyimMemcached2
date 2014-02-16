@@ -23,17 +23,16 @@ namespace Enyim.Caching
 
 		private readonly Thread worker;
 		private readonly ManualResetEventSlim workerIsDone;
-		private readonly ConcurrentQueue<INode> reconnectedNodes;
 
 		private INode[] allNodes;
 		private INode[] workingNodes;
 		private NodeQueue ioQueue;
 
-		protected BasicCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy policy)
+		protected BasicCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy reconnectPolicy)
 		{
 			this.endpoints = endpoints.ToArray();
 			this.locator = locator;
-			this.policy = policy;
+			this.policy = reconnectPolicy;
 
 			this.worker = new Thread(Worker);
 #if DEBUG
@@ -42,7 +41,6 @@ namespace Enyim.Caching
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.workerIsDone = new ManualResetEventSlim(false);
-			this.reconnectedNodes = new ConcurrentQueue<INode>();
 		}
 
 		static BasicCluster()
@@ -84,6 +82,8 @@ namespace Enyim.Caching
 					}
 				}
 			}
+
+			SocketAsyncEventArgsPool.Instance.Compact();
 		}
 
 		public virtual Task<IOperation> Execute(IItemOperation op)
@@ -101,7 +101,7 @@ namespace Enyim.Caching
 
 		public virtual Task<IOperation[]> Broadcast(Func<INode, IOperation> createOp)
 		{
-			// create local "copy" of the reference
+			// create local "copy" of the reference, as
 			// workingNodes is never changed but replaced
 			var nodes = workingNodes;
 			var tasks = new List<Task<IOperation>>(nodes.Length);
@@ -164,14 +164,15 @@ namespace Enyim.Caching
 			if (log.IsInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
 
 			var when = policy.Schedule(node);
-			if (log.IsDebugEnabled) log.Debug("Will reconnect after " + when);
 
 			if (when == TimeSpan.Zero)
 			{
+				if (log.IsInfoEnabled) log.Info("Will reconnect now");
 				ReconnectNow(node, false);
 			}
 			else
 			{
+				if (log.IsInfoEnabled) log.Info("Will reconnect after " + when);
 				Task
 					.Delay(when, shutdownToken.Token)
 					.ContinueWith(_ => ReconnectNow(node, true),
@@ -188,6 +189,7 @@ namespace Enyim.Caching
 				node.Connect(reset, shutdownToken.Token);
 
 				ReAddNode(node);
+				ioQueue.Add(node); // trigger IO on this node
 			}
 			catch (Exception e)
 			{
@@ -224,7 +226,6 @@ namespace Enyim.Caching
 			}
 
 			locator.Initialize(existing);
-			ioQueue.Add(node); // trigger IO on this node
 		}
 
 		private void FailNode(INode node, Exception e)

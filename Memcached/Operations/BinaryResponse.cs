@@ -13,9 +13,10 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_DONE = 3;
 
 		// 128 is the minimum size handled by the BuffferManager
+#if USE_BUFFER_POOL
 		private const int ArraySize = 128;
 		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
-
+#endif
 		private string responseMessage;
 
 		private byte[] header;
@@ -28,19 +29,25 @@ namespace Enyim.Caching.Memcached.Operations
 		internal BinaryResponse()
 		{
 			StatusCode = -1;
-			header = bufferPool.Acquire(Protocol.HeaderLength);// new byte[Protocol.HeaderLength];
+#if USE_BUFFER_POOL
+			header = bufferPool.Acquire(Protocol.HeaderLength);
+#else
+			header = new byte[Protocol.HeaderLength];
+#endif
 			remainingHeader = Protocol.HeaderLength;
 			state = STATE_NEED_HEADER;
 		}
 
 		void IDisposable.Dispose()
 		{
+#if USE_BUFFER_POOL
 			if (header != null)
 			{
 				GC.SuppressFinalize(this);
 				bufferPool.Release(header);
 				header = null;
 			}
+#endif
 		}
 
 		public byte OpCode;
@@ -63,11 +70,11 @@ namespace Enyim.Caching.Memcached.Operations
 					: (this.responseMessage ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
 		}
 
-		bool IResponse.Read(Stream stream)
+		bool IResponse.Read(ReadBuffer buffer)
 		{
 			if (state == STATE_NEED_HEADER)
 			{
-				remainingHeader -= stream.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
+				remainingHeader -= buffer.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
 				Debug.Assert(remainingHeader >= 0);
 
 				if (remainingHeader > 0)
@@ -84,7 +91,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 			if (state == STATE_NEED_BODY)
 			{
-				remainingData -= stream.Read(body, body.Length - remainingData, remainingData);
+				remainingData -= buffer.Read(body, body.Length - remainingData, remainingData);
 				Debug.Assert(remainingData >= 0);
 
 				if (remainingData > 0)

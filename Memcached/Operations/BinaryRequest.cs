@@ -1,5 +1,4 @@
-﻿#define _TRACK_ALLOCATIONS
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -19,7 +18,9 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_WRITE_BODY = 3;
 		private const int STATE_DONE = 4;
 
+#if USE_BUFFER_POOL
 		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
+#endif
 		private static int InstanceCounter;
 
 		private byte[] header;
@@ -34,11 +35,16 @@ namespace Enyim.Caching.Memcached.Operations
 		public BinaryRequest(byte commandCode, byte extraLength)
 		{
 			this.Operation = commandCode;
+			//this.CorrelationId = (uint)(++InstanceCounter);
 			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
 
 			this.headerLength = Protocol.HeaderLength + extraLength;
 			// prealloc header so that the extra data an be placed into the same buffer
+#if USE_BUFFER_POOL
 			this.header = bufferPool.Acquire(headerLength);
+#else
+			this.header = new byte[headerLength];
+#endif
 			this.Extra = extraLength == 0
 							? new ArraySegment<byte>()
 							: new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
@@ -46,12 +52,14 @@ namespace Enyim.Caching.Memcached.Operations
 
 		void IDisposable.Dispose()
 		{
+#if USE_BUFFER_POOL
 			if (header != null)
 			{
 				GC.SuppressFinalize(this);
 				bufferPool.Release(header);
 				header = null;
 			}
+#endif
 		}
 
 		bool IRequest.WriteTo(WriteBuffer buffer)

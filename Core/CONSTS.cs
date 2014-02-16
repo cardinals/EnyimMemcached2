@@ -1,11 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace Enyim.Caching
 {
-	public interface IRequest : IDisposable
+	public class CONSTS
 	{
-		bool WriteTo(WriteBuffer buffer);
+		public const int BufferSize = 32 * 1024;
 	}
 }
 

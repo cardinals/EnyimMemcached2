@@ -6,17 +6,16 @@ namespace Enyim.Caching
 {
 	public interface ISocket : IDisposable
 	{
-		void Connect(IPEndPoint endpoint, CancellationToken token);
-		int Receive(byte[] buffer, int offset, int count);
-		void Send(byte[] buffer, int offset, int count);
-
 		bool IsAlive { get; }
-		int BufferSize { get; set; }
+		ReadBuffer ReadBuffer { get; }
+		WriteBuffer WriteBuffer { get; }
+
 		TimeSpan ConnectionTimeout { get; set; }
 		TimeSpan ReceiveTimeout { get; set; }
 
-		void ReceiveAsync(byte[] buffer, int offset, int count, Action<int> whenDone);
-		bool ReceiveInProgress { get; }
+		void Connect(IPEndPoint endpoint, CancellationToken token);
+		void ScheduleReceive(Action<bool> whenDone);
+		void ScheduleSend(Action<bool> whenDone);
 	}
 }
 

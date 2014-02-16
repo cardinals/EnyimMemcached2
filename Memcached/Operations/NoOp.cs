@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -12,6 +13,8 @@ namespace Enyim.Caching.Memcached.Operations
 
 		protected override IOperationResult CreateResult(BinaryResponse response)
 		{
+			Debug.Assert(response != null);
+
 			return BinaryOperationResult.FromResponse(response);
 		}
 	}

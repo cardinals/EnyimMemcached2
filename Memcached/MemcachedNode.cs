@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using System.Threading;
 using Enyim.Caching.Memcached.Operations;
+using System.Runtime.CompilerServices;
 
 namespace Enyim.Caching.Memcached
 {
@@ -21,7 +22,7 @@ namespace Enyim.Caching.Memcached
 		private bool lasWasSilent = false;
 
 		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
-			: base(owner, endpoint, failurePolicy, socket) { }
+			: base(endpoint, owner, failurePolicy, socket) { }
 
 		public override void Connect(bool reset, CancellationToken token)
 		{
@@ -63,6 +64,7 @@ namespace Enyim.Caching.Memcached
 			silentCount = 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool IsSilent(IOperation op)
 		{
 			var silent = op as ICanBeSilent;

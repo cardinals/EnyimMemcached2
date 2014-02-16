@@ -42,10 +42,10 @@ namespace Enyim.Caching
 
 		private class IndexSet
 		{
-			const int TRUE = 1;
-			const int FALSE = 0;
+			private const int TRUE = 1;
+			private const int FALSE = 0;
 
-			private int[] data;
+			private readonly int[] data;
 
 			public IndexSet(int capacity)
 			{
@@ -62,7 +62,7 @@ namespace Enyim.Caching
 				return Interlocked.CompareExchange(ref data[index], FALSE, TRUE) == TRUE;
 			}
 
-			public bool IsSet(int index)
+			public bool Contains(int index)
 			{
 				return Interlocked.CompareExchange(ref data[index], -1, -1) == TRUE;
 			}

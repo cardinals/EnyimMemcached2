@@ -1,48 +1,49 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace Enyim.Caching
 {
-	public class WriteBuffer
+	public class ReadBuffer
 	{
-		private readonly byte[] buffer;
+		private readonly byte[] readBuffer;
 		private readonly int bufferOffset;
-		private readonly int length;
+		private readonly int bufferLength;
+
+		private int length;
 		private int position;
 
-		internal WriteBuffer(byte[] buffer, int offset, int count)
+		internal ReadBuffer(byte[] buffer, int offset, int count)
 		{
-			this.buffer = buffer;
-			this.bufferOffset = offset;
-			this.length = count;
+			readBuffer = buffer;
+			bufferOffset = offset;
+			bufferLength = count;
 		}
 
-		internal int BufferOffset { get { return bufferOffset; } }
-		public int Length { get { return length; } }
 		public int Position { get { return position; } }
-		public bool IsFull { get { return position == length; } }
+		public int Length { get { return length; } }
+		public bool IsEmpty { get { return position == length; } }
 
-		public int Append(byte[] data, int offset, int count)
+		public int Read(byte[] buffer, int offset, int count)
 		{
-			var canWrite = length - position;
+			var canRead = length - position;
 
-			if (canWrite <= 0) return 0;
-			if (canWrite > count) canWrite = count;
+			if (canRead <= 0) return 0;
+			if (canRead > count) canRead = count;
 
-			Buffer.BlockCopy(data, offset, buffer, position + bufferOffset, canWrite);
+			Buffer.BlockCopy(readBuffer, bufferOffset + position, buffer, offset, canRead);
 
-			position += canWrite;
+			position += canRead;
 
-			return canWrite;
+			return canRead;
 		}
 
-		public bool CanWrite(int count)
+		internal void Reset(int length)
 		{
-			return length - position >= count;
-		}
+			Debug.Assert(length <= bufferLength, "length cannot be larger than bufferLength");
 
-		public void Reset()
-		{
-			position = 0;
+			this.position = 0;
+			this.length = (int)length;
 		}
 	}
 }
