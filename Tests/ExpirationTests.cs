@@ -9,22 +9,22 @@ namespace Tests
 		[Fact]
 		public void TestTimeSpan()
 		{
-			Assert.Equal(TestClient.PublicGetExpiration(TimeSpan.Zero), 0u);
-			Assert.Equal(TestClient.PublicGetExpiration(TimeSpan.FromSeconds(100)), 100u);
-			Assert.Equal(TestClient.PublicGetExpiration(TimeSpan.MaxValue), 0u);
+			Assert.Equal(0u, TestClient.PublicGetExpiration(TimeSpan.Zero));
+			Assert.Equal(100u, TestClient.PublicGetExpiration(TimeSpan.FromSeconds(100)));
+			Assert.Equal(0u, TestClient.PublicGetExpiration(TimeSpan.MaxValue));
 
-			using (SystemTime.Set(() => new DateTime(2012, 1, 1)))
+			using (SystemTime.Set(() => new DateTime(2011, 12, 31, 23, 0, 0, DateTimeKind.Utc)))
 			{
-				Assert.Equal(TestClient.PublicGetExpiration(TimeSpan.FromDays(31)), 1328050800u);
+				Assert.Equal(1328050800u, TestClient.PublicGetExpiration(TimeSpan.FromDays(31)));
 			}
 		}
 
 		[Fact]
 		public void TestDateTime()
 		{
-			Assert.Equal(TestClient.PublicGetExpiration(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)), 0u);
-			Assert.Equal(TestClient.PublicGetExpiration(DateTime.MaxValue), 0u);
-			Assert.Equal(TestClient.PublicGetExpiration(new DateTime(2012, 2, 1)), 1328050800u);
+			Assert.Equal(0u, TestClient.PublicGetExpiration(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)));
+			Assert.Equal(0u, TestClient.PublicGetExpiration(DateTime.MaxValue));
+			Assert.Equal(1328050800u, TestClient.PublicGetExpiration(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc)));
 		}
 
 		private class TestClient : MemcachedClient
