@@ -4,9 +4,14 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("enyim.com")]
 [assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó")]
 
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+#if DEBUG
+[assembly: AssemblyConfiguration("DEBUG")]
+#endif
+#if RELEASE
+[assembly: AssemblyConfiguration("RELEASE")]
+#endif
+
+// Assembly versioning is handled by VersionInfo.targets
 
 #region [ License information          ]
 
