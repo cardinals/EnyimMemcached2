@@ -12,6 +12,8 @@ namespace Enyim.Caching
 	public abstract class NodeBase : INode
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
+		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
 
 		private readonly ICluster owner;
 		private readonly IPEndPoint endpoint;
@@ -82,7 +84,7 @@ namespace Enyim.Caching
 			Debug.Assert(readQueue.Count == 0);
 			Debug.Assert(bufferQueue.Count == 0);
 
-			if (log.IsDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
+			if (LogDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
 
 			socket.Connect(endpoint, token);
 			if (reset) writeQueue.Clear();
@@ -188,7 +190,7 @@ namespace Enyim.Caching
 			if (currentWriteCopier.WriteTo(socket.WriteBuffer)) return true;
 
 			// last chunk was sent
-			if (log.IsTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
+			if (LogTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
 
 			// finished writing, clean up
 			bufferQueue.Enqueue(currentWriteOp);
@@ -226,7 +228,7 @@ namespace Enyim.Caching
 
 		protected virtual void FlushWriteBuffer()
 		{
-			if (log.IsTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
+			if (LogTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
 
 			counterWritePerSec.Increment();
 			sendInProgress = true;
@@ -287,7 +289,7 @@ namespace Enyim.Caching
 				bufferQueue.Enqueue(data);
 				request.Dispose();
 
-				if (log.IsTraceEnabled) log.Trace("Full send of " + data.Op);
+				if (LogTraceEnabled) log.Trace("Full send of " + data.Op);
 			}
 			else
 			{
@@ -295,7 +297,7 @@ namespace Enyim.Caching
 				// as "in-progress"; PerformSend will loop until it's fully sent
 				currentWriteOp = data;
 				currentWriteCopier = request;
-				if (log.IsTraceEnabled) log.Trace("Partial send of " + data.Op);
+				if (LogTraceEnabled) log.Trace("Partial send of " + data.Op);
 			}
 		}
 

@@ -12,6 +12,12 @@ namespace Enyim.Caching
 	public abstract class BasicCluster : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
+		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
+		private static readonly bool LogInfoEnabled = log.IsInfoEnabled;
+		private static readonly bool LogWarnEnabled = log.IsWarnEnabled;
+		private static readonly bool LogErrorEnabled = log.IsErrorEnabled;
+
 		private static readonly TaskCompletionSource<IOperation> failSingle;
 		private static readonly TaskCompletionSource<IOperation[]> failBroadcast;
 
@@ -77,7 +83,7 @@ namespace Enyim.Caching
 					try { node.Shutdown(); }
 					catch (Exception e)
 					{
-						if (log.IsErrorEnabled)
+						if (LogErrorEnabled)
 							log.Error("Error while shutting down " + node, e);
 					}
 				}
@@ -139,7 +145,7 @@ namespace Enyim.Caching
 
 						if (requeue)
 						{
-							if (log.IsTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
+							if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
 							ioQueue.Add(node);
 						}
 					}
@@ -154,25 +160,25 @@ namespace Enyim.Caching
 				}
 			}
 
-			if (log.IsDebugEnabled) log.Debug("shutdownToken was cancelled, finishing work");
+			if (LogDebugEnabled) log.Debug("shutdownToken was cancelled, finishing work");
 
 			workerIsDone.Set();
 		}
 
 		protected virtual void ScheduleReconnect(INode node)
 		{
-			if (log.IsInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
+			if (LogInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
 
 			var when = policy.Schedule(node);
 
 			if (when == TimeSpan.Zero)
 			{
-				if (log.IsInfoEnabled) log.Info("Will reconnect now");
+				if (LogInfoEnabled) log.Info("Will reconnect now");
 				ReconnectNow(node, false);
 			}
 			else
 			{
-				if (log.IsInfoEnabled) log.Info("Will reconnect after " + when);
+				if (LogInfoEnabled) log.Info("Will reconnect after " + when);
 				Task
 					.Delay(when, shutdownToken.Token)
 					.ContinueWith(_ => ReconnectNow(node, true),
@@ -193,7 +199,7 @@ namespace Enyim.Caching
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled)
+				if (LogErrorEnabled)
 					log.Error("Failed to reconnect", e);
 
 				ScheduleReconnect(node);
@@ -202,7 +208,7 @@ namespace Enyim.Caching
 
 		private void ReAddNode(INode node)
 		{
-			if (log.IsDebugEnabled) log.Debug("Node {0} was reconnected", node.EndPoint);
+			if (LogDebugEnabled) log.Debug("Node {0} was reconnected", node.EndPoint);
 
 			policy.Reset(node);
 
@@ -230,7 +236,7 @@ namespace Enyim.Caching
 
 		private void FailNode(INode node, Exception e)
 		{
-			if (log.IsWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
+			if (LogWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
 
 			var existing = Volatile.Read(ref workingNodes);
 

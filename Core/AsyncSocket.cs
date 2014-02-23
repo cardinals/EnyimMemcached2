@@ -12,6 +12,9 @@ namespace Enyim.Caching
 	public class AsyncSocket : ISocket
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
+		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
+		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
+
 		private readonly object InstanceLock = new object();
 
 		private IPEndPoint endpoint;
@@ -58,7 +61,7 @@ namespace Enyim.Caching
 
 		private void DestroySocket()
 		{
-			if (log.IsTraceEnabled) log.Trace("DestroySocket");
+			if (LogTraceEnabled) log.Trace("DestroySocket");
 
 			if (socket != null)
 			{
@@ -72,7 +75,7 @@ namespace Enyim.Caching
 				}
 				catch (Exception e)
 				{
-					if (log.IsDebugEnabled) log.Debug("Exception while destroying socket.", e);
+					if (LogDebugEnabled) log.Debug("Exception while destroying socket.", e);
 				}
 
 				socket = null;
@@ -103,7 +106,7 @@ namespace Enyim.Caching
 
 		private void RecreateSocket()
 		{
-			if (log.IsTraceEnabled) log.Trace("RecreateSocket");
+			if (LogTraceEnabled) log.Trace("RecreateSocket");
 			DestroySocket();
 
 			var tmp = ToTimeout(ReceiveTimeout);
@@ -180,7 +183,7 @@ namespace Enyim.Caching
 				if (socket.ConnectAsync(opt)
 					&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
 				{
-					if (log.IsTraceEnabled) log.Trace("mre.Wait() timeout while connecting");
+					if (LogTraceEnabled) log.Trace("mre.Wait() timeout while connecting");
 
 					Socket.CancelConnectAsync(opt);
 					throw new TimeoutException();
@@ -189,7 +192,7 @@ namespace Enyim.Caching
 				if (opt.SocketError != SocketError.Success)
 					throw new IOException("Could not connect to " + endpoint);
 
-				if (log.IsDebugEnabled) log.Debug(endpoint + " is connected");
+				if (LogDebugEnabled) log.Debug(endpoint + " is connected");
 
 				IsAlive = true;
 			}
