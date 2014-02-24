@@ -12,7 +12,7 @@ namespace Enyim.Caching
 	public static class Metrics
 	{
 		private static readonly object CacheLock = new Object();
-		private static readonly Dictionary<string, IMetric> Cache = new Dictionary<string, IMetric>();
+		private static readonly SortedList<string, IMetric> Cache = new SortedList<string, IMetric>();
 
 		private static IMetricFactory Factory = new Internal.DefaultMetricFactory();
 
@@ -24,39 +24,111 @@ namespace Enyim.Caching
 		public static IMetric[] GetAll()
 		{
 			lock (CacheLock)
-				return Cache.Values.ToArray();
+			{
+				var retval = new IMetric[Cache.Count];
+				Cache.Values.CopyTo(retval, 0);
+
+				return retval;
+			}
 		}
 
 		private static IMetric New(string name, string instance, Func<IMetric> create)
 		{
 			IMetric retval;
-			var key = name + "." + instance;
+			var key = String.IsNullOrEmpty(instance)
+						? name
+						: name + "\t" + instance;
 
 			if (!Cache.TryGetValue(key, out retval))
 				lock (CacheLock)
 					if (!Cache.TryGetValue(key, out retval))
-						Cache[key] = retval = create();
+					{
+						retval = create();
+						Cache.Add(key, retval);
+					}
 
 			return retval;
 		}
 
 		public static ICounter Counter(string name, string instance)
 		{
-			return (ICounter)New(name, instance, () => Factory.Counter(name, instance));
+			var parent = (ICounter)New(name, null, () => Factory.Counter(name));
+
+			return (ICounter)New(name, instance, () => Factory.Counter(parent, instance));
 		}
 
 		public static IMeter Meter(string name, string instance, Interval interval)
 		{
-			return (IMeter)New(name, instance, () => Factory.Meter(name, instance, interval));
+			var parent = (IMeter)New(name, null, () => Factory.Meter(name, interval));
+
+			return (IMeter)New(name, instance, () => Factory.Meter(parent, instance, interval));
 		}
 
 		public static IGauge Gauge(string name, string instance)
 		{
-			return (IGauge)New(name, instance, () => Factory.Gauge(name, instance));
+			var parent = (IGauge)New(name, null, () => Factory.Gauge(name));
+
+			return (IGauge)New(name, instance, () => Factory.Gauge(parent, instance));
 		}
 	}
 
-	public abstract class MetricsVisitor
+	public interface IMetricFactory
+	{
+		ICounter Counter(string name);
+		IMeter Meter(string name, Interval interval);
+		IGauge Gauge(string name);
+
+		ICounter Counter(ICounter parent, string instance);
+		IMeter Meter(IMeter parent, string instance, Interval interval);
+		IGauge Gauge(IGauge parent, string instance);
+	}
+
+	public interface IMetric
+	{
+		string Name { get; }
+		string Instance { get; }
+		IMetric Parent { get; }
+	}
+
+	public interface IGauge : IMetric
+	{
+		void Set(long value);
+
+		long Value { get; }
+		long Min { get; }
+		long Max { get; }
+	}
+
+	public interface ICounter : IMetric
+	{
+		void Reset();
+		void Increment();
+		void Decrement();
+		void IncrementBy(int value);
+		void DecrementBy(int value);
+		long Count { get; }
+	}
+
+	public interface IMeter : ICounter
+	{
+		double Rate { get; }
+		Interval Interval { get; }
+	}
+
+	public enum Interval
+	{
+		Nanoseconds,
+		Microseconds,
+		Milliseconds,
+		Seconds,
+		Minutes,
+		Hours,
+		Days
+	}
+
+	#region [ MetricsVisitor               ]
+
+	internal abstract class MetricsVisitor
 	{
 		public virtual void Visit(IEnumerable<IMetric> metrics)
 		{
@@ -85,6 +157,9 @@ namespace Enyim.Caching
 		protected abstract void Visit(IGauge gauge);
 	}
 
+	#endregion
+	#region [ StringBuilderVisitor         ]
+
 	class StringBuilderVisitor : MetricsVisitor
 	{
 		private StringBuilder sb;
@@ -96,26 +171,24 @@ namespace Enyim.Caching
 
 		public override void Visit(IEnumerable<IMetric> metrics)
 		{
-			var grouped = metrics.OrderBy(m => m.Instance).ToLookup(m => m.Name);
-
-			foreach (var g in grouped)
+			foreach (var m in metrics)
 			{
-				sb.AppendLine(g.Key);
-				sb.AppendLine("========================================");
+				if (m.Parent == null)
+				{
+					sb.AppendLine();
+					sb.AppendFormat("{0,-22}", m.Name);
+				}
+				else
+				{
+					sb.AppendFormat("{0,20}: ", m.Instance);
+				}
 
-				base.Visit(g);
+				Visit(m);
+				sb.AppendLine("      ");
 
-				sb.AppendLine();
+				if (m.Parent == null)
+					sb.AppendLine("========================================");
 			}
-		}
-
-		protected override void Visit(IMetric metric)
-		{
-			sb.AppendFormat("{0,20}: ", metric.Instance);
-
-			base.Visit(metric);
-
-			sb.AppendLine("      ");
 		}
 
 		protected override void Visit(IMeter meter)
@@ -133,6 +206,9 @@ namespace Enyim.Caching
 			sb.AppendFormat("{0} ({1}/{2})", gauge.Value, gauge.Min, gauge.Max);
 		}
 	}
+
+	#endregion
+	#region [ ConsoleReporter              ]
 
 	public class ConsoleReporter
 	{
@@ -174,6 +250,9 @@ namespace Enyim.Caching
 		}
 	}
 
+	#endregion
+	#region [ CsvReporter                  ]
+	/*
 	public class CsvReporter
 	{
 		private List<Tuple<DateTime, Tuple<string, string, double>[]>> data;
@@ -250,45 +329,11 @@ namespace Enyim.Caching
 		}
 	}
 
-	public interface IMetricFactory
-	{
-		ICounter Counter(string name, string instance);
-		IMeter Meter(string name, string instance, Interval interval);
-		IGauge Gauge(string name, string instance);
-	}
+	*/
+	#endregion
+	#region [ IntervalConverter            ]
 
-	public interface IMetric
-	{
-		string Name { get; }
-		string Instance { get; }
-	}
-
-	public interface IGauge : IMetric
-	{
-		void Set(long value);
-
-		long Value { get; }
-		long Min { get; }
-		long Max { get; }
-	}
-
-	public interface ICounter : IMetric
-	{
-		void Reset();
-		void Increment();
-		void Decrement();
-		void IncrementBy(int value);
-		void DecrementBy(int value);
-		long Count { get; }
-	}
-
-	public interface IMeter : ICounter
-	{
-		double Rate { get; }
-		Interval Interval { get; }
-	}
-
-	static class IntervalConverter
+	internal static class IntervalConverter
 	{
 		static readonly long[][] ConversionMatrix = CreateMatrix();
 
@@ -323,58 +368,80 @@ namespace Enyim.Caching
 		}
 	}
 
-	public enum Interval
-	{
-		Nanoseconds,
-		Microseconds,
-		Milliseconds,
-		Seconds,
-		Minutes,
-		Hours,
-		Days
-	}
+	#endregion
+	#region [ Internal impl.               ]
 
 	namespace Internal
 	{
 		class DefaultMetricFactory : IMetricFactory
 		{
-			public ICounter Counter(string name, string instance)
+			public ICounter Counter(string name)
 			{
-				return new SharedCounter(name, instance);
+				return new SharedCounter(name);
 			}
 
-			public IMeter Meter(string name, string instance, Interval interval)
+			public IMeter Meter(string name, Interval interval)
 			{
-				return new DefaultMeter(name, instance, interval);
+				return new DefaultMeter(name, interval);
 			}
 
-			public IGauge Gauge(string name, string instance)
+			public IGauge Gauge(string name)
 			{
-				return new DefaultGauge(name, instance);
+				return new DefaultGauge(name);
+			}
+
+			public ICounter Counter(ICounter parent, string instance)
+			{
+				return new SharedCounter(parent, instance);
+			}
+
+			public IMeter Meter(IMeter parent, string instance, Interval interval)
+			{
+				return new DefaultMeter(parent, instance, interval);
+			}
+
+			public IGauge Gauge(IGauge parent, string instance)
+			{
+				return new DefaultGauge(parent, instance);
 			}
 		}
 
 		abstract class DefaultMetric : IMetric
 		{
-			protected DefaultMetric(string name, string instance)
+			private readonly IMetric parent;
+			private readonly string name;
+
+			protected DefaultMetric(IMetric parent, string instance)
 			{
-				Name = name;
+				this.parent = parent;
 				Instance = instance;
 			}
 
-			public string Name { get; private set; }
+			protected DefaultMetric(string name)
+			{
+				this.name = name;
+			}
+
+			public string Name { get { return name ?? parent.Name; } }
 			public string Instance { get; private set; }
+			IMetric IMetric.Parent { get { return parent; } }
 		}
 
 		class DefaultGauge : DefaultMetric, IGauge
 		{
-			public DefaultGauge(string name, string instance) : base(name, instance) { }
+			public DefaultGauge(string name) : base(name) { }
+			public DefaultGauge(IMetric parent, string instance) : base(parent, instance) { }
+
+			public IGauge Parent { get { return ((IMetric)this).Parent as IGauge; } }
 
 			public void Set(long value)
 			{
 				Value = value;
 				if (Min > value) Min = value;
 				if (Max < value) Max = value;
+
+				var p = Parent;
+				if (p != null) p.Set(value);
 			}
 
 			public long Value { get; private set; }
@@ -382,58 +449,29 @@ namespace Enyim.Caching
 			public long Max { get; private set; }
 		}
 
-		class DefaultCounter : DefaultMetric, ICounter
-		{
-			private long count;
-
-			public DefaultCounter(string name, string instance) : base(name, instance) { }
-
-			public virtual void Reset()
-			{
-				Interlocked.Exchange(ref count, 0);
-			}
-
-			public void Increment()
-			{
-				Interlocked.Increment(ref count);
-			}
-
-			public void Decrement()
-			{
-				Interlocked.Decrement(ref count);
-			}
-
-			public void IncrementBy(int value)
-			{
-				Interlocked.Add(ref count, value);
-			}
-
-			public void DecrementBy(int value)
-			{
-				Interlocked.Add(ref count, -value);
-			}
-
-			public long Count
-			{
-				get { return count; }
-			}
-		}
-
 		class SharedCounter : DefaultMetric, ICounter
 		{
 			private long global;
 			private Entry[] slices;
 
+			public SharedCounter(string name)
+				: base(name)
+			{
+				Initialize();
+			}
+
+			public SharedCounter(IMetric parent, string instance)
+				: base(parent, instance)
+			{
+				Initialize();
+			}
+
+			public ICounter Parent { get { return ((IMetric)this).Parent as ICounter; } }
+
 			private struct Entry
 			{
 				public int ThreadId;
 				public long Value;
-			}
-
-			public SharedCounter(string name, string instance)
-				: base(name, instance)
-			{
-				Initialize();
 			}
 
 			private void Initialize()
@@ -446,6 +484,9 @@ namespace Enyim.Caching
 			public virtual void Reset()
 			{
 				Initialize();
+
+				var p = Parent;
+				if (p != null) p.Reset();
 			}
 
 			public void Increment()
@@ -470,6 +511,9 @@ namespace Enyim.Caching
 
 			private void ChangeBy(int by)
 			{
+				var p = Parent as SharedCounter;
+				if (p != null) p.ChangeBy(by);
+
 				var threadId = Thread.CurrentThread.ManagedThreadId;
 
 				for (var i = 0; i < slices.Length; i++)
@@ -513,8 +557,15 @@ namespace Enyim.Caching
 			private readonly Stopwatch stopwatch;
 			private readonly Interval interval;
 
-			public DefaultMeter(string name, string instance, Interval interval)
-				: base(name, instance)
+			public DefaultMeter(string name, Interval interval)
+				: base(name)
+			{
+				this.interval = interval;
+				this.stopwatch = Stopwatch.StartNew();
+			}
+
+			public DefaultMeter(IMetric parent, string instance, Interval interval)
+				: base(parent, instance)
 			{
 				this.interval = interval;
 				this.stopwatch = Stopwatch.StartNew();
@@ -539,18 +590,10 @@ namespace Enyim.Caching
 					return retval;
 				}
 			}
-
-			//public double Rate
-			//{
-			//	get
-			//	{
-			//		var by = IntervalConverter.Convert(stopwatch.ElapsedTicks * NanoTick, Interval.Nanoseconds, interval);
-
-			//		return by == 0 ? 0 : Count / by;
-			//	}
-			//}
 		}
 	}
+
+	#endregion
 }
 
 #region [ License information          ]
