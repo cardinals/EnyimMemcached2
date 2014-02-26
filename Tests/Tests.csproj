@@ -55,8 +55,8 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="..\Copyright.cs">
-      <Link>Properties\Copyright.cs</Link>
+    <Compile Include="..\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="ConfigurationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -11,7 +11,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("RELEASE")]
 #endif
 
-// Assembly versioning is handled by VersionInfo.targets
+// we use semantic versioning; version number is incremented by hand
+[assembly: AssemblyVersion("4.0.0")]
+
+// AssemblyFileVersion & AssemblyInformationalVersion
+// is provided by the VersionInfo.targets
+
 
 #region [ License information          ]
 
