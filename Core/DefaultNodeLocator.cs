@@ -139,14 +139,12 @@ namespace Enyim.Caching
 				return FailedTask.Task;
 			}
 
-			public bool Send()
+			public void Send()
 			{
-				return false;
 			}
 
-			public bool Receive()
+			public void Receive()
 			{
-				return false;
 			}
 
 			public override string ToString()

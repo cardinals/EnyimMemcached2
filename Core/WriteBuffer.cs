@@ -40,7 +40,7 @@ namespace Enyim.Caching
 			return length - position >= count;
 		}
 
-		public void Reset()
+		internal void Reset()
 		{
 			position = 0;
 		}

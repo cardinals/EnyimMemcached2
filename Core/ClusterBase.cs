@@ -9,21 +9,19 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public abstract class BasicCluster : ICluster
+	public abstract class ClusterBase : ICluster
 	{
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
 		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
 		private static readonly bool LogInfoEnabled = log.IsInfoEnabled;
-		private static readonly bool LogWarnEnabled = log.IsWarnEnabled;
-		private static readonly bool LogErrorEnabled = log.IsErrorEnabled;
 
 		private static readonly TaskCompletionSource<IOperation> failSingle;
 		private static readonly TaskCompletionSource<IOperation[]> failBroadcast;
 
 		private readonly IPEndPoint[] endpoints;
 		private readonly INodeLocator locator;
-		private readonly IReconnectPolicy policy;
+		private readonly IReconnectPolicy reconnectPolicy;
 
 		private readonly CancellationTokenSource shutdownToken;
 
@@ -34,22 +32,19 @@ namespace Enyim.Caching
 		private INode[] workingNodes;
 		private NodeQueue ioQueue;
 
-		protected BasicCluster(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy reconnectPolicy)
+		protected ClusterBase(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy reconnectPolicy)
 		{
 			this.endpoints = endpoints.ToArray();
 			this.locator = locator;
-			this.policy = reconnectPolicy;
+			this.reconnectPolicy = reconnectPolicy;
 
 			this.worker = new Thread(Worker);
-#if DEBUG
-			this.worker.Name = "worker";
-#endif
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.workerIsDone = new ManualResetEventSlim(false);
 		}
 
-		static BasicCluster()
+		static ClusterBase()
 		{
 			var allDead = new IOException("All nodes are dead.");
 
@@ -83,7 +78,7 @@ namespace Enyim.Caching
 					try { node.Shutdown(); }
 					catch (Exception e)
 					{
-						if (LogErrorEnabled)
+						if (log.IsErrorEnabled)
 							log.Error("Error while shutting down " + node, e);
 					}
 				}
@@ -131,23 +126,15 @@ namespace Enyim.Caching
 		{
 			while (!shutdownToken.IsCancellationRequested)
 			{
-				var requeue = false;
-
 				try
 				{
 					var node = ioQueue.Take(shutdownToken.Token);
 
 					try
 					{
-						if (node.Send()) requeue = true;
+						node.Send();
 						if (shutdownToken.IsCancellationRequested) break;
-						if (node.Receive()) requeue = true;
-
-						if (requeue)
-						{
-							if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
-							ioQueue.Add(node);
-						}
+						node.Receive();
 					}
 					catch (Exception e)
 					{
@@ -169,7 +156,7 @@ namespace Enyim.Caching
 		{
 			if (LogInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
 
-			var when = policy.Schedule(node);
+			var when = reconnectPolicy.Schedule(node);
 
 			if (when == TimeSpan.Zero)
 			{
@@ -199,7 +186,7 @@ namespace Enyim.Caching
 			}
 			catch (Exception e)
 			{
-				if (LogErrorEnabled)
+				if (log.IsErrorEnabled)
 					log.Error("Failed to reconnect", e);
 
 				ScheduleReconnect(node);
@@ -210,7 +197,7 @@ namespace Enyim.Caching
 		{
 			if (LogDebugEnabled) log.Debug("Node {0} was reconnected", node.EndPoint);
 
-			policy.Reset(node);
+			reconnectPolicy.Reset(node);
 
 			var existing = Volatile.Read(ref workingNodes);
 
@@ -236,7 +223,7 @@ namespace Enyim.Caching
 
 		private void FailNode(INode node, Exception e)
 		{
-			if (LogWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
+			if (log.IsWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
 
 			var existing = Volatile.Read(ref workingNodes);
 
@@ -259,6 +246,7 @@ namespace Enyim.Caching
 
 		public void NeedsIO(INode node)
 		{
+			if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
 			ioQueue.Add(node);
 		}
 	}

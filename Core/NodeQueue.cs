@@ -12,13 +12,13 @@ namespace Enyim.Caching
 	internal class NodeQueue
 	{
 		private readonly BlockingCollection<INode> queue;
-		private readonly IndexSet set;
+		private readonly ConcurrentIndexSet set;
 		private readonly Dictionary<INode, int> nodeIndexes;
 
 		internal NodeQueue(INode[] allNodes)
 		{
 			this.queue = new BlockingCollection<INode>();
-			this.set = new IndexSet(allNodes.Length);
+			this.set = new ConcurrentIndexSet(allNodes.Length);
 			this.nodeIndexes = Enumerable
 									.Range(0, allNodes.Length)
 									.ToDictionary(k => allNodes[k], k => k);
@@ -38,16 +38,16 @@ namespace Enyim.Caching
 			return retval;
 		}
 
-		#region [ IndexSet                     ]
+		#region [ ConcurrentIndexSet           ]
 
-		private class IndexSet
+		private class ConcurrentIndexSet
 		{
 			private const int TRUE = 1;
 			private const int FALSE = 0;
 
 			private readonly int[] data;
 
-			public IndexSet(int capacity)
+			public ConcurrentIndexSet(int capacity)
 			{
 				data = new int[capacity];
 			}

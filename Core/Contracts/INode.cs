@@ -15,8 +15,8 @@ namespace Enyim.Caching
 		IPEndPoint EndPoint { get; }
 
 		Task<IOperation> Enqueue(IOperation op);
-		bool Send();
-		bool Receive();
+		void Send();
+		void Receive();
 	}
 }
 

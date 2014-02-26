@@ -124,23 +124,12 @@ namespace Enyim.Caching
 			return tcs.Task;
 		}
 
-		public virtual bool Send()
-		{
-			return Run(PerformSend);
-		}
-
-		public virtual bool Receive()
-		{
-			return Run(PerformReceive2);
-		}
-
-		private bool Run(Func<bool> work)
+		public virtual void Send()
 		{
 			try
 			{
 				if (mustReconnect) Connect(false, CancellationToken.None);
-
-				return IsAlive && work();
+				if (IsAlive) PerformSend();
 			}
 			catch (Exception e)
 			{
@@ -152,7 +141,28 @@ namespace Enyim.Caching
 				}
 
 				mustReconnect = true;
-				return true;
+				owner.NeedsIO(this);
+			}
+		}
+
+		public virtual void Receive()
+		{
+			try
+			{
+				if (mustReconnect) Connect(false, CancellationToken.None);
+				if (IsAlive) PerformReceive2();
+			}
+			catch (Exception e)
+			{
+				if (failurePolicy.ShouldFail())
+				{
+					IsAlive = false;
+					HandleIOFail(e);
+					throw;
+				}
+
+				mustReconnect = true;
+				owner.NeedsIO(this);
 			}
 		}
 
@@ -201,11 +211,11 @@ namespace Enyim.Caching
 			return false;
 		}
 
-		private bool PerformSend()
+		private void PerformSend()
 		{
 			Debug.Assert(IsAlive);
 
-			if (sendInProgress) return false;
+			if (sendInProgress) return;
 
 			if (!SendInProgressOp())
 			{
@@ -215,15 +225,7 @@ namespace Enyim.Caching
 
 			// did we write anything?
 			if (socket.WriteBuffer.Position > 0)
-			{
 				FlushWriteBuffer();
-
-				return true;
-			}
-
-			//Debug.Assert(bufferQueue.Count == 0);
-
-			return false;
 		}
 
 		protected virtual void FlushWriteBuffer()
@@ -306,10 +308,10 @@ namespace Enyim.Caching
 		private bool receiveInProgress;
 		private bool sendInProgress;
 
-		private bool PerformReceive2()
+		private void PerformReceive2()
 		{
 			Debug.Assert(IsAlive);
-			if (readQueue.Count == 0 || sendInProgress || receiveInProgress) return false;
+			if (readQueue.Count == 0 || sendInProgress || receiveInProgress) return;
 
 		fill:
 			// no data to process => read the socket
@@ -326,7 +328,7 @@ namespace Enyim.Caching
 					}
 				});
 
-				return false;
+				return;
 			}
 
 			while (readQueue.Count > 0)
@@ -371,8 +373,6 @@ namespace Enyim.Caching
 
 				response.Dispose();
 			}
-
-			return false;
 		}
 
 		protected struct Data

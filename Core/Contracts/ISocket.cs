@@ -6,16 +6,51 @@ namespace Enyim.Caching
 {
 	public interface ISocket : IDisposable
 	{
+		/// <summary>
+		/// Gets a value that indicates whether the socket is still connected and can be used for communication.
+		/// </summary>
 		bool IsAlive { get; }
-		ReadBuffer ReadBuffer { get; }
-		WriteBuffer WriteBuffer { get; }
 
+		/// <summary>
+		/// Gets or sets a value that specifies the size of the send buffer.
+		/// </summary>
+		int SendBufferSize { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value that specifies the size of the receive buffer.
+		/// </summary>
+		int ReceiveBufferSize { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value that specifies the amount of time after which a connect operation will time out and the socket is considered dead.
+		/// </summary>
 		TimeSpan ConnectionTimeout { get; set; }
+		/// <summary>
+		/// Gets or sets a value that specifies the amount of time after which a send operation will time out and the socket is considered dead.
+		/// </summary>
+		TimeSpan SendTimeout { get; set; }
+		/// <summary>
+		/// Gets or sets a value that specifies the amount of time after which a receive operation will time out and the socket is considered dead.
+		/// </summary>
 		TimeSpan ReceiveTimeout { get; set; }
 
+		/// <summary>
+		/// Gets the buffer that contains the data read from the remote endpoint.
+		/// </summary>
+		ReadBuffer ReadBuffer { get; }
+		/// <summary>
+		/// Gets the buffer that contains the data that will be sent to the remote endpoint.
+		/// </summary>
+		WriteBuffer WriteBuffer { get; }
+
+		/// <summary>
+		/// Establishes a connection to a remote host.
+		/// </summary>
+		/// <param name="endpoint">The endpoint to connect to.</param>
+		/// <param name="token">cancel</param>
 		void Connect(IPEndPoint endpoint, CancellationToken token);
-		void ScheduleReceive(Action<bool> whenDone);
 		void ScheduleSend(Action<bool> whenDone);
+		void ScheduleReceive(Action<bool> whenDone);
 	}
 }
 

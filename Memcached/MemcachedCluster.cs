@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
-	public class MemcachedCluster : BasicCluster
+	public class MemcachedCluster : ClusterBase
 	{
 		private readonly IFailurePolicy failurePolicy;
 		private readonly Func<ISocket> socketFactory;

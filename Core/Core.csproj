@@ -71,7 +71,7 @@
     <Compile Include="SocketAsyncEventArgsPool.cs" />
     <Compile Include="CONSTS.cs" />
     <Compile Include="AsyncSocket.cs" />
-    <Compile Include="BasicCluster.cs" />
+    <Compile Include="ClusterBase.cs" />
     <Compile Include="DefaultNodeLocator.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ImmediateFailurePolicy.cs" />

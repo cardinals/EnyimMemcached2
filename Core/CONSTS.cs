@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Enyim.Caching
 {
-	public class CONSTS
+	internal class CONSTS
 	{
 		public const int BufferSize = 32 * 1024;
 	}
