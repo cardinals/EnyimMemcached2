@@ -23,19 +23,12 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		public static void RegisterInto(this ClusterConfigurationElement section, Funq.Container container)
 		{
-			var bs = section.Connection.BufferSize;
-			var to = section.Connection.Timeout;
+			var p = section.Connection.Clone();
 
 			container
 				.AutoWireAs<ISocket, AsyncSocket>()
-				.InitializedBy((c, socket) =>
-				{
-					// TODO fix socket intialization
-					//socket.BufferSize = bs;
-					//socket.ConnectionTimeout = to;
-				})
+				.InitializedBy((c, socket) => { p.Update(socket); })
 				.ReusedWithin(ReuseScope.None);
-
 
 			// TODO figure out component lifetimes
 			section.NodeLocator.RegisterInto(container, typeof(DefaultNodeLocator));

@@ -69,7 +69,6 @@
     <Compile Include="LogManager.cs" />
     <Compile Include="ReadBuffer.cs" />
     <Compile Include="SocketAsyncEventArgsPool.cs" />
-    <Compile Include="CONSTS.cs" />
     <Compile Include="AsyncSocket.cs" />
     <Compile Include="ClusterBase.cs" />
     <Compile Include="DefaultNodeLocator.cs" />

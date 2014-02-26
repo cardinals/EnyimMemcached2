@@ -6,21 +6,77 @@ namespace Enyim.Caching.Configuration
 {
 	public class ConnectionElement : ConfigurationElement
 	{
-		[ConfigurationProperty("bufferSize", IsRequired = false, DefaultValue = 16384)]
-		[IntegerValidator(MinValue = 1)]
-		public int BufferSize
+		[IntegerValidator(MinValue = 1, MaxValue = 1024 * 1024)]
+		[ConfigurationProperty("sendBufferSize", IsRequired = false, DefaultValue = 32 * 1024)]
+		public int SendBufferSize
 		{
-			get { return (int)base["bufferSize"]; }
-			set { base["bufferSize"] = value; }
+			get { return (int)base["sendBufferSize"]; }
+			set { base["sendBufferSize"] = value; }
 		}
 
-		[ConfigurationProperty("timeout", IsRequired = false, DefaultValue = "00:00:10")]
+		[IntegerValidator(MinValue = 1, MaxValue = 1024 * 1024)]
+		[ConfigurationProperty("receiveBufferSize", IsRequired = false, DefaultValue = 32 * 1024)]
+		public int ReceiveBufferSize
+		{
+			get { return (int)base["receiveBufferSize"]; }
+			set { base["receiveBufferSize"] = value; }
+		}
+
+		[ConfigurationProperty("connectionTimeout", IsRequired = false, DefaultValue = "00:00:10")]
 		[PositiveTimeSpanValidator]
 		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
-		public TimeSpan Timeout
+		public TimeSpan ConnectionTimeout
 		{
-			get { return (TimeSpan)base["timeout"]; }
-			set { base["timeout"] = value; }
+			get { return (TimeSpan)base["connectionTimeout"]; }
+			set { base["connectionTimeout"] = value; }
+		}
+
+		[PositiveTimeSpanValidator]
+		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
+		[ConfigurationProperty("sendTimeout", IsRequired = false, DefaultValue = "00:00:10")]
+		public TimeSpan SendTimeout
+		{
+			get { return (TimeSpan)base["sendTimeout"]; }
+			set { base["sendTimeout"] = value; }
+		}
+
+		[PositiveTimeSpanValidator]
+		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
+		[ConfigurationProperty("receiveTimeout", IsRequired = false, DefaultValue = "00:00:10")]
+		public TimeSpan ReceiveTimeout
+		{
+			get { return (TimeSpan)base["receiveTimeout"]; }
+			set { base["receiveTimeout"] = value; }
+		}
+
+		internal ConnectionParams Clone()
+		{
+			return new ConnectionParams
+			{
+				SendBufferSize = SendBufferSize,
+				ReceiveBufferSize = ReceiveBufferSize,
+				ConnectionTimeout = ConnectionTimeout,
+				SendTimeout = SendTimeout,
+				ReceiveTimeout = ReceiveTimeout
+			};
+		}
+
+		internal class ConnectionParams
+		{
+			public int SendBufferSize { get; set; }
+			public int ReceiveBufferSize { get; set; }
+			public TimeSpan ConnectionTimeout { get; set; }
+			public TimeSpan SendTimeout { get; set; }
+			public TimeSpan ReceiveTimeout { get; set; }
+
+			public void Update(ISocket socket)
+			{
+				socket.SendBufferSize = SendBufferSize;
+				socket.ReceiveBufferSize = ReceiveBufferSize;
+				socket.ConnectionTimeout = ConnectionTimeout;
+				socket.SendTimeout = SendTimeout;
+				socket.ReceiveTimeout = ReceiveTimeout;
+			}
 		}
 	}
 }
