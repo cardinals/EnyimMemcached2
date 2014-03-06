@@ -33,7 +33,7 @@ namespace Enyim.Caching.Configuration
 		{
 			var retval = BaseGet(name) as ClusterConfigurationElement;
 			if (retval == null)
-				throw new KeyNotFoundException("cluster '" + name + "' not found");
+				throw new KeyNotFoundException("cluster '" + (String.IsNullOrEmpty(name) ? "<default>" : name) + "' not found");
 
 			return retval;
 		}

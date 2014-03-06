@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Enyim.Caching.Configuration;
@@ -9,100 +10,31 @@ namespace Enyim.Caching.Memcached.Configuration
 {
 	public static class ConfigurationManager
 	{
-		private static readonly Dictionary<string, Container> ClientCache = new Dictionary<string, Container>();
-		private static readonly Dictionary<string, Container> ClusterCache = new Dictionary<string, Container>();
-		private static readonly object OnClientCache = new Object();
-		private static readonly object OnClusterCache = new Object();
+		private const string DefaultName = "<default>";
+		private static readonly ConcurrentDictionary<string, Container> ClientCache = new ConcurrentDictionary<string, Container>();
+		private static readonly ConcurrentDictionary<string, Container> ClusterCache = new ConcurrentDictionary<string, Container>();
 
-		public static IContainer GetSection(string section)
+		internal static void CacheCluster(string name, Container container)
 		{
-			return new ContainerWrapper(GetClientContainer(section));
+			if (!ClusterCache.TryAdd(name ?? String.Empty, container))
+				throw new ArgumentException("Cluster already exists: " + (name ?? DefaultName));
 		}
 
-		private static Container GetClientContainer(string clientName)
+		internal static Container GetCluster(string name)
 		{
 			Container retval;
 
-			if (!ClientCache.TryGetValue(clientName, out retval))
-			{
-				lock (OnClientCache)
-				{
-					if (!ClientCache.TryGetValue(clientName, out retval))
-					{
-						retval = BuildClientContainer(clientName);
-						ClientCache[clientName] = retval;
-					}
-				}
-			}
+			if (!ClusterCache.TryGetValue(name ?? String.Empty, out retval))
+				throw new ArgumentException("Cluster is not registered: " + (name ?? DefaultName));
 
 			return retval;
 		}
 
-		private static Container BuildClientContainer(string clientName)
+		internal static void CacheClient(string name, Container container)
 		{
-			var section = CM.GetSection(clientName) as ClientConfigurationSection;
-			var root = GetClusterContainer(section.Cluster ?? String.Empty);
-			var retval = root.CreateChildContainer();
-
-			section.RegisterInto(retval);
-
-			return retval;
+			if (!ClientCache.TryAdd(name ?? String.Empty, container))
+				throw new ArgumentException("Client already exists: " + (name ?? DefaultName));
 		}
-
-		private static Container GetClusterContainer(string clusterName)
-		{
-			Debug.Assert(clusterName != null);
-			Container retval;
-
-			if (!ClusterCache.TryGetValue(clusterName, out retval))
-			{
-				lock (OnClusterCache)
-				{
-					if (!ClusterCache.TryGetValue(clusterName, out retval))
-					{
-						retval = BuildClusterContainer(clusterName);
-						ClusterCache[clusterName] = retval;
-					}
-				}
-			}
-
-			return retval;
-		}
-
-		private static Container BuildClusterContainer(string clusterName)
-		{
-			var section = CM.GetSection("enyim.com/memcached/clusters") as ClustersConfigurationSection;
-			Require.NotNull(section, "name", "enyim.com/memcached/clusters section is missing");
-
-			var retval = new Container();
-			section.Clusters.ByName(clusterName).RegisterInto(retval);
-
-			return retval;
-		}
-
-		#region [ ContainerWrapper             ]
-
-		private class ContainerWrapper : IContainer
-		{
-			private readonly Container root;
-
-			public ContainerWrapper(Container root)
-			{
-				this.root = root;
-			}
-
-			public TService Resolve<TService>()
-			{
-				return root.Resolve<TService>();
-			}
-
-			public void Dispose()
-			{
-				root.Dispose();
-			}
-		}
-
-		#endregion
 	}
 }
 

@@ -11,8 +11,18 @@ namespace Enyim.Caching
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
 	public class AsyncSocket : ISocket
 	{
-		private const int DefaultBufferSize = 32 * 1024;
-		private const int MaxBufferSize = 1024 * 1024;
+		public static class Defaults
+		{
+			public const int MaxBufferSize = 1024 * 1024;
+			public const int MinBufferSize = 4096;
+
+			public const int SendBufferSize = 32 * 1024;
+			public const int ReceiveBufferSize = 32 * 1024;
+
+			public const int ConnectionTimeoutMsec = 10000;
+			public const int SendTimeoutMsec = 10000;
+			public const int ReceiveTimeoutMsec = 10000;
+		}
 
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
@@ -38,12 +48,12 @@ namespace Enyim.Caching
 
 		public AsyncSocket()
 		{
-			ConnectionTimeout = TimeSpan.FromSeconds(10);
-			SendTimeout = TimeSpan.FromSeconds(10);
-			ReceiveTimeout = TimeSpan.FromSeconds(10);
+			ConnectionTimeout = TimeSpan.FromMilliseconds(Defaults.ConnectionTimeoutMsec);
+			SendTimeout = TimeSpan.FromMilliseconds(Defaults.SendTimeoutMsec);
+			ReceiveTimeout = TimeSpan.FromMilliseconds(Defaults.ReceiveTimeoutMsec);
 
-			SendBufferSize = DefaultBufferSize;
-			ReceiveBufferSize = DefaultBufferSize;
+			SendBufferSize = Defaults.SendBufferSize;
+			ReceiveBufferSize = Defaults.ReceiveBufferSize;
 		}
 
 		public void Connect(IPEndPoint endpoint, CancellationToken token)
@@ -238,9 +248,9 @@ namespace Enyim.Caching
 			set
 			{
 				ThrowIfConnected();
-				Require.Value("value", value > 0, "SendBufferSize must be > 0");
+				Require.Value("value", value >= Defaults.MinBufferSize, "SendBufferSize must be >= " + Defaults.MinBufferSize);
+				Require.Value("value", value <= Defaults.MaxBufferSize, "SendBufferSize must be <=- " + Defaults.MaxBufferSize);
 				Require.Value("value", value % 4096 == 0, "SendBufferSize must be a multiply of 4k");
-				Require.Value("value", value <= MaxBufferSize, "SendBufferSize must be <=- " + MaxBufferSize);
 
 				sendBufferSize = value;
 			}
@@ -252,9 +262,9 @@ namespace Enyim.Caching
 			set
 			{
 				ThrowIfConnected();
-				Require.Value("value", value > 0, "ReceiveBufferSize must be > 0");
+				Require.Value("value", value >= Defaults.MinBufferSize, "ReceiveBufferSize must be > 0" + Defaults.MinBufferSize);
+				Require.Value("value", value <= Defaults.MaxBufferSize, "ReceiveBufferSize must be <=- " + Defaults.MaxBufferSize);
 				Require.Value("value", value % 4096 == 0, "ReceiveBufferSize must be a multiply of 4k");
-				Require.Value("value", value <= MaxBufferSize, "ReceiveBufferSize must be <=- " + MaxBufferSize);
 
 				receiveBufferSize = value;
 			}

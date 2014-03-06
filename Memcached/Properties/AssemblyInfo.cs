@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Enyim.Caching.Memcached")]
 [assembly: AssemblyProduct("Enyim.Caching.Memcached")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Memcached client")]
 [assembly: ComVisible(false)]
 [assembly: Guid("934f5e21-0a76-4edd-a6df-e66379fa2e4c")]
 

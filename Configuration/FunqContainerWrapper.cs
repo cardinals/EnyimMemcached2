@@ -1,16 +1,24 @@
-﻿using System;
-using System.Linq;
-using System.Configuration;
+﻿using Funq;
 
-namespace Enyim.Caching.Configuration
+namespace Enyim.Caching.Memcached.Configuration
 {
-	public class ClustersConfigurationSection : ConfigurationSection
+	internal class FunqContainerWrapper : IContainer
 	{
-		[ConfigurationProperty("", IsDefaultCollection = true, Options = ConfigurationPropertyOptions.IsDefaultCollection)]
-		public ClusterConfigurationCollection Clusters
+		private readonly Container root;
+
+		public FunqContainerWrapper(Container root)
 		{
-			get { return (ClusterConfigurationCollection)base[""]; }
-			set { base[""] = value; }
+			this.root = root;
+		}
+
+		public TService Resolve<TService>()
+		{
+			return root.Resolve<TService>();
+		}
+
+		public void Dispose()
+		{
+			root.Dispose();
 		}
 	}
 }

@@ -23,7 +23,7 @@ namespace Enyim.Caching.Memcached
 
 		protected override INode CreateNode(IPEndPoint endpoint)
 		{
-			return new MemcachedNode(this, endpoint, failurePolicy, socketFactory());
+			return new MemcachedNode(this, endpoint, failurePolicy, socketFactory);
 		}
 	}
 }

@@ -45,6 +45,8 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="FastActivator.cs" />
+    <Compile Include="FluentBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationSection.cs" />
     <Compile Include="ClusterConfigurationCollection.cs" />
     <Compile Include="ClusterConfigurationElement.cs" />
@@ -52,6 +54,11 @@
     <Compile Include="ConfigurationManager.cs" />
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
+    <Compile Include="ConfigurationExtensions.cs" />
+    <Compile Include="FunqContainerWrapper.cs" />
+    <Compile Include="Syntax.cs" />
+    <Compile Include="ClientConfigurationBuilder.cs" />
+    <Compile Include="ClusterBuilder.cs" />
     <Compile Include="FunqExtensions.cs" />
     <Compile Include="Funq\Container.cs" />
     <Compile Include="Funq\Container.LazyResolve.cs">

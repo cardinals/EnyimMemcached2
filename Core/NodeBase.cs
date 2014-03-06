@@ -40,7 +40,7 @@ namespace Enyim.Caching
 		private ICounter counterQueue;
 		private IGauge gaugeSendSpeed;
 
-		protected NodeBase(IPEndPoint endpoint, ICluster owner, IFailurePolicy failurePolicy, ISocket socket)
+		protected NodeBase(IPEndPoint endpoint, ICluster owner, IFailurePolicy failurePolicy, Func<ISocket> socket)
 		{
 			counterEnqueuePerSec = Metrics.Meter("node enqueue/sec", endpoint.ToString(), Interval.Seconds);
 			counterDequeuePerSec = Metrics.Meter("node dequeue/sec", endpoint.ToString(), Interval.Seconds);
@@ -52,7 +52,7 @@ namespace Enyim.Caching
 
 			this.owner = owner;
 			this.endpoint = endpoint;
-			this.socket = socket;
+			this.socket = socket();
 			this.failurePolicy = failurePolicy;
 
 			this.writeQueue = new ConcurrentQueue<Data>();

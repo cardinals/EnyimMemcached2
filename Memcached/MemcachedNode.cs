@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached
 		private int silentCount;
 		private bool lasWasSilent = false;
 
-		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
+		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, Func<ISocket> socket)
 			: base(endpoint, owner, failurePolicy, socket) { }
 
 		public override void Connect(bool reset, CancellationToken token)

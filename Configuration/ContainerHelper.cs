@@ -11,51 +11,73 @@ namespace Enyim.Caching.Memcached.Configuration
 {
 	internal static class ContainerHelper
 	{
+		internal static void AddClusterDefauls(this Funq.Container container)
+		{
+			container.Register<Func<ISocket>>(_ => () => new AsyncSocket());
+			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
+			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
+			container.AutoWireAs<IReconnectPolicy, PeriodicReconnectPolicy>();
+
+			container.Register<ICluster>(_ => { throw new InvalidOperationException("Must register an ICluster implementation!"); });
+		}
+
+		internal static void AddClientDefauls(this Funq.Container container)
+		{
+			container.AutoWireAs<IOperationFactory, MemcachedOperationFactory>();
+			container.AutoWireAs<ITranscoder, DefaultTranscoder>();
+			container.AutoWireAs<IPerformanceMonitor, NullPerformanceMonitor>();
+			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
+		}
+
 		public static void RegisterInto(this ClientConfigurationSection section, Funq.Container container)
 		{
-			container.AutoWireAs<MemcachedNode, MemcachedNode, IPEndPoint>().ReusedWithin(ReuseScope.None);
+			container.AddClientDefauls();
 
-			section.OperationFactory.RegisterInto(container, typeof(MemcachedOperationFactory));
-			section.Transcoder.RegisterInto(container, typeof(DefaultTranscoder));
-			section.PerformanceMonitor.RegisterInto(container, typeof(NullPerformanceMonitor));
-			section.KeyTransformer.RegisterInto(container, typeof(NullKeyTransformer));
+			container.RegisterFrom(section.OperationFactory);
+			container.RegisterFrom(section.Transcoder);
+			container.RegisterFrom(section.PerformanceMonitor);
+			container.RegisterFrom(section.KeyTransformer);
 		}
 
 		public static void RegisterInto(this ClusterConfigurationElement section, Funq.Container container)
 		{
-			var p = section.Connection.Clone();
+			container.AddClusterDefauls();
+			container.RegisterFrom(section.NodeLocator);
+			container.RegisterFrom(section.FailurePolicy);
+			container.RegisterFrom(section.ReconnectPolicy);
+			container.RegisterCluster(section.Nodes.AsIPEndPoints());
 
-			container
-				.AutoWireAs<ISocket, AsyncSocket>()
-				.InitializedBy((c, socket) => { p.Update(socket); })
-				.ReusedWithin(ReuseScope.None);
+			section.Connection.RegisterInto(container);
+		}
 
-			// TODO figure out component lifetimes
-			section.NodeLocator.RegisterInto(container, typeof(DefaultNodeLocator));
-			section.FailurePolicy.RegisterInto(container, typeof(ImmediateFailurePolicy));
-			section.ReconnectPolicy.RegisterInto(container, typeof(PeriodicReconnectPolicy));
+		public static void RegisterInto(this ConnectionElement connectionElement, Funq.Container container)
+		{
+			if (connectionElement == null) return;
+			var p = connectionElement.Clone();
 
-			var endpoints = section.Nodes.AsIPEndPoints().ToArray();
+			container.Register<Func<ISocket>>(_ => () =>
+			{
+				var retval = new AsyncSocket();
+				p.Update(retval);
+
+				return retval;
+			});
+		}
+
+		internal static void RegisterCluster(this Container container, IEnumerable<IPEndPoint> endpoints)
+		{
+			var clone = endpoints.ToArray();
 
 			// such uglies
 			container
-				.Register<ICluster>(c => new MemcachedCluster(endpoints,
-															c.Resolve<INodeLocator>(),
-															c.Resolve<IReconnectPolicy>(),
-															c.Resolve<IFailurePolicy>(),
-															c.LazyResolve<ISocket>()
-															))
-				.InitializedBy((_, c) => c.Start())
-				.ReusedWithin(ReuseScope.Container);
+				.Register<ICluster>(c =>
+					new MemcachedCluster(clone,
+											c.Resolve<INodeLocator>(), c.Resolve<IReconnectPolicy>(),
+											c.Resolve<IFailurePolicy>(), c.LazyResolve<ISocket>()))
+				.InitializedBy((_, cluster) => cluster.Start());
 		}
 
-		public static IRegistration<TContract> TryRegisterInto<TContract>(this ProviderElement<TContract> element, Container target)
-			where TContract : class
-		{
-			return element.RegisterInto(target, null);
-		}
-
-		public static IRegistration<TContract> RegisterInto<TContract>(this ProviderElement<TContract> element, Container target, Type defaultImplementation)
+		public static IRegistration<TContract> RegisterFrom<TContract>(this Container container, ProviderElement<TContract> element, Type defaultImplementation = null)
 			where TContract : class
 		{
 			var type = element == null || element.Type == null
@@ -64,9 +86,13 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			if (type == null) return null;
 
-			var reg = target.AutoWireAs<TContract>(type);
+			var reg = container.AutoWireAs<TContract>(type);
 			if (typeof(ISupportInitialize).IsAssignableFrom(type))
-				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(element.Parameters));
+			{
+				// make a snapshot of the parameters
+				var clone = element.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+				reg.InitializedBy((c, instance) => ((ISupportInitialize)instance).Initialize(clone));
+			}
 
 			return reg;
 		}
