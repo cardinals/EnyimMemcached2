@@ -1,25 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
 	internal class NodeQueue
 	{
 		private readonly BlockingCollection<INode> queue;
-		private readonly ConcurrentIndexSet set;
+		private readonly NonLockingIndexSet set;
 		private readonly Dictionary<INode, int> nodeIndexes;
 
 		internal NodeQueue(INode[] allNodes)
 		{
-			this.queue = new BlockingCollection<INode>();
-			this.set = new ConcurrentIndexSet(allNodes.Length);
-			this.nodeIndexes = Enumerable
+			queue = new BlockingCollection<INode>();
+			set = new NonLockingIndexSet(allNodes.Length);
+			nodeIndexes = Enumerable
 									.Range(0, allNodes.Length)
 									.ToDictionary(k => allNodes[k], k => k);
 		}
@@ -65,6 +62,44 @@ namespace Enyim.Caching
 			public bool Contains(int index)
 			{
 				return Interlocked.CompareExchange(ref data[index], -1, -1) == TRUE;
+			}
+		}
+
+		#endregion
+		#region [ NonLockingIndexSet           ]
+		// TODO check if we need memory barriers
+		private class NonLockingIndexSet
+		{
+			private const int TRUE = 1;
+			private const int FALSE = 0;
+			private const int GAP = 64 / sizeof(int);
+
+			private readonly int[] data;
+
+			public NonLockingIndexSet(int capacity)
+			{
+				data = new int[capacity * GAP];
+			}
+
+			public bool Set(int index)
+			{
+				var old = data[index * GAP];
+				data[index * GAP] = TRUE;
+
+				return old == FALSE;
+			}
+
+			public bool Unset(int index)
+			{
+				var old = data[index * GAP];
+				data[index * GAP] = FALSE;
+
+				return old == TRUE;
+			}
+
+			public bool Contains(int index)
+			{
+				return data[index * GAP] == TRUE;
 			}
 		}
 
