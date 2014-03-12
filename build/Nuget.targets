@@ -1,0 +1,58 @@
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<NugetPath>"$(SolutionDir).nuget\nuget.exe"</NugetPath>
+		<NuspecPath Condition=" Exists('$(MSBuildProjectDirectory)\.nuget\$(MSBuildProjectName).nuspec') ">$(MSBuildProjectDirectory)\.nuget\$(MSBuildProjectName).nuspec</NuspecPath>
+		<NuspecPath Condition=" Exists('$(MSBuildProjectDirectory)\$(MSBuildProjectName).nuspec') ">$(MSBuildProjectDirectory)\$(MSBuildProjectName).nuspec</NuspecPath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn Condition=" '$(NuspecPath)' != '' ">$(CleanDependsOn);_DeleteNugetPackage</CleanDependsOn>
+	</PropertyGroup>
+
+	<Target Name="CreatePackage" DependsOnTargets="_DeleteNugetPackage" Condition=" '$(NuspecPath)' != '' ">
+		<GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+			<Output TaskParameter="Assemblies" ItemName="AssemblyVersion" />
+		</GetAssemblyIdentity>
+
+		<PropertyGroup>
+			<FullVersion>%(AssemblyVersion.Version)</FullVersion>
+			<LastDot>$(FullVersion.LastIndexOf('.'))</LastDot>
+			<SemanticVersion>$(FullVersion.Remove('$(LastDot)'))</SemanticVersion>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<CmdArgs Include="OutputDirectory">
+				<Value>$(OutputPath.TrimEnd('\'))</Value>
+			</CmdArgs>
+			<CmdArgs Include="BasePath">
+				<Value>$(MSBuildProjectDirectory.TrimEnd('\'))</Value>
+			</CmdArgs>
+			<CmdArgs Include="Version">
+				<Value>$(SemanticVersion)</Value>
+			</CmdArgs>
+			<CmdArgs Include="Verbosity">
+				<Value>detailed</Value>
+			</CmdArgs>
+			<CmdArgs Include="Properties">
+				<Value>configuration=$(Configuration)</Value>
+			</CmdArgs>
+		</ItemGroup>
+
+		<!-- generate command line -->
+		<PropertyGroup>
+			<_Exec>$(NugetPath) pack -NoDefaultExcludes </_Exec>
+			<_Exec>$(_Exec) @(CmdArgs -> '-%(Identity) "%(Value)"', ' ')</_Exec>
+			<_Exec>$(_Exec) $(NuspecPath)</_Exec>
+		</PropertyGroup>
+		<Exec Command="$(_Exec)" StandardOutputImportance="high" />
+	</Target>
+
+	<Target Name="_DeleteNugetPackage" Condition=" '$(NuspecPath)' != '' ">
+		<XmlPeek XmlInputPath="$(NuspecPath)" Query="//id/text()">
+			<Output TaskParameter="Result" PropertyName="PackageId" />
+		</XmlPeek>
+		<ItemGroup>
+			<_Del Include="$(OutputPath)\$(PackageId).*.nupkg" />
+		</ItemGroup>
+		<Delete Files="@(_Del)" ContinueOnError="false" />
+	</Target>
+</Project>

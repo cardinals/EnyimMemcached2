@@ -6,3 +6,5 @@ obj/
 Tester
 Sql/Sql.dbmdl
 enyim.snk
+out/
+*.apikey

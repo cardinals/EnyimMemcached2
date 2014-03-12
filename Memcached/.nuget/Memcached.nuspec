@@ -1,0 +1,19 @@
+﻿<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Enyim.Caching.Memcached</id>
+		<title>EnyimMemcached2</title>
+		<version>$version$</version>
+		<authors>Attila Kiskó</authors>
+		<owners>Attila Kiskó</owners>
+		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Memcached client library for .NET based languages.</description>
+		<tags>memcached enyim cache caching</tags>
+	</metadata>
+	<files>
+		<file src="bin\$configuration$\*" target="lib\net45" />
+		<file src=".nuget\*.xdt" target="content" />
+	</files>
+</package>

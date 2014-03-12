@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memcached", "Memcached\Memcached.csproj", "{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}"
 EndProject
@@ -24,14 +24,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B7653-D6D4-4469-A79E-F142D103E5FC}"
 	ProjectSection(SolutionItems) = preProject
-		Copyright.cs = Copyright.cs
+		AssemblyInfo.cs = AssemblyInfo.cs
+		build.ps1 = build.ps1
+		build\buildscript.ps1 = build\buildscript.ps1
 		footer.txt = footer.txt
-		ILMerge.targets = ILMerge.targets
+		build\ILMerge.targets = build\ILMerge.targets
 		LICENSE = LICENSE
-		SignAssembly.targets = SignAssembly.targets
-		VersionInfo.targets = VersionInfo.targets
+		build\Nuget.targets = build\Nuget.targets
+		build\ProjectDefaults.targets = build\ProjectDefaults.targets
+		build\SignAssembly.targets = build\SignAssembly.targets
+		build\Tasks.targets = build\Tasks.targets
+		build\VersionInfo.targets = build\VersionInfo.targets
 	EndProjectSection
-EndProject
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,7 +62,6 @@ Global
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
