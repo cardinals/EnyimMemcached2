@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Enyim.Caching.Log4NetAdapter</id>
+		<title>EnyimMemcached2 log4net Adapter</title>
+		<version>$version$</version>
+		<authors>Attila Kiskó</authors>
+		<owners>Attila Kiskó</owners>
+		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+		<projectUrl>https://github.com/enyim/EnyimMemcached2</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>log4net based logging adapter for the Enyim Memcached [2] library.</description>
+		<tags>memcached enyim cache caching log4net</tags>
+		<dependencies>
+			<dependency id="log4net" version="1.0.0"/>
+			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\$configuration$\Enyim.Caching.Log4net.*" target="lib\net45" />
+	</files>
+</package>
