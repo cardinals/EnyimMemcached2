@@ -66,7 +66,11 @@ param(
 import-module .\build\psake\psake.psm1
 try {
 
-	if ($ApiKey.Length -eq 0) { $ApiKey = gc "${Target}.apikey" }
+	if ($ApiKey.Length -eq 0) {
+		$fn = "${Target}.apikey"
+
+		if (test-path $fn) { $ApiKey = gc $fn }
+	}
 
 	invoke-psake -nologo -buildFile .\build\buildscript.ps1 -TaskList $Tasks -properties @{configuration=$configuration; platform=$platform; push_target=$target; push_symbols=$symbols; push_key = $APIKey }
 }
