@@ -24,6 +24,7 @@ Properties {
 	#used by build/package
 	$configuration = "Release"
 	$platform = "Any CPU"
+	$verbosity = "m"
 
 	#used by push
 	$push_target = "myget"
@@ -109,7 +110,16 @@ function invoke-msbuild($target, $props, $project) {
 			}).GetEnumerator() | % { $_.Name + "=" + $_.Value }
 		) -join ";"
 
-	Exec { msbuild $project /t:$target /p:"$p" /v:m /nologo }
+	$v = $verbosity
+	if ([String]::IsNullOrWhiteSpace($v)) { $v = "n" }
+
+	$extras = @( "/v:$v", "/nologo" )
+
+	if (![String]::IsNullOrWhiteSpace($env:AppVeyorCI)) {
+		$extras += @( "/logger:C:\Program^ Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" )
+	}
+
+	Exec { msbuild $project $extras /t:$target /p:"$p"  }
 }
 
 <#
