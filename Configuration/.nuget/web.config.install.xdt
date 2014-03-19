@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
+	<!-- insert an empty section-->
+	<configSections xdt:Transform="InsertBefore(/configuration/*[1])" />
+	<!-- append elements to the last section -->
+	<configSections xdt:Locator="XPath(/configuration/configSections[last()])">
+		<sectionGroup name="enyim.com" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing">
+			<sectionGroup name="memcached" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing">
+				<section name="clusters" type="Enyim.Caching.Configuration.ClustersConfigurationSection, Enyim.Caching.Memcached.Configuration" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
+				<section name="client" type="Enyim.Caching.Memcached.Configuration.ClientConfigurationSection, Enyim.Caching.Memcached.Configuration" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
+			</sectionGroup>
+		</sectionGroup>
+	</configSections>
+	<!-- remove all empty sections -->
+	<configSections xdt:Transform="RemoveAll" xdt:Locator="Condition(count(*)=0)" />
+
+	<enyim.com xdt:Transform="InsertIfMissing">
+		<memcached xdt:Transform="InsertIfMissing">
+			<clusters xdt:Transform="InsertIfMissing">
+				<!-- default cluster -->
+				<cluster>
+					<nodes>
+						<!--
+						<add address="192.168.1.1:11211" />
+						<add address="192.168.1.2:11211" />
+						-->
+					</nodes>
+					<connection timeout="00:00:10" />
+					<!--
+					<reconnectPolicy type="Enyim.Caching.Memcached.SimpleReconnectPolicy, Enyim.Caching.Memcached" immediate="True" interval="00:00:10" />
+					<failurePolicy type="Enyim.Caching.Memcached.SimpleFailurePolicy, Enyim.Caching.Memcached" failAfter="3" window="00:00:10" />
+					-->
+				</cluster>
+				<!-- define another cluster -->
+				<!--
+				<cluster name="second">
+					<nodes>
+						<add address="10.10.0.10:11211" />
+					</nodes>
+					<connection bufferSize="16384" timeout="00:00:01" />
+				</cluster>
+				-->
+			</clusters>
+		</memcached>
+	</enyim.com>
+
+</configuration>

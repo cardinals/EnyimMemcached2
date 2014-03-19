@@ -114,9 +114,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include=".nuget\app.config.install.xdt" />
-    <None Include=".nuget\Memcached.nuspec" />
-    <None Include=".nuget\web.config.install.xdt" />
+    <None Include="Memcached.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -9,7 +9,12 @@ $package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached2/api/v2/
 $symbol_push_urls = @{ "myget"="https://nuget.symbolsource.org/MyGet/enyimmemcached2"; "nuget"="https://nuget.gw.symbolsource.org/Public/NuGet"; }
 
 $solution_file = "$solution_dir\Enyim.Caching.sln"
-$package_projects = ("Memcached\Memcached.csproj", "NLog\NLog.csproj") | % { join-Path $solution_dir $_ -Resolve }
+$package_projects = (
+						"Memcached",
+						"NLog",
+						"log4net",
+						"Configuration"
+					) | % { resolve-path "$solution_dir\$_\$_.csproj" }
 
 #
 # build script

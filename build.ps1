@@ -68,7 +68,7 @@ try {
 
 	if ($ApiKey.Length -eq 0) { $ApiKey = gc "${Target}.apikey" }
 
-	invoke-psake -buildFile .\build\buildscript.ps1 -TaskList $Tasks -properties @{configuration=$configuration; platform=$platform; push_target=$target; push_symbols=$symbols; push_key = $APIKey }
+	invoke-psake -nologo -buildFile .\build\buildscript.ps1 -TaskList $Tasks -properties @{configuration=$configuration; platform=$platform; push_target=$target; push_symbols=$symbols; push_key = $APIKey }
 }
 finally { remove-module psake }
 

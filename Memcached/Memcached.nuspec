@@ -14,6 +14,5 @@
 	</metadata>
 	<files>
 		<file src="bin\$configuration$\*" target="lib\net45" />
-		<file src=".nuget\*.xdt" target="content" />
 	</files>
 </package>

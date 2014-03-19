@@ -117,6 +117,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include=".nuget\app.config.install.xdt" />
+    <None Include=".nuget\Configuration.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include=".nuget\web.config.install.xdt" />
     <None Include="Funq\Container.LazyResolve.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>
