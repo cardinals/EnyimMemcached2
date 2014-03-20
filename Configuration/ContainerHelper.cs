@@ -73,7 +73,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				.Register<ICluster>(c =>
 					new MemcachedCluster(clone,
 											c.Resolve<INodeLocator>(), c.Resolve<IReconnectPolicy>(),
-											c.Resolve<IFailurePolicy>(), c.LazyResolve<ISocket>()))
+											c.Resolve<IFailurePolicy>(), c.Resolve<Func<ISocket>>()))
 				.InitializedBy((_, cluster) => cluster.Start());
 		}
 
