@@ -79,6 +79,8 @@ namespace Enyim.Caching
 
 		public virtual void Connect(bool reset, CancellationToken token)
 		{
+			Console.WriteLine(new StackTrace());
+
 			Debug.Assert(currentWriteCopier == null);
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
@@ -133,15 +135,7 @@ namespace Enyim.Caching
 			}
 			catch (Exception e)
 			{
-				if (failurePolicy.ShouldFail())
-				{
-					IsAlive = false;
-					HandleIOFail(e);
-					throw;
-				}
-
-				mustReconnect = true;
-				owner.NeedsIO(this);
+				if (FailMe(e)) throw;
 			}
 		}
 
@@ -154,22 +148,31 @@ namespace Enyim.Caching
 			}
 			catch (Exception e)
 			{
-				if (failurePolicy.ShouldFail())
-				{
-					IsAlive = false;
-					HandleIOFail(e);
-					throw;
-				}
-
-				mustReconnect = true;
-				owner.NeedsIO(this);
+				if (FailMe(e)) throw;
 			}
+		}
+
+		private bool FailMe(Exception e)
+		{
+			HandleIOFail(e);
+
+			if (failurePolicy.ShouldFail())
+			{
+				IsAlive = false;
+				return true;
+			}
+
+			mustReconnect = true;
+			owner.NeedsIO(this);
+
+			return false;
 		}
 
 		protected virtual void HandleIOFail(Exception e)
 		{
 			var fail = new IOException("io fail; see inner exception", e);
 
+			FailQueue(writeQueue, fail);
 			FailQueue(bufferQueue, fail);
 			FailQueue(readQueue, fail);
 			if (currentWriteOp.Task != null) currentWriteOp.Task.SetException(fail);
@@ -184,9 +187,24 @@ namespace Enyim.Caching
 			counterErrorPerSec.IncrementBy(queue.Count);
 
 			foreach (var data in queue)
-				data.Task.SetException(e);
+			{
+				var t = data.Task;
+				if (t != null) t.SetException(e);
+			}
 
 			queue.Clear();
+		}
+
+		private void FailQueue(ConcurrentQueue<Data> queue, Exception e)
+		{
+			Data data;
+			counterErrorPerSec.IncrementBy(queue.Count);
+
+			while (queue.TryDequeue(out data))
+			{
+				var t = data.Task;
+				if (t != null) t.SetException(e);
+			}
 		}
 
 		/// <summary>
@@ -228,30 +246,34 @@ namespace Enyim.Caching
 				FlushWriteBuffer();
 		}
 
+#if DEBUG
+		private uint bufferCounter;
+#endif
+
 		protected virtual void FlushWriteBuffer()
 		{
+#if DEBUG
 			if (LogTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
+#endif
 
 			counterWritePerSec.Increment();
 			sendInProgress = true;
 
-			var sw = Stopwatch.StartNew();
-
 			socket.ScheduleSend(success =>
 			{
-				if (!success) HandleIOFail(new IOException("send fail"));
+				sendInProgress = false;
+
+				if (success)
+				{
+					readQueue.Enqueue(bufferQueue);
+					owner.NeedsIO(this);
+				}
 				else
 				{
-					if (bufferQueue.Count > 0) readQueue.Enqueue(bufferQueue);
-
-					gaugeSendSpeed.Set(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency);
-					sendInProgress = false;
-					owner.NeedsIO(this);
+					FailMe(new IOException("send fail"));
 				}
 			});
 		}
-
-		private uint bufferCounter;
 
 		protected virtual Data GetNextOp()
 		{
@@ -320,12 +342,10 @@ namespace Enyim.Caching
 				receiveInProgress = true;
 				socket.ScheduleReceive(success =>
 				{
-					if (!success) HandleIOFail(new IOException("receive fail"));
-					else
-					{
-						receiveInProgress = false;
-						owner.NeedsIO(this);
-					}
+					receiveInProgress = false;
+
+					if (success) owner.NeedsIO(this);
+					else FailMe(new IOException("receive fail"));
 				});
 
 				return;

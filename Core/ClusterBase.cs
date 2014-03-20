@@ -122,19 +122,43 @@ namespace Enyim.Caching
 			return Task.WhenAll(tasks);
 		}
 
+		[System.Diagnostics.Conditional("DEBUGa")]
+		private static void DebugLogTrace(string message)
+		{
+			if (LogTraceEnabled) log.Trace(message);
+		}
+
 		private void Worker()
 		{
 			while (!shutdownToken.IsCancellationRequested)
 			{
 				try
 				{
+					DebugLogTrace("Getting node from ioqueue");
 					var node = ioQueue.Take(shutdownToken.Token);
+					DebugLogTrace("Got node from queue");
 
 					try
 					{
 						node.Send();
+						DebugLogTrace("Did send");
+
+						if (!node.IsAlive)
+						{
+							DebugLogTrace("Node not alive after send");
+							FailNode(node, new Exception());
+							continue;
+						}
+
 						if (shutdownToken.IsCancellationRequested) break;
 						node.Receive();
+						DebugLogTrace("Did receive");
+
+						if (!node.IsAlive)
+						{
+							DebugLogTrace("Node not alive after receive");
+							FailNode(node, new Exception());
+						}
 					}
 					catch (Exception e)
 					{
