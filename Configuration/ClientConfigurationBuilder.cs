@@ -24,6 +24,11 @@ namespace Enyim.Caching.Memcached.Configuration
 			return builder.Cluster(name);
 		}
 
+		public void MakeDefault(bool force = false)
+		{
+			builder.MakeDefault(force);
+		}
+
 		#region [ Builder                      ]
 
 		private class Ω : IClientBuilderServicesNext
@@ -89,6 +94,19 @@ namespace Enyim.Caching.Memcached.Configuration
 			private void ThrowIfReadOnly()
 			{
 				if (isReadOnly) throw new InvalidOperationException("Client cannot be reconfigured.");
+			}
+
+			public void MakeDefault(bool force = false)
+			{
+				if (MemcachedClientBase.DefaultContainer != null)
+				{
+					if (!force)
+						throw new InvalidOperationException("There is already a default configuration defined for MemcachedClient");
+
+					MemcachedClientBase.DefaultContainer.Dispose();
+				}
+
+				MemcachedClientBase.DefaultContainer = Create();
 			}
 		}
 

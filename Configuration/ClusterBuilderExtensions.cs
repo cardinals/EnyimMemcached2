@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	public static class FluentBuilderExtensions
+	public static class ClusterBuilderExtensions
 	{
+		public const int DefaultPort = 11211;
+
 		public static IClusterBuilderServicesNext NodeLocator<T>(this IClusterBuilderServices services, Func<INodeLocator> factory)
 		{
 			return services.Service(factory);
@@ -39,19 +43,9 @@ namespace Enyim.Caching.Memcached.Configuration
 			return services;
 		}
 
-		public static IClientBuilderServicesNext Transcoder(this IClientBuilderServices services, Func<ITranscoder> factory)
+		public static IClusterBuilderNext Endpoints(this IClusterBuilder builder, params string[] endpoints)
 		{
-			return services.Service(factory);
-		}
-
-		public static IClientBuilderServicesNext KeyTransformer(this IClientBuilderServices services, Func<IKeyTransformer> factory)
-		{
-			return services.Service(factory);
-		}
-
-		public static IClientBuilderServicesNext OperationFactory(this IClientBuilderServices services, Func<IOperationFactory> factory)
-		{
-			return services.Service(factory);
+			return builder.Endpoints(endpoints.Select(e => ConfigurationHelper.ParseEndPoint(e, DefaultPort)));
 		}
 	}
 }

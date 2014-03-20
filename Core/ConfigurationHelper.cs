@@ -85,19 +85,26 @@ namespace Enyim.Caching.Configuration
 				throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
 		}
 
-		public static IPEndPoint ResolveToEndPoint(string value)
+		public static IPEndPoint ParseEndPoint(string value, int defaultPort = 0)
 		{
 			if (String.IsNullOrEmpty(value)) throw new ArgumentNullException("value");
 
 			var index = value.LastIndexOf(':');
-			if (index == -1) throw new ArgumentException("host:port is expected", "value");
+			if (index == -1 && defaultPort == 0) throw new ArgumentException("host:port is expected", "value");
 
-			var addressPart = value.Remove(index);
-			var portPart = value.Substring(index + 1);
-
+			var addressPart = index == -1 ? value : value.Remove(index);
 			int port;
-			if (!Int32.TryParse(portPart, out port))
-				throw new ArgumentException("Cannot parse " + value, "value");
+
+			if (index == -1)
+			{
+				port = defaultPort;
+			}
+			else
+			{
+				var portPart = value.Substring(index + 1);
+				if (!Int32.TryParse(portPart, out port))
+					throw new ArgumentException("Cannot parse " + value, "value");
+			}
 
 			return ResolveToEndPoint(addressPart, port);
 		}

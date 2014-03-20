@@ -23,7 +23,7 @@ namespace Enyim.Caching.Configuration
 		/// </summary>
 		public System.Net.IPEndPoint EndPoint
 		{
-			get { return this.endpoint ?? (this.endpoint = ConfigurationHelper.ResolveToEndPoint(this.Address)); }
+			get { return this.endpoint ?? (this.endpoint = ConfigurationHelper.ParseEndPoint(this.Address)); }
 		}
 
 		#region [ AddressValidator             ]

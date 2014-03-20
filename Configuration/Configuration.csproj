@@ -30,7 +30,8 @@
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="FastActivator.cs" />
-    <Compile Include="FluentBuilderExtensions.cs" />
+    <Compile Include="ClusterBuilderExtensions.cs" />
+    <Compile Include="ClientConfigurationBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationSection.cs" />
     <Compile Include="ClusterConfigurationCollection.cs" />
     <Compile Include="ClusterConfigurationElement.cs" />
