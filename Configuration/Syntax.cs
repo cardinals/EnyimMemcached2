@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface IHaveServices<out TServices> : IFluentSyntax
 	{
-		TServices Add { get; }
+		TServices Use { get; }
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]

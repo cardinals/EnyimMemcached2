@@ -12,7 +12,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			builder = new Ω(this);
 		}
 
-		public IClientBuilderServices Add { get { return builder; } }
+		public IClientBuilderServices Use { get { return builder; } }
 
 		public IContainer Create()
 		{
@@ -43,7 +43,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				this.owner = owner;
 			}
 
-			public IClientBuilderServices Add { get { return this; } }
+			public IClientBuilderServices Use { get { return this; } }
 
 			private void InitCluster()
 			{

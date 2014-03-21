@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached.Configuration
 		public static IClusterBuilderNext SocketOpts(this IClusterBuilderNext services, int? sendBufferSize = null, int? receiveBufferSize = null,
 																TimeSpan? connectionTimeout = null, TimeSpan? sendTimeout = null, TimeSpan? receiveTimeout = null)
 		{
-			services.Add.Service<Func<ISocket>>(() => () =>
+			services.Use.Service<Func<ISocket>>(() => () =>
 			{
 				var retval = new AsyncSocket();
 

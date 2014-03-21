@@ -47,7 +47,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				this.container.AddClusterDefauls();
 			}
 
-			public IClusterBuilderServices Add { get { return this; } }
+			public IClusterBuilderServices Use { get { return this; } }
 
 			public IClusterBuilderNext Endpoints(IEnumerable<IPEndPoint> endpoints)
 			{

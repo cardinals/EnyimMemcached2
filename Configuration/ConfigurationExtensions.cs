@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			builder
 				.Endpoints(cluster.Nodes.AsIPEndPoints())
 				.SocketOpts(cluster.Connection)
-				.Add
+				.Use
 					.From(cluster.FailurePolicy)
 					.From(cluster.NodeLocator)
 					.From(cluster.ReconnectPolicy);
@@ -69,7 +69,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			builder
 				.Cluster(section.Cluster)
-				.Add
+				.Use
 					.From(section.KeyTransformer)
 					.From(section.OperationFactory)
 					.From(section.Transcoder)
