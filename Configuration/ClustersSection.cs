@@ -9,8 +9,8 @@ namespace Enyim.Caching.Configuration
 		[ConfigurationProperty("", IsDefaultCollection = true, Options = ConfigurationPropertyOptions.IsDefaultCollection)]
 		public ClusterConfigurationCollection Clusters
 		{
-			get { return (ClusterConfigurationCollection)base[""]; }
-			set { base[""] = value; }
+			get { return (ClusterConfigurationCollection)base[String.Empty]; }
+			set { base[String.Empty] = value; }
 		}
 	}
 }

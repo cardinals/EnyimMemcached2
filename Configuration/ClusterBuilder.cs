@@ -23,11 +23,19 @@ namespace Enyim.Caching.Memcached.Configuration
 		public string Name { get; private set; }
 		public IClusterBuilderServices Add { get { return builder; } }
 
+		/// <summary>
+		/// Specify the nodes of the clusters.
+		/// </summary>
+		/// <param name="endpoints">List of endpoint addresses.</param>
+		/// <returns></returns>
 		public IClusterBuilderNext Endpoints(IEnumerable<IPEndPoint> endpoints)
 		{
 			return builder.Endpoints(endpoints);
 		}
 
+		/// <summary>
+		/// Registers the cluster configuration.
+		/// </summary>
 		public void Register()
 		{
 			builder.Register();
@@ -51,9 +59,10 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			public IClusterBuilderNext Endpoints(IEnumerable<IPEndPoint> endpoints)
 			{
+				Require.NotNull(endpoints, "endpoints");
 				ThrowIfReadOnly();
 
-				var tmp = (endpoints ?? Enumerable.Empty<IPEndPoint>()).ToArray();
+				var tmp = endpoints.ToArray();
 				if (tmp.Length == 0) throw new ArgumentException("Endpoints must be specified.");
 
 				container.RegisterCluster(tmp);
@@ -65,7 +74,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			{
 				ThrowIfReadOnly();
 
-				ConfigurationManager.CacheCluster(owner.Name, container);
+				ClusterConfigurationCache.CacheCluster(owner.Name, container);
 				container = null;
 				owner = null;
 			}
@@ -81,7 +90,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			private void ThrowIfReadOnly()
 			{
-				if (container == null) throw new InvalidOperationException("Cluster cannot be reconfigured.");
+				if (container == null) throw new InvalidOperationException("Cluster is already registered and cannot be reconfigured.");
 			}
 		}
 

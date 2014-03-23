@@ -21,6 +21,19 @@ namespace Enyim.Caching.Memcached.Configuration
 		{
 			return services.Service(factory);
 		}
+
+		public static void MakeDefault(this IContainer self, bool force = false)
+		{
+			if (MemcachedClientBase.DefaultContainer != null)
+			{
+				if (!force)
+					throw new InvalidOperationException("There is already a default configuration defined for MemcachedClient");
+
+				MemcachedClientBase.DefaultContainer.Dispose();
+			}
+
+			MemcachedClientBase.DefaultContainer = self;
+		}
 	}
 }
 

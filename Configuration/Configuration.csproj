@@ -36,7 +36,7 @@
     <Compile Include="ClusterConfigurationCollection.cs" />
     <Compile Include="ClusterConfigurationElement.cs" />
     <Compile Include="ClustersSection.cs" />
-    <Compile Include="ConfigurationManager.cs" />
+    <Compile Include="ClusterConfigurationCache.cs" />
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
     <Compile Include="ConfigurationExtensions.cs" />

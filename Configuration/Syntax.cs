@@ -71,7 +71,6 @@ namespace Enyim.Caching.Memcached.Configuration
 	public interface IClientConfigurationBuilderDefaults : IHaveServices<IClientBuilderServices>
 	{
 		IContainer Create();
-		void MakeDefault(bool force = false);
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]

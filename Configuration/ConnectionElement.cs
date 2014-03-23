@@ -6,80 +6,57 @@ namespace Enyim.Caching.Configuration
 {
 	public class ConnectionElement : ConfigurationElement
 	{
-		[IntegerValidator(MinValue = AsyncSocket.Defaults.MinBufferSize, MaxValue = AsyncSocket.Defaults.MaxBufferSize)]
-		[ConfigurationProperty("sendBufferSize", IsRequired = false, DefaultValue = AsyncSocket.Defaults.SendBufferSize)]
+		private static readonly ConfigurationProperty sendBufferSize;
+		private static readonly ConfigurationProperty receiveBufferSize;
+
+		private static readonly ConfigurationProperty connectionTimeout;
+		private static readonly ConfigurationProperty sendTimeout;
+		private static readonly ConfigurationProperty receiveTimeout;
+
+		private static readonly ConfigurationPropertyCollection properties;
+
+		static ConnectionElement()
+		{
+			sendBufferSize = new ConfigurationProperty("sendBufferSize", typeof(int), AsyncSocket.Defaults.SendBufferSize, null, new IntegerValidator(AsyncSocket.Defaults.MinBufferSize, AsyncSocket.Defaults.MaxBufferSize), ConfigurationPropertyOptions.None);
+			receiveBufferSize = new ConfigurationProperty("receiveBufferSize", typeof(int), AsyncSocket.Defaults.ReceiveBufferSize, null, new IntegerValidator(AsyncSocket.Defaults.MinBufferSize, AsyncSocket.Defaults.MaxBufferSize), ConfigurationPropertyOptions.None);
+
+			connectionTimeout = new ConfigurationProperty("connectionTimeout", typeof(TimeSpan), TimeSpan.FromMilliseconds(AsyncSocket.Defaults.ConnectionTimeoutMsec), new InfiniteTimeSpanConverter(), new PositiveTimeSpanValidator(), ConfigurationPropertyOptions.None);
+			sendTimeout = new ConfigurationProperty("sendTimeout", typeof(TimeSpan), TimeSpan.FromMilliseconds(AsyncSocket.Defaults.ConnectionTimeoutMsec), new InfiniteTimeSpanConverter(), new PositiveTimeSpanValidator(), ConfigurationPropertyOptions.None);
+			receiveTimeout = new ConfigurationProperty("receiveTimeout", typeof(TimeSpan), TimeSpan.FromMilliseconds(AsyncSocket.Defaults.ConnectionTimeoutMsec), new InfiniteTimeSpanConverter(), new PositiveTimeSpanValidator(), ConfigurationPropertyOptions.None);
+
+			properties = new ConfigurationPropertyCollection { sendBufferSize, receiveBufferSize, connectionTimeout, sendTimeout, receiveTimeout };
+		}
+
+		protected override ConfigurationPropertyCollection Properties
+		{
+			get { return properties; }
+		}
+
 		public int SendBufferSize
 		{
-			get { return (int)base["sendBufferSize"]; }
-			set { base["sendBufferSize"] = value; }
+			get { return (int)base[sendBufferSize]; }
 		}
 
-		[IntegerValidator(MinValue = AsyncSocket.Defaults.MinBufferSize, MaxValue = AsyncSocket.Defaults.MaxBufferSize)]
-		[ConfigurationProperty("receiveBufferSize", IsRequired = false, DefaultValue = AsyncSocket.Defaults.ReceiveBufferSize)]
 		public int ReceiveBufferSize
 		{
-			get { return (int)base["receiveBufferSize"]; }
-			set { base["receiveBufferSize"] = value; }
+			get { return (int)base[receiveBufferSize]; }
 		}
 
-		[ConfigurationProperty("connectionTimeout", IsRequired = false, DefaultValue = AsyncSocket.Defaults.ConnectionTimeoutMsec)]
-		[PositiveTimeSpanValidator]
-		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
 		public TimeSpan ConnectionTimeout
 		{
-			get { return (TimeSpan)base["connectionTimeout"]; }
-			set { base["connectionTimeout"] = value; }
+			get { return (TimeSpan)base[connectionTimeout]; }
 		}
 
-		[PositiveTimeSpanValidator]
-		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
-		[ConfigurationProperty("sendTimeout", IsRequired = false, DefaultValue = AsyncSocket.Defaults.SendTimeoutMsec)]
 		public TimeSpan SendTimeout
 		{
-			get { return (TimeSpan)base["sendTimeout"]; }
-			set { base["sendTimeout"] = value; }
+			get { return (TimeSpan)base[sendTimeout]; }
 		}
 
-		[PositiveTimeSpanValidator]
-		[TypeConverter(typeof(InfiniteTimeSpanConverter))]
-		[ConfigurationProperty("receiveTimeout", IsRequired = false, DefaultValue = AsyncSocket.Defaults.ReceiveTimeoutMsec)]
 		public TimeSpan ReceiveTimeout
 		{
-			get { return (TimeSpan)base["receiveTimeout"]; }
-			set { base["receiveTimeout"] = value; }
-		}
-
-		internal ConnectionParams Clone()
-		{
-			return new ConnectionParams
-			{
-				SendBufferSize = SendBufferSize,
-				ReceiveBufferSize = ReceiveBufferSize,
-				ConnectionTimeout = ConnectionTimeout,
-				SendTimeout = SendTimeout,
-				ReceiveTimeout = ReceiveTimeout
-			};
+			get { return (TimeSpan)base[receiveTimeout]; }
 		}
 	}
-
-	internal class ConnectionParams
-	{
-		public int SendBufferSize { get; set; }
-		public int ReceiveBufferSize { get; set; }
-		public TimeSpan ConnectionTimeout { get; set; }
-		public TimeSpan SendTimeout { get; set; }
-		public TimeSpan ReceiveTimeout { get; set; }
-
-		public void Update(ISocket socket)
-		{
-			socket.SendBufferSize = SendBufferSize;
-			socket.ReceiveBufferSize = ReceiveBufferSize;
-			socket.ConnectionTimeout = ConnectionTimeout;
-			socket.SendTimeout = SendTimeout;
-			socket.ReceiveTimeout = ReceiveTimeout;
-		}
-	}
-
 }
 
 #region [ License information          ]

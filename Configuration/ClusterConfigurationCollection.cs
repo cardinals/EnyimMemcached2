@@ -7,16 +7,29 @@ namespace Enyim.Caching.Configuration
 {
 	public class ClusterConfigurationCollection : ConfigurationElementCollection
 	{
+		private const string DefaultName = "<default>";
+
+		public ClusterConfigurationElement ByName(string name)
+		{
+			var retval = BaseGet(name) as ClusterConfigurationElement;
+			if (retval == null)
+				throw new KeyNotFoundException("cluster '" + (String.IsNullOrEmpty(name) ? DefaultName : name) + "' not found");
+
+			return retval;
+		}
+
+		#region [ Overrides                    ]
+
+		public override ConfigurationElementCollectionType CollectionType
+		{
+			get { return ConfigurationElementCollectionType.AddRemoveClearMap; }
+		}
+
 		protected override void Init()
 		{
 			AddElementName = "cluster";
 
 			base.Init();
-		}
-
-		public override ConfigurationElementCollectionType CollectionType
-		{
-			get { return ConfigurationElementCollectionType.AddRemoveClearMap; }
 		}
 
 		protected override ConfigurationElement CreateNewElement()
@@ -29,14 +42,7 @@ namespace Enyim.Caching.Configuration
 			return ((ClusterConfigurationElement)element).Name;
 		}
 
-		public ClusterConfigurationElement ByName(string name)
-		{
-			var retval = BaseGet(name) as ClusterConfigurationElement;
-			if (retval == null)
-				throw new KeyNotFoundException("cluster '" + (String.IsNullOrEmpty(name) ? "<default>" : name) + "' not found");
-
-			return retval;
-		}
+		#endregion
 	}
 }
 

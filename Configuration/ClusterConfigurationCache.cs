@@ -8,10 +8,9 @@ using CM = System.Configuration.ConfigurationManager;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	public static class ConfigurationManager
+	internal static class ClusterConfigurationCache
 	{
 		private const string DefaultName = "<default>";
-		private static readonly ConcurrentDictionary<string, Container> ClientCache = new ConcurrentDictionary<string, Container>();
 		private static readonly ConcurrentDictionary<string, Container> ClusterCache = new ConcurrentDictionary<string, Container>();
 
 		internal static void CacheCluster(string name, Container container)
@@ -28,12 +27,6 @@ namespace Enyim.Caching.Memcached.Configuration
 				throw new ArgumentException("Cluster is not registered: " + (name ?? DefaultName));
 
 			return retval;
-		}
-
-		internal static void CacheClient(string name, Container container)
-		{
-			if (!ClientCache.TryAdd(name ?? String.Empty, container))
-				throw new ArgumentException("Client already exists: " + (name ?? DefaultName));
 		}
 	}
 }

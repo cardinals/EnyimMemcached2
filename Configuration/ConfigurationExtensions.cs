@@ -6,64 +6,57 @@ using Enyim.Reflection;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	using CM = System.Configuration.ConfigurationManager;
-
 	public static class ConfigurationExtensions
 	{
+		public const string ClustersSectionName = "enyim.com/memcached/clusters";
+		public const string DefaultClientSectionName = "enyim.com/memcached/client";
+
 		/// <summary>
-		/// Updates the ClusterBuilder from the clusters section in the app/web.config using the Name of the builder.
+		/// Updates the ClusterBuilder from app/web.config using the cluster definition with the same name as the builder.
 		/// </summary>
-		/// <param name="builder"></param>
-		/// <returns></returns>
-		public static IClusterBuilder FromConfiguration(this IClusterBuilder builder)
+		public static IClusterBuilderNext FromConfiguration(this IClusterBuilder builder)
 		{
 			return builder.FromConfiguration(builder.Name);
 		}
 
 		/// <summary>
-		/// Updates the ClusterBuilder from the clusters section in the app/web.config using the specified name.
+		/// Updates the ClusterBuilder from app/web.config using the cluster definition with the specified name.
 		/// </summary>
-		/// <param name="builder"></param>
-		/// <returns></returns>
-		public static IClusterBuilder FromConfiguration(this IClusterBuilder builder, string name)
+		public static IClusterBuilderNext FromConfiguration(this IClusterBuilder builder, string name)
 		{
-			Require.NotNull(name, "name");
-
-			var section = CM.GetSection("enyim.com/memcached/clusters") as ClustersConfigurationSection;
+			var section = ConfigurationManager.GetSection(ClustersSectionName) as ClustersConfigurationSection;
 			if (section == null)
-				throw new ConfigurationErrorsException("enyim.com/memcached/clusters section is missing");
+				throw new ConfigurationErrorsException(ClustersSectionName + " section is missing");
 
-			var cluster = section.Clusters.ByName(name);
+			var cluster = section.Clusters.ByName(name ?? String.Empty);
+			var retval = builder.Endpoints(cluster.Nodes.AsIPEndPoints());
 
-			builder
-				.Endpoints(cluster.Nodes.AsIPEndPoints())
+			retval
 				.SocketOpts(cluster.Connection)
 				.Use
 					.From(cluster.FailurePolicy)
 					.From(cluster.NodeLocator)
 					.From(cluster.ReconnectPolicy);
 
-			return builder;
+			return retval;
 		}
 
-		private static IClusterBuilderNext SocketOpts(this IClusterBuilderNext builder, ConnectionElement connection)
+		/// <summary>
+		/// Updates the ClientConfigurationBuilder from default client section in the app/web.config.
+		/// </summary>
+		public static IClientBuilderServices FromConfiguration(this IClientConfigurationBuilder builder)
 		{
-			if (connection != null)
-				builder.SocketOpts(
-							connection.SendBufferSize, 
-							connection.ReceiveBufferSize, 
-							connection.ConnectionTimeout, 
-							connection.SendTimeout, 
-							connection.ReceiveTimeout);
-
-			return builder;
+			return builder.FromConfiguration(DefaultClientSectionName);
 		}
 
-		public static IClientConfigurationBuilder FromConfiguration(this IClientConfigurationBuilder builder, string sectionName)
+		/// <summary>
+		/// Updates the ClientConfigurationBuilder from specified client section in the app/web.config.
+		/// </summary>
+		public static IClientBuilderServices FromConfiguration(this IClientConfigurationBuilder builder, string sectionName)
 		{
-			Require.NotNull(sectionName, "section");
+			Require.NotNull(sectionName, "sectionName");
 
-			var section = CM.GetSection("enyim.com/memcached/clients") as ClientConfigurationSection;
+			var section = ConfigurationManager.GetSection(sectionName) as ClientConfigurationSection;
 			if (section == null)
 				throw new ConfigurationErrorsException(sectionName + " section is missing");
 
@@ -75,10 +68,23 @@ namespace Enyim.Caching.Memcached.Configuration
 					.From(section.Transcoder)
 					.From(section.PerformanceMonitor);
 
+			return builder.Use;
+		}
+
+		public static IClusterBuilderNext SocketOpts(this IClusterBuilderNext builder, ConnectionElement connection)
+		{
+			if (connection != null)
+				builder.SocketOpts(
+							connection.SendBufferSize,
+							connection.ReceiveBufferSize,
+							connection.ConnectionTimeout,
+							connection.SendTimeout,
+							connection.ReceiveTimeout);
+
 			return builder;
 		}
 
-		private static ICanAddServices<TNext> From<TNext, TService>(this ICanAddServices<TNext> services, ProviderElement<TService> element)
+		public static ICanAddServices<TNext> From<TNext, TService>(this ICanAddServices<TNext> services, ProviderElement<TService> element)
 			where TService : class
 		{
 			if (element != null && element.Type != null)

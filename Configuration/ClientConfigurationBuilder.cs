@@ -12,21 +12,28 @@ namespace Enyim.Caching.Memcached.Configuration
 			builder = new Ω(this);
 		}
 
+		/// <summary>
+		/// Specify service overrides.
+		/// </summary>
 		public IClientBuilderServices Use { get { return builder; } }
 
+		/// <summary>
+		/// Creates the container that can be ued to initialize the MecachedClient.
+		/// </summary>
+		/// <returns></returns>
 		public IContainer Create()
 		{
 			return builder.Create();
 		}
 
+		/// <summary>
+		/// Specifies the cluster to be used by the clients using this configuration.
+		/// </summary>
+		/// <param name="name">The name of the cluster.</param>
+		/// <returns></returns>
 		public IClientConfigurationBuilderDefaults Cluster(string name)
 		{
 			return builder.Cluster(name);
-		}
-
-		public void MakeDefault(bool force = false)
-		{
-			builder.MakeDefault(force);
 		}
 
 		#region [ Builder                      ]
@@ -44,17 +51,6 @@ namespace Enyim.Caching.Memcached.Configuration
 			}
 
 			public IClientBuilderServices Use { get { return this; } }
-
-			private void InitCluster()
-			{
-				ThrowIfReadOnly();
-
-				var cluster = ConfigurationManager.GetCluster(clusterName);
-
-				if (container != null) container.Dispose();
-				container = cluster.CreateChildContainer();
-				container.AddClientDefauls();
-			}
 
 			public IClientConfigurationBuilder Cluster(string name)
 			{
@@ -91,22 +87,20 @@ namespace Enyim.Caching.Memcached.Configuration
 				return this;
 			}
 
+			private void InitCluster()
+			{
+				ThrowIfReadOnly();
+
+				var cluster = ClusterConfigurationCache.GetCluster(clusterName);
+
+				if (container != null) container.Dispose();
+				container = cluster.CreateChildContainer();
+				container.AddClientDefauls();
+			}
+
 			private void ThrowIfReadOnly()
 			{
 				if (isReadOnly) throw new InvalidOperationException("Client cannot be reconfigured.");
-			}
-
-			public void MakeDefault(bool force = false)
-			{
-				if (MemcachedClientBase.DefaultContainer != null)
-				{
-					if (!force)
-						throw new InvalidOperationException("There is already a default configuration defined for MemcachedClient");
-
-					MemcachedClientBase.DefaultContainer.Dispose();
-				}
-
-				MemcachedClientBase.DefaultContainer = Create();
 			}
 		}
 

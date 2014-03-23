@@ -24,8 +24,12 @@ namespace Enyim.Caching.Memcached.Configuration
 			return services.Service(factory);
 		}
 
-		public static IClusterBuilderNext SocketOpts(this IClusterBuilderNext services, int? sendBufferSize = null, int? receiveBufferSize = null,
-																TimeSpan? connectionTimeout = null, TimeSpan? sendTimeout = null, TimeSpan? receiveTimeout = null)
+		public static IClusterBuilderNext SocketOpts(this IClusterBuilderNext services,
+															int? sendBufferSize = null,
+															int? receiveBufferSize = null,
+															TimeSpan? connectionTimeout = null,
+															TimeSpan? sendTimeout = null,
+															TimeSpan? receiveTimeout = null)
 		{
 			services.Use.Service<Func<ISocket>>(() => () =>
 			{
