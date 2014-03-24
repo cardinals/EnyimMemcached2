@@ -79,8 +79,6 @@ namespace Enyim.Caching
 
 		public virtual void Connect(bool reset, CancellationToken token)
 		{
-			Console.WriteLine(new StackTrace());
-
 			Debug.Assert(currentWriteCopier == null);
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
@@ -131,7 +129,9 @@ namespace Enyim.Caching
 			try
 			{
 				if (mustReconnect) Connect(false, CancellationToken.None);
-				if (IsAlive) PerformSend();
+				if (!IsAlive) throw new IOException("Node is dead: " + EndPoint);
+
+				PerformSend();
 			}
 			catch (Exception e)
 			{
@@ -144,7 +144,9 @@ namespace Enyim.Caching
 			try
 			{
 				if (mustReconnect) Connect(false, CancellationToken.None);
-				if (IsAlive) PerformReceive2();
+				if (!IsAlive) throw new IOException("Node is dead: " + EndPoint);
+
+				PerformReceive();
 			}
 			catch (Exception e)
 			{
@@ -154,7 +156,16 @@ namespace Enyim.Caching
 
 		private bool FailMe(Exception e)
 		{
-			HandleIOFail(e);
+			var fail = (e is IOException) ? e : new IOException("io fail; see inner exception", e);
+
+			FailQueue(writeQueue, fail);
+			FailQueue(bufferQueue, fail);
+			FailQueue(readQueue, fail);
+			if (currentWriteOp.Task != null) currentWriteOp.Task.SetException(fail);
+
+			currentWriteOp = Data.Empty;
+			currentWriteCopier = null;
+			inprogressResponse = null;
 
 			if (failurePolicy.ShouldFail())
 			{
@@ -166,20 +177,6 @@ namespace Enyim.Caching
 			owner.NeedsIO(this);
 
 			return false;
-		}
-
-		protected virtual void HandleIOFail(Exception e)
-		{
-			var fail = new IOException("io fail; see inner exception", e);
-
-			FailQueue(writeQueue, fail);
-			FailQueue(bufferQueue, fail);
-			FailQueue(readQueue, fail);
-			if (currentWriteOp.Task != null) currentWriteOp.Task.SetException(fail);
-
-			currentWriteOp = Data.Empty;
-			currentWriteCopier = null;
-			inprogressResponse = null;
 		}
 
 		private void FailQueue(AdvQueue<Data> queue, Exception e)
@@ -246,16 +243,8 @@ namespace Enyim.Caching
 				FlushWriteBuffer();
 		}
 
-#if DEBUG
-		private uint bufferCounter;
-#endif
-
 		protected virtual void FlushWriteBuffer()
 		{
-#if DEBUG
-			if (LogTraceEnabled) log.Trace("Flush write buffer " + bufferCounter++);
-#endif
-
 			counterWritePerSec.Increment();
 			sendInProgress = true;
 
@@ -264,14 +253,13 @@ namespace Enyim.Caching
 				sendInProgress = false;
 
 				if (success)
-				{
 					readQueue.Enqueue(bufferQueue);
-					owner.NeedsIO(this);
-				}
 				else
-				{
+					// this is a soft fail (cannot throw from other thread)
+					// so we requeue for IO and Send will throw instead
 					FailMe(new IOException("send fail"));
-				}
+
+				owner.NeedsIO(this);
 			});
 		}
 
@@ -330,7 +318,7 @@ namespace Enyim.Caching
 		private bool receiveInProgress;
 		private bool sendInProgress;
 
-		private void PerformReceive2()
+		private void PerformReceive()
 		{
 			Debug.Assert(IsAlive);
 			if (readQueue.Count == 0 || sendInProgress || receiveInProgress) return;
@@ -344,8 +332,12 @@ namespace Enyim.Caching
 				{
 					receiveInProgress = false;
 
-					if (success) owner.NeedsIO(this);
-					else FailMe(new IOException("receive fail"));
+					if (!success)
+						// this is a soft fail (cannot throw from other thread)
+						// so we requeue for IO and Receive will throw instead
+						FailMe(new IOException("receive fail"));
+
+					owner.NeedsIO(this);
 				});
 
 				return;
