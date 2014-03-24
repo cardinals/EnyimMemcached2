@@ -18,7 +18,7 @@ namespace Enyim.Caching.Configuration
 		/// <summary>
 		/// Gets or sets the type of the provider.
 		/// </summary>
-		[ConfigurationProperty("type", IsRequired = true), TypeConverter(typeof(TypeNameConverter))]
+		[ConfigurationProperty("type", IsRequired = true), TypeConverter(typeof(ProviderTypeNameConverter))]
 		public Type Type
 		{
 			get { return (Type)base["type"]; }
