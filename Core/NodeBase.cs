@@ -327,6 +327,8 @@ namespace Enyim.Caching
 			// no data to process => read the socket
 			if (socket.ReadBuffer.IsEmpty)
 			{
+				if (LogTraceEnabled) log.Trace("Read buffer is empty, ask for more.");
+
 				receiveInProgress = true;
 				socket.ScheduleReceive(success =>
 				{
@@ -354,8 +356,8 @@ namespace Enyim.Caching
 					Debug.Assert(inprogressResponse == null);
 
 					inprogressResponse = response;
+					if (LogTraceEnabled) log.Trace("Response is not read fully, continuing.");
 					goto fill;
-					//return true;
 				}
 
 				if (inprogressResponse != null)
@@ -370,6 +372,7 @@ namespace Enyim.Caching
 				{
 					var data = readQueue.Peek();
 					matching = data.Op.Handles(response);
+					if (LogTraceEnabled) log.Trace("Command {0} handles reponse: {1}", data.Op, matching);
 
 					// null is a response to a successful quiet op
 					// we have to feed the responses to the current op
