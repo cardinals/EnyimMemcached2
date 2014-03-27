@@ -7,7 +7,7 @@ namespace Enyim.Caching
 	/// <summary>
 	/// Fails a node when the specified number of failures happen in a specified time window.
 	/// </summary>
-	public class ThrottlingFailurePolicy : IFailurePolicy, ISupportInitialize
+	public class ThrottlingFailurePolicy : IFailurePolicy
 	{
 		private static readonly ILog log = LogManager.GetLogger(typeof(ThrottlingFailurePolicy));
 
@@ -59,14 +59,6 @@ namespace Enyim.Caching
 			if (log.IsDebugEnabled) log.Debug("Threshold not reached, current value is {0}.", counter);
 
 			return false;
-		}
-
-		void ISupportInitialize.Initialize(IDictionary<string, string> properties)
-		{
-			ResetAfter = ConfigurationHelper.GetAndRemove(properties, "resetAfter", true, ResetAfter);
-			Threshold = ConfigurationHelper.GetAndRemove(properties, "threshold", true, Threshold);
-
-			ConfigurationHelper.CheckForUnknownAttributes(properties);
 		}
 	}
 }

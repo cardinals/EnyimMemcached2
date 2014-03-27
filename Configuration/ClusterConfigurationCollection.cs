@@ -11,7 +11,7 @@ namespace Enyim.Caching.Configuration
 
 		public ClusterConfigurationElement ByName(string name)
 		{
-			var retval = BaseGet(name) as ClusterConfigurationElement;
+			var retval = BaseGet(name ?? String.Empty) as ClusterConfigurationElement;
 			if (retval == null)
 				throw new KeyNotFoundException("cluster '" + (String.IsNullOrEmpty(name) ? DefaultName : name) + "' not found");
 

@@ -6,8 +6,8 @@
     <ProjectGuid>{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>Tests</AssemblyName>
+    <RootNamespace>Enyim.Caching.Tests</RootNamespace>
+    <AssemblyName>Enyim.Caching.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -58,8 +58,13 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="ClusterBuilderTests.cs" />
     <Compile Include="ConfigurationHelperTests.cs" />
-    <Compile Include="ConfigurationTests.cs" />
+    <Compile Include="ConfigurationSectionTests.cs" />
+    <Compile Include="Fakes.cs" />
+    <Compile Include="PeriodicReconnectPolicyTests.cs" />
+    <Compile Include="StepRecorder.cs" />
+    <Compile Include="ObjectUpdaterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ExpirationTests.cs" />
   </ItemGroup>

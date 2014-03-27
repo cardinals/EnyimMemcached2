@@ -1,25 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using Enyim.Caching.Configuration;
+using Enyim.Caching;
+using Enyim.Caching.Memcached;
+using Moq;
+using Xunit;
 
-namespace Enyim.Caching
+namespace Tests
 {
-	public class PeriodicReconnectPolicy : IReconnectPolicy
+	public class PeriodicReconnectPolicyTests
 	{
-		public PeriodicReconnectPolicy()
+		[Fact]
+		public void Returns_Proper_Interval()
 		{
-			Interval = TimeSpan.FromSeconds(10);
-		}
+			var interval = TimeSpan.FromSeconds(20);
+			var policy = new PeriodicReconnectPolicy { Interval = interval };
 
-		public TimeSpan Interval { get; set; }
+			var node1 = new Mock<INode>().Object;
+			var node2 = new Mock<INode>().Object;
+			
+			Assert.Equal(policy.Schedule(node1), interval);
+			Assert.Equal(policy.Schedule(node2), interval);
 
-		public TimeSpan Schedule(INode node)
-		{
-			return Interval;
-		}
+			policy.Reset(node1);
+			policy.Reset(node2);
 
-		public void Reset(INode node)
-		{
+			Assert.Equal(policy.Schedule(node1), interval);
+			Assert.Equal(policy.Schedule(node2), interval);
 		}
 	}
 }

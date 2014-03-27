@@ -37,6 +37,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	public interface ICanAddServices<out TNext> : IFluentSyntax
 	{
 		TNext Service<TService>(Func<TService> factory);
+		TNext Service<TService>(Type implementation, Action<TService> initializer) where TService : class;
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
@@ -46,19 +47,19 @@ namespace Enyim.Caching.Memcached.Configuration
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface ICanBeRegistered : IFluentSyntax
+	public interface ICanRegisterCluster : IFluentSyntax
 	{
-		void Register();
+		IContainer Register();
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IClusterBuilderNext : IHaveServices<IClusterBuilderServices>, ICanBeRegistered { }
+	public interface IClusterBuilderNext : IHaveServices<IClusterBuilderServices>, ICanRegisterCluster { }
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface IClusterBuilderServices : ICanAddServices<IClusterBuilderServicesNext> { }
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public interface IClusterBuilderServicesNext : IClusterBuilderServices, ICanBeRegistered { }
+	public interface IClusterBuilderServicesNext : IClusterBuilderServices, ICanRegisterCluster { }
 
 
 	[EditorBrowsable(EditorBrowsableState.Never)]

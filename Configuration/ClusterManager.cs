@@ -1,22 +1,33 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Enyim.Caching.Configuration;
 using Funq;
-using CM = System.Configuration.ConfigurationManager;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
-	internal static class ClusterConfigurationCache
+	public static class ClusterManager
 	{
 		private const string DefaultName = "<default>";
 		private static readonly ConcurrentDictionary<string, Container> ClusterCache = new ConcurrentDictionary<string, Container>();
 
+		public static bool IsRegistered(string name)
+		{
+			return ClusterCache.ContainsKey(name ?? String.Empty);
+		}
+
+		public static void Shutdown(string name)
+		{
+			Container c;
+
+			if (!ClusterCache.TryRemove(name ?? String.Empty, out c))
+				throw NotRegistered(name);
+
+			c.Dispose();
+		}
+
 		internal static void CacheCluster(string name, Container container)
 		{
 			if (!ClusterCache.TryAdd(name ?? String.Empty, container))
-				throw new ArgumentException("Cluster already exists: " + (name ?? DefaultName));
+				throw AlreadyExists(name);
 		}
 
 		internal static Container GetCluster(string name)
@@ -24,9 +35,24 @@ namespace Enyim.Caching.Memcached.Configuration
 			Container retval;
 
 			if (!ClusterCache.TryGetValue(name ?? String.Empty, out retval))
-				throw new ArgumentException("Cluster is not registered: " + (name ?? DefaultName));
+				throw NotRegistered(name);
 
 			return retval;
+		}
+
+		private static string FixDisplayName(string name)
+		{
+			return String.IsNullOrEmpty(name) ? DefaultName : name;
+		}
+
+		private static ArgumentException AlreadyExists(string name)
+		{
+			return new ArgumentException("Cluster is already registered: " + FixDisplayName(name)); ;
+		}
+
+		private static ArgumentException NotRegistered(string name)
+		{
+			return new ArgumentException("Cluster is not registered: " + FixDisplayName(name)); ;
 		}
 	}
 }

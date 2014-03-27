@@ -36,9 +36,9 @@ namespace Enyim.Caching.Memcached.Configuration
 		/// <summary>
 		/// Registers the cluster configuration.
 		/// </summary>
-		public void Register()
+		public IContainer Register()
 		{
-			builder.Register();
+			return builder.Register();
 		}
 
 		#region [ Builder                      ]
@@ -70,13 +70,21 @@ namespace Enyim.Caching.Memcached.Configuration
 				return this;
 			}
 
-			public void Register()
+			public IContainer Register()
 			{
 				ThrowIfReadOnly();
 
-				ClusterConfigurationCache.CacheCluster(owner.Name, container);
-				container = null;
-				owner = null;
+				try
+				{
+					ClusterManager.CacheCluster(owner.Name, container);
+
+					return new FunqContainerWrapper(container);
+				}
+				finally
+				{
+					container = null;
+					owner = null;
+				}
 			}
 
 			public IClusterBuilderServicesNext Service<TService>(Func<TService> factory)
@@ -84,6 +92,16 @@ namespace Enyim.Caching.Memcached.Configuration
 				ThrowIfReadOnly();
 
 				container.Register<TService>(_ => factory());
+
+				return this;
+			}
+
+			public IClusterBuilderServicesNext Service<TService>(Type implementation, Action<TService> initializer) where TService : class
+			{
+				ThrowIfReadOnly();
+
+				var reg = container.AutoWireAs<TService>(implementation);
+				if (initializer != null) reg.InitializedBy((_, i) => initializer(i));
 
 				return this;
 			}

@@ -36,11 +36,12 @@
     <Compile Include="ClusterConfigurationCollection.cs" />
     <Compile Include="ClusterConfigurationElement.cs" />
     <Compile Include="ClustersSection.cs" />
-    <Compile Include="ClusterConfigurationCache.cs" />
+    <Compile Include="ClusterManager.cs" />
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
     <Compile Include="ConfigurationExtensions.cs" />
     <Compile Include="FunqContainerWrapper.cs" />
+    <Compile Include="ObjectUpdater.cs" />
     <Compile Include="Syntax.cs" />
     <Compile Include="ClientConfigurationBuilder.cs" />
     <Compile Include="ClusterBuilder.cs" />

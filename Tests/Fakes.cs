@@ -1,56 +1,74 @@
 ﻿using System;
-using System.Configuration;
-using Enyim.Caching;
+using System.Collections.Generic;
 using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Configuration;
-using Xunit;
 
-namespace Tests
+namespace Enyim.Caching.Tests
 {
-	public class UnitTest1
+	public class _FailurePolicy : IFailurePolicy
 	{
-		[Fact]
-		public void Can_load_client_section()
+		internal _FailurePolicy(StepRecorder recorder)
 		{
-			var section = System.Configuration.ConfigurationManager.GetSection("enyim.com/memcached/client") as ClientConfigurationSection;
-			Assert.NotNull(section);
+			recorder.Mark("FailurePolicy");
+		}
 
-			Assert.Equal(typeof(TestOperationfactory), section.OperationFactory.Type);
-			Assert.Equal(typeof(TestTranscoder), section.Transcoder.Type);
+		public int Property { get; set; }
 
-			//Assert.True(((TestTranscoder)section.Transcoder).IsInitialized, "Transcoder should have been initialized");
-			//Assert.True(((TestOperationfactory)section.OperationFactory).IsInitialized, "Operationfactory should have been initialized");
+		public bool ShouldFail()
+		{
+			return false;
+		}
+
+		public int Counter { get; set; }
+	}
+
+	public class _NodeLocator : INodeLocator
+	{
+		internal _NodeLocator(StepRecorder recorder)
+		{
+			recorder.Mark("NodeLocator");
+		}
+
+		public string Property { get; set; }
+
+		public void Initialize(IEnumerable<INode> nodes)
+		{
+		}
+
+		public INode Locate(byte[] key)
+		{
+			return null;
 		}
 	}
 
-	class TestKeyTransformer : IKeyTransformer, ISupportInitialize
+	public class _ReconnectPolicy : IReconnectPolicy
 	{
-		public bool IsInitialized { get; set; }
-
-		public void Initialize(System.Collections.Generic.IDictionary<string, string> properties)
+		internal _ReconnectPolicy(StepRecorder recorder)
 		{
-			Assert.True(properties.ContainsKey("testKey"));
-			Assert.Equal(properties["testKey"], "test value");
-			IsInitialized = true;
+			recorder.Mark("ReconnectPolicy");
 		}
 
+		public TimeSpan Property { get; set; }
+
+		public TimeSpan Schedule(INode node)
+		{
+			return TimeSpan.Zero;
+		}
+
+		public void Reset(INode node)
+		{
+		}
+	}
+
+	public class _KeyTransformer : IKeyTransformer
+	{
 		public byte[] Transform(string key)
 		{
 			throw new NotImplementedException();
 		}
 	}
 
-	class TestTranscoder : ITranscoder, ISupportInitialize
+	public class _Transcoder : ITranscoder
 	{
-		public bool IsInitialized { get; set; }
-
-		public void Initialize(System.Collections.Generic.IDictionary<string, string> properties)
-		{
-			Assert.True(properties.ContainsKey("testKey"));
-			Assert.Equal(properties["testKey"], "test value");
-			IsInitialized = true;
-		}
-
 		public CacheItem Serialize(object value)
 		{
 			throw new NotImplementedException();
@@ -62,17 +80,8 @@ namespace Tests
 		}
 	}
 
-	class TestOperationfactory : IOperationFactory, ISupportInitialize
+	public class _Operationfactory : IOperationFactory
 	{
-		public bool IsInitialized { get; set; }
-
-		public void Initialize(System.Collections.Generic.IDictionary<string, string> properties)
-		{
-			Assert.True(properties.ContainsKey("testKey"));
-			Assert.Equal(properties["testKey"], "test value");
-			IsInitialized = true;
-		}
-
 		public IGetOperation Get(string key)
 		{
 			throw new NotImplementedException();
@@ -128,13 +137,11 @@ namespace Tests
 			throw new NotImplementedException();
 		}
 
-
 		public IStatsOperation Stats(string type)
 		{
 			throw new NotImplementedException();
 		}
 	}
-
 }
 
 #region [ License information          ]

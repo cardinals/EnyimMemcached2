@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
@@ -59,7 +60,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				if (name != clusterName)
 				{
 					clusterName = name;
-					InitCluster();
+					InitCluster(true);
 				}
 
 				return owner;
@@ -67,7 +68,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			public IContainer Create()
 			{
-				InitCluster();
+				InitCluster(false);
 
 				try { return new FunqContainerWrapper(container); }
 				finally
@@ -80,20 +81,37 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			public IClientBuilderServicesNext Service<TService>(Func<TService> factory)
 			{
-				InitCluster();
+				InitCluster(false);
 
 				container.Register<TService>(_ => factory());
 
 				return this;
 			}
 
-			private void InitCluster()
+			public IClientBuilderServicesNext Service<TService>(Type implementation, Action<TService> initializer)
+				where TService : class
+			{
+				InitCluster(false);
+
+				var reg = container.AutoWireAs<TService>(implementation);
+				if (initializer != null) reg.InitializedBy((_, i) => initializer(i));
+
+				return this;
+			}
+
+			private void InitCluster(bool recreate)
 			{
 				ThrowIfReadOnly();
 
-				var cluster = ClusterConfigurationCache.GetCluster(clusterName);
+				var cluster = ClusterManager.GetCluster(clusterName);
 
-				if (container != null) container.Dispose();
+				if (container != null)
+				{
+					if (!recreate) return;
+
+					container.Dispose();
+				}
+
 				container = cluster.CreateChildContainer();
 				container.AddClientDefauls();
 			}

@@ -9,7 +9,39 @@ namespace Enyim.Caching.Memcached.Configuration
 	{
 		public const int DefaultPort = 11211;
 
-		public static IClusterBuilderServicesNext NodeLocator<T>(this IClusterBuilderServices services, Func<INodeLocator> factory)
+		public static IClusterBuilderServicesNext Service<TService>(this IClusterBuilderServices services, Action<TService> initializer = null) where TService : class
+		{
+			return services.Service<TService>(typeof(TService), initializer);
+		}
+
+		public static IClusterBuilderServicesNext Service<TService, TImplementation>(this IClusterBuilderServices services, Action<TImplementation> initializer = null)
+			where TService : class
+			where TImplementation : TService
+		{
+			var a = initializer == null ? null : new Action<TService>(i => initializer((TImplementation)i));
+
+			return services.Service<TService>(typeof(TImplementation), a);
+		}
+
+		public static IClusterBuilderServicesNext NodeLocator<TImplementation>(this IClusterBuilderServices services, Action<TImplementation> initializer = null)
+			where TImplementation : INodeLocator
+		{
+			return services.Service<INodeLocator, TImplementation>(initializer);
+		}
+
+		public static IClusterBuilderServicesNext FailurePolicy<TImplementation>(this IClusterBuilderServices services, Action<TImplementation> initializer = null)
+			where TImplementation : IFailurePolicy
+		{
+			return services.Service<IFailurePolicy, TImplementation>(initializer);
+		}
+
+		public static IClusterBuilderServicesNext ReconnectPolicy<TImplementation>(this IClusterBuilderServices services, Action<TImplementation> initializer = null)
+			where TImplementation : IReconnectPolicy
+		{
+			return services.Service<IReconnectPolicy, TImplementation>(initializer);
+		}
+
+		public static IClusterBuilderServicesNext NodeLocator(this IClusterBuilderServices services, Func<INodeLocator> factory)
 		{
 			return services.Service(factory);
 		}

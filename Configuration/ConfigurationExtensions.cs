@@ -88,7 +88,17 @@ namespace Enyim.Caching.Memcached.Configuration
 			where TService : class
 		{
 			if (element != null && element.Type != null)
-				services.Service(() => (TService)FastActivator.Create(element.Type));
+			{
+				var props = element.Parameters.Count == 0
+								? null
+								: element.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+				var init = props == null
+								? null
+								: new Action<TService>(instance => ObjectUpdater.Update(instance, props));
+
+				services.Service<TService>(element.Type, init);
+			}
 
 			return services;
 		}

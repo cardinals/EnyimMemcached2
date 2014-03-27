@@ -50,7 +50,7 @@ namespace Enyim.Caching.Configuration
 			base.PostDeserialize();
 
 			var c = this.Content;
-			if (c != null)
+			if (c != null && !String.IsNullOrEmpty(c.Content))
 				Parameters[String.Empty] = c.Content;
 		}
 	}
