@@ -2,7 +2,7 @@
 using Enyim.Caching.Memcached;
 using Xunit;
 
-namespace Tests
+namespace Enyim.Caching.Tests
 {
 	public class ExpirationTests
 	{

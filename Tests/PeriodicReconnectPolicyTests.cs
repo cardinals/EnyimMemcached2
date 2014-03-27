@@ -5,7 +5,7 @@ using Enyim.Caching.Memcached;
 using Moq;
 using Xunit;
 
-namespace Tests
+namespace Enyim.Caching.Tests
 {
 	public class PeriodicReconnectPolicyTests
 	{
