@@ -6,6 +6,16 @@ namespace Enyim.Caching.Memcached
 {
 	public static class MemcachedClientWithResultsExtensions
 	{
+		public static IGetOperationResult<object> Get(this IMemcachedClientWithResults self, string key)
+		{
+			return self.Get<object>(key);
+		}
+
+		public static Task<IGetOperationResult<object>> GetAsync(this IMemcachedClientWithResults self, string key)
+		{
+			return self.GetAsync<object>(key);
+		}
+
 		public static IOperationResult Append(this IMemcachedClientWithResults self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.Concate(ConcatenationMode.Append, key, data, cas);
@@ -74,6 +84,16 @@ namespace Enyim.Caching.Memcached
 		public static Task<IOperationResult> SetAsync(this IMemcachedClientWithResults self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
 			return self.StoreAsync(StoreMode.Set, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+		}
+
+		public static IOperationResult Store(this IMemcachedClientWithResults self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		{
+			return self.Store(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+		}
+
+		public static Task<IOperationResult> StoreAsync(this IMemcachedClientWithResults self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		{
+			return self.StoreAsync(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
 	}
 }

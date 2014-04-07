@@ -5,6 +5,16 @@ namespace Enyim.Caching.Memcached
 {
 	public static class MemcachedClientExtensions
 	{
+		public static object Get(this IMemcachedClient self, string key)
+		{
+			return self.Get<object>(key);
+		}
+
+		public static Task<object> GetAsync(this IMemcachedClient self, string key)
+		{
+			return self.GetAsync<object>(key);
+		}
+
 		public static bool Append(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.Concate(ConcatenationMode.Append, key, data, cas);

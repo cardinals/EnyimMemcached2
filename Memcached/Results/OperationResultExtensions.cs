@@ -74,6 +74,7 @@ namespace Enyim.Caching.Memcached.Results
 		public static T UpdateFrom<T>(this T target, IOperationResult source)
 			where T : IOperationResult
 		{
+			target.Cas = source.Cas;
 			target.Message = source.Message;
 			target.Success = source.Success;
 			target.Exception = source.Exception;
@@ -92,6 +93,7 @@ namespace Enyim.Caching.Memcached.Results
 		{
 			if (!source.Success)
 			{
+				target.Cas = source.Cas;
 				target.Message = source.Message;
 				target.Success = source.Success;
 				target.Exception = source.Exception;

@@ -20,12 +20,14 @@
   </PropertyGroup>
   <Import Project="$(SolutionDir)\build\ProjectDefaults.targets" />
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Moq">
       <HintPath>..\packages\Moq.4.1.1309.1617\lib\net40\Moq.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
-    <Reference Include="xunit">
+    <Reference Include="xunit, Version=1.9.2.1705, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\xunit.1.9.2\lib\net20\xunit.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -33,10 +35,16 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="AdvQueueTests.cs" />
     <Compile Include="ClusterBuilderTests.cs" />
     <Compile Include="ConfigurationHelperTests.cs" />
     <Compile Include="ConfigurationSectionTests.cs" />
     <Compile Include="Fakes.cs" />
+    <Compile Include="MemcachedClientGetTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MemcachedClientStoreTests.cs" />
+    <Compile Include="MemcachedClientTestsBase.cs" />
     <Compile Include="PeriodicReconnectPolicyTests.cs" />
     <Compile Include="StepRecorder.cs" />
     <Compile Include="ObjectUpdaterTests.cs" />

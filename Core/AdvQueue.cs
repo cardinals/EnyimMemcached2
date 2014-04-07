@@ -12,7 +12,7 @@ namespace Enyim.Caching
 	///  A queue which allows to insert items to the beginning, and also supports efficient enqueuing of other AdvQueues
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	internal class AdvQueue<T> : IEnumerable<T>
+	public class AdvQueue<T> : IEnumerable<T>
 	{
 		private const int GrowthFactor = 2;
 		private const int DefaultCapacity = 4;

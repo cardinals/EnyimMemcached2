@@ -11,17 +11,17 @@ namespace Enyim.Caching.Memcached
 	{
 		public IGetOperation Get(byte[] key)
 		{
-			return new GetOperation(key) { Silent = true };
+			return new GetOperation(key) { Silent = false };
 		}
 
 		public IStoreOperation Store(StoreMode mode, byte[] key, CacheItem value, ulong cas, uint expires)
 		{
-			return new StoreOperation(mode, key, value, expires) { Cas = cas, Silent = true };
+			return new StoreOperation(mode, key, value, expires) { Cas = cas, Silent = false };
 		}
 
 		public IDeleteOperation Delete(byte[] key, ulong cas)
 		{
-			return new DeleteOperation(key) { Cas = cas, Silent = true };
+			return new DeleteOperation(key) { Cas = cas, Silent = false };
 		}
 
 		public IMutateOperation Mutate(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, ulong cas, uint expires)
@@ -31,7 +31,7 @@ namespace Enyim.Caching.Memcached
 
 		public IConcatOperation Concat(ConcatenationMode mode, byte[] key, ulong cas, ArraySegment<byte> data)
 		{
-			return new ConcatOperation(mode, key, data) { Cas = cas, Silent = true };
+			return new ConcatOperation(mode, key, data) { Cas = cas, Silent = false };
 		}
 
 		public IFlushOperation Flush()
