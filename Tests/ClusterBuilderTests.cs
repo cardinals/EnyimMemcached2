@@ -14,24 +14,31 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Should_Not_Register_Duplicates()
 		{
-			new ClusterBuilder("test").Register();
-			var e = Assert.Throws<ArgumentException>(() => new ClusterBuilder("test").Register());
+			const string Name = "Should_Not_Register_Duplicates";
+			new ClusterBuilder(Name).Register();
+			var e = Assert.Throws<ArgumentException>(() => new ClusterBuilder(Name).Register());
 
-			Assert.Equal("Cluster is already registered: test", e.Message);
+			Assert.Equal("Cluster is already registered: " + Name, e.Message);
+			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
 		}
 
 		[Fact]
 		public void Cluster_With_Same_Name_Can_Be_Registered_When_Previous_Instance_Is_Stopped()
 		{
-			new ClusterBuilder("name").Register();
-			ClusterManager.Shutdown("name");
-			new ClusterBuilder("name").Register();
+			const string Name = "Cluster_With_Same_Name_Can_Be_Registered_When_Previous_Instance_Is_Stopped";
+
+			for (var i = 0; i < 3; i++)
+			{
+				new ClusterBuilder(Name).Register();
+				Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
+			}
 		}
 
 		[Fact]
 		public void Can_Build_Using_Extensions()
 		{
-			var c = new ClusterBuilder("Can_Build_Using_Extensions")
+			const string Name = "Can_Build_Using_Extensions";
+			var c = new ClusterBuilder(Name)
 							.Endpoints("127.0.0.1")
 							.Use
 								.Service<StepRecorder>()
@@ -44,12 +51,15 @@ namespace Enyim.Caching.Tests
 			var m = c.Resolve<StepRecorder>();
 
 			m.AssertSteps("FailurePolicy", "NodeLocator", "ReconnectPolicy");
+
+			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
 		}
 
 		[Fact]
 		public void Can_Build_From_Config()
 		{
-			var c = new ClusterBuilder("Can_Build_From_Config")
+			const string Name = "Can_Build_From_Config";
+			var c = new ClusterBuilder(Name)
 							.FromConfiguration("Can_Build_From_Config")
 							.Use.Service<StepRecorder>()
 							.Register();
@@ -66,6 +76,8 @@ namespace Enyim.Caching.Tests
 			Assert.Equal(10, ((_FailurePolicy)c.Resolve<IFailurePolicy>()).Property);
 			Assert.Equal("10", ((_NodeLocator)c.Resolve<INodeLocator>()).Property);
 			Assert.Equal(TimeSpan.FromSeconds(10), ((_ReconnectPolicy)c.Resolve<IReconnectPolicy>()).Property);
+
+			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
 		}
 	}
 }
