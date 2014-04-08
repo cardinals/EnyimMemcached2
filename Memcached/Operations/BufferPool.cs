@@ -25,6 +25,7 @@ namespace Enyim.Caching.Memcached.Operations
 		public byte[] Acquire(int size)
 		{
 			var buffer = pool.TakeBuffer(size);
+			Array.Clear(buffer, 0, size);
 #if TRACK_ALLOCATIONS
 			trackers.GetOrCreateValue(buffer).Remember();
 #endif
