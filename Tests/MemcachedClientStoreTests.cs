@@ -21,14 +21,14 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Add_Twice");
 
-			ShouldPass(Store(StoreMode.Add, key));
-			ShouldFail(Store(StoreMode.Add, key));
+			ShouldPass(Store(StoreMode.Add, key: key));
+			ShouldFail(Store(StoreMode.Add, key: key));
 		}
 
 		[Fact]
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
 		{
-			var result = Store(StoreMode.Replace, key:GetUniqueKey( "New_Replace"));
+			var result = Store(StoreMode.Replace, key: GetUniqueKey("New_Replace"));
 
 			Assert.Equal((int)StatusCode.KeyNotFound, result.StatusCode);
 			ShouldFail(result);
