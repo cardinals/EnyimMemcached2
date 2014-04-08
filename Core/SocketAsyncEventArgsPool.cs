@@ -79,6 +79,8 @@ namespace Enyim.Caching
 		{
 			lock (ExtendLock)
 			{
+				if (entries.Count == 0) return;
+
 				var all = new Entry[entries.Count];
 				var didPop = entries.TryPopRange(all);
 
