@@ -7,7 +7,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientRemoveTests : MemcachedClientTestsBase
+	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
 		public void When_Removing_A_Valid_Key_Result_Is_Successful()
@@ -15,8 +15,8 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Remove_Valid");
 
 			ShouldPass(Store(key: key));
-			ShouldPass(_Client.Remove(key), checkCas: false);
-			ShouldFail(_Client.Get(key));
+			ShouldPass(client.Remove(key), checkCas: false);
+			ShouldFail(client.Get(key));
 		}
 
 		[Fact]
@@ -24,8 +24,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Remove_Invalid");
 
-			ShouldFail(_Client.Get(key)); // sanity-check
-			ShouldFail(_Client.Remove(key));
+			ShouldFail(client.Get(key)); // sanity-check
+			ShouldFail(client.Remove(key));
 		}
 	}
 }

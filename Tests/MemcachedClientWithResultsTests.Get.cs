@@ -8,7 +8,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientGetTests : MemcachedClientTestsBase
+	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
 		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
@@ -17,14 +17,14 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Get(key), value);
+			ShouldPass(client.Get(key), value);
 		}
 
 		[Fact]
 		public void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Get_Invalid");
-			var getResult = _Client.Get<object>(key);
+			var getResult = client.Get<object>(key);
 
 			Assert.Equal((int)StatusCode.KeyNotFound, getResult.StatusCode);
 			ShouldFail(getResult);
@@ -37,7 +37,7 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Get<string>(key), value);
+			ShouldPass(client.Get<string>(key), value);
 		}
 
 		[Fact]
@@ -49,7 +49,7 @@ namespace Enyim.Caching.Tests
 				ShouldPass(Store(key: key, value: "Value for" + key));
 			}
 
-			var dict = _Client.Get(keys);
+			var dict = client.Get(keys);
 			Assert.Equal(keys.OrderBy(_ => _), dict.Keys.OrderBy(_ => _));
 			Assert.True(dict.All(kvp => kvp.Value.Success));
 		}
@@ -61,7 +61,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Byte");
 
 			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(_Client.Get(key), expectedValue);
+			ShouldPass(client.Get(key), expectedValue);
 		}
 
 		[Fact]
@@ -71,7 +71,7 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Sbyte");
 
 			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(_Client.Get(key), expectedValue);
+			ShouldPass(client.Get(key), expectedValue);
 		}
 	}
 }

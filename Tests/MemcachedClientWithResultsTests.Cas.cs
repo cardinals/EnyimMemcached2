@@ -7,24 +7,26 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientMutateTests : MemcachedClientTestsBase
+	public partial class MemcachedClientWithResultsTests 
 	{
 		[Fact]
-		public void When_Incrementing_Value_Result_Is_Successful()
+		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
 		{
-			var key = GetUniqueKey("Increment");
+			var key = GetUniqueKey("Cas_Success");
+			var value = GetRandomString();
 
-			ShouldPass(_Client.Increment(key, 100, 10), 100);
-			ShouldPass(_Client.Increment(key, 100, 10), 110);
+			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
+			ShouldPass(client.Set(key, value, storeResult.Cas));
 		}
 
 		[Fact]
-		public void When_Decrementing_Value_Result_Is_Successful()
+		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
 		{
-			var key = GetUniqueKey("Decrement");
+			var key = GetUniqueKey("Cas_Fail");
+			var value = GetRandomString();
 
-			ShouldPass(_Client.Decrement(key, 100, 10), 100);
-			ShouldPass(_Client.Decrement(key, 100, 10), 90);
+			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
+			ShouldFail(client.Set(key, value, storeResult.Cas - 1));
 		}
 	}
 }

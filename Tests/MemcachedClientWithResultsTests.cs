@@ -2,32 +2,53 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Xunit;
-using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
+using Enyim.Caching.Memcached.Results;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public abstract class MemcachedClientTestsBase
+	public class MemcachedClusterSetup : IDisposable
 	{
-		static readonly IContainer clientConfig;
+		private const string ClusterName = "MemcachedClientTests";
+		private IContainer clientConfig;
 
-		static MemcachedClientTestsBase()
+		public MemcachedClusterSetup()
 		{
-			const string ClusterName = "MemcachedClientTests";
 
 			new ClusterBuilder(ClusterName).FromConfiguration().Register();
 			clientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
+			Client = new MemcachedClientWithResults(clientConfig);
 		}
 
-		protected IMemcachedClientWithResults _Client;
+		public IMemcachedClientWithResults Client { get; private set; }
 
-		protected MemcachedClientTestsBase()
+		public void Dispose()
 		{
-			_Client = new MemcachedClientWithResults(clientConfig);
+			clientConfig.Dispose();
+			ClusterManager.Shutdown(ClusterName);
 		}
+	}
+
+	public partial class MemcachedClientWithResultsTests : IUseFixture<MemcachedClusterSetup>
+	{
+		//static readonly IContainer clientConfig;
+
+		//static MemcachedClientWithResultsTests()
+		//{
+		//	const string ClusterName = "MemcachedClientTests";
+
+		//	new ClusterBuilder(ClusterName).FromConfiguration().Register();
+		//	clientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
+		//}
+
+		private IMemcachedClientWithResults client;
+
+		//public MemcachedClientWithResultsTests()
+		//{
+		//	client = new MemcachedClientWithResults(clientConfig);
+		//}
 
 		protected string GetUniqueKey(string prefix = null)
 		{
@@ -57,7 +78,7 @@ namespace Enyim.Caching.Tests
 			if (key == null) key = GetUniqueKey("store");
 			if (value == null) value = GetRandomString();
 
-			return _Client.Store(mode, key, value);
+			return client.Store(mode, key, value);
 		}
 
 		protected IOperationResult ShouldPass(IOperationResult result, bool checkCas = true)
@@ -133,6 +154,11 @@ namespace Enyim.Caching.Tests
 		//	Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
 		//	Assert.That(result.StatusCode, Is.Null.Or.GreaterThan(0), "StatusCode not greater than 0");
 		//}
+
+		public void SetFixture(MemcachedClusterSetup data)
+		{
+			client = data.Client;
+		}
 	}
 }
 

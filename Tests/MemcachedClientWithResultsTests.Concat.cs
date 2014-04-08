@@ -7,7 +7,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientConcatTests : MemcachedClientTestsBase
+	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
 		public void When_Appending_To_Existing_Value_Result_Is_Successful()
@@ -17,8 +17,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			ShouldPass(_Client.Get(key), value + ToAppend);
+			ShouldPass(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
+			ShouldPass(client.Get(key), value + ToAppend);
 		}
 
 		[Fact]
@@ -27,8 +27,8 @@ namespace Enyim.Caching.Tests
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Fail");
 
-			ShouldFail(_Client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			ShouldFail(_Client.Get(key));
+			ShouldFail(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
+			ShouldFail(client.Get(key));
 		}
 
 		[Fact]
@@ -39,8 +39,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			ShouldPass(_Client.Get(key), ToPrepend + value);
+			ShouldPass(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
+			ShouldPass(client.Get(key), ToPrepend + value);
 		}
 
 		[Fact]
@@ -49,8 +49,8 @@ namespace Enyim.Caching.Tests
 			const string ToPrepend = "The Beginning";
 			var key = GetUniqueKey("Prepend_Fail");
 
-			ShouldFail(_Client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			ShouldFail(_Client.Get(key));
+			ShouldFail(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
+			ShouldFail(client.Get(key));
 		}
 
 		[Fact]
@@ -61,8 +61,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas));
-			ShouldPass(_Client.Get(key), value + ToAppend);
+			ShouldPass(client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas));
+			ShouldPass(client.Get(key), value + ToAppend);
 		}
 
 		[Fact]
@@ -73,8 +73,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldFail(_Client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas - 1));
-			ShouldPass(_Client.Get(key), value);
+			ShouldFail(client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas - 1));
+			ShouldPass(client.Get(key), value);
 		}
 
 		[Fact]
@@ -85,8 +85,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldPass(_Client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas));
-			ShouldPass(_Client.Get(key), ToPrepend + value);
+			ShouldPass(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas));
+			ShouldPass(client.Get(key), ToPrepend + value);
 		}
 
 		[Fact]
@@ -97,8 +97,8 @@ namespace Enyim.Caching.Tests
 			var value = GetRandomString();
 
 			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldFail(_Client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas - 1));
-			ShouldPass(_Client.Get(key), value);
+			ShouldFail(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas - 1));
+			ShouldPass(client.Get(key), value);
 		}
 	}
 }

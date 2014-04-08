@@ -40,15 +40,25 @@
     <Compile Include="ConfigurationHelperTests.cs" />
     <Compile Include="ConfigurationSectionTests.cs" />
     <Compile Include="Fakes.cs" />
-    <Compile Include="MemcachedClientCasTests.cs" />
-    <Compile Include="MemcachedClientConcatTests.cs" />
-    <Compile Include="MemcachedClientGetTests.cs">
-      <SubType>Code</SubType>
+    <Compile Include="MemcachedClientWithResultsTests.cs" />
+    <Compile Include="MemcachedClientWithResultsTests.Cas.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
     </Compile>
-    <Compile Include="MemcachedClientMutateTests.cs" />
-    <Compile Include="MemcachedClientRemoveTests.cs" />
-    <Compile Include="MemcachedClientStoreTests.cs" />
-    <Compile Include="MemcachedClientTestsBase.cs" />
+    <Compile Include="MemcachedClientWithResultsTests.Concat.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientWithResultsTests.Get.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientWithResultsTests.Mutate.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientWithResultsTests.Remove.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientWithResultsTests.Store.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
     <Compile Include="PeriodicReconnectPolicyTests.cs" />
     <Compile Include="StepRecorder.cs" />
     <Compile Include="ObjectUpdaterTests.cs" />
