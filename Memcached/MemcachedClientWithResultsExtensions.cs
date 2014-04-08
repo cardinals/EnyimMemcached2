@@ -16,9 +16,19 @@ namespace Enyim.Caching.Memcached
 			return self.GetAsync<object>(key);
 		}
 
+		public static IOperationResult Append(this IMemcachedClientWithResults self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.Append(key, new ArraySegment<byte>(data), cas);
+		}
+
 		public static IOperationResult Append(this IMemcachedClientWithResults self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.Concate(ConcatenationMode.Append, key, data, cas);
+		}
+
+		public static IOperationResult Prepend(this IMemcachedClientWithResults self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.Prepend(key, new ArraySegment<byte>(data), cas);
 		}
 
 		public static IOperationResult Prepend(this IMemcachedClientWithResults self, string key, ArraySegment<byte> data, ulong cas = 0)
@@ -36,9 +46,19 @@ namespace Enyim.Caching.Memcached
 			return self.Mutate(MutationMode.Decrement, key, defaultValue, delta, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
 
+		public static Task<IOperationResult> AppendAsync(this IMemcachedClientWithResults self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.AppendAsync(key, new ArraySegment<byte>(data), cas);
+		}
+
 		public static Task<IOperationResult> AppendAsync(this IMemcachedClientWithResults self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.ConcateAsync(ConcatenationMode.Append, key, data, cas);
+		}
+
+		public static Task<IOperationResult> PrependAsync(this IMemcachedClientWithResults self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.PrependAsync(key, new ArraySegment<byte>(data), cas);
 		}
 
 		public static Task<IOperationResult> PrependAsync(this IMemcachedClientWithResults self, string key, ArraySegment<byte> data, ulong cas = 0)

@@ -60,11 +60,13 @@ namespace Enyim.Caching.Tests
 			return _Client.Store(mode, key, value);
 		}
 
-		protected void ShouldPass(IOperationResult result)
+		protected IOperationResult ShouldPass(IOperationResult result)
 		{
 			Assert.True(result.Success, "Success was false");
 			Assert.True(result.Cas > 0, "Cas value was 0");
 			Assert.True(result.StatusCode == 0, "StatusCode was not 0");
+
+			return result;
 		}
 
 		protected void ShouldFail(IOperationResult result)
@@ -82,7 +84,7 @@ namespace Enyim.Caching.Tests
 
 		protected void ShouldPass<T>(IGetOperationResult<T> result, T expectedValue)
 		{
-			ShouldPass((IOperationResult)result);
+			ShouldPass(result);
 
 			Assert.True(result.HasValue);
 			Assert.Equal(expectedValue, result.Value);
@@ -96,9 +98,16 @@ namespace Enyim.Caching.Tests
 			Assert.Equal(default(T), result.Value);
 		}
 
-		protected void ShoudPass(IMutateOperationResult result, ulong expectedValue)
+		protected void ShouldFail<T>(IGetOperationResult<T> result, T shouldNotBe)
 		{
-			ShouldPass((IOperationResult)result);
+			ShouldFail((IOperationResult)result);
+
+			Assert.NotEqual(shouldNotBe, result.Value);
+		}
+
+		protected void ShouldPass(IMutateOperationResult result, ulong expectedValue)
+		{
+			ShouldPass(result);
 
 			Assert.Equal(expectedValue, result.Value);
 		}

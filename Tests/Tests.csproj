@@ -40,9 +40,11 @@
     <Compile Include="ConfigurationHelperTests.cs" />
     <Compile Include="ConfigurationSectionTests.cs" />
     <Compile Include="Fakes.cs" />
+    <Compile Include="MemcachedClientConcatTests.cs" />
     <Compile Include="MemcachedClientGetTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MemcachedClientMutateTests.cs" />
     <Compile Include="MemcachedClientStoreTests.cs" />
     <Compile Include="MemcachedClientTestsBase.cs" />
     <Compile Include="PeriodicReconnectPolicyTests.cs" />
