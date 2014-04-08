@@ -115,6 +115,16 @@ namespace Enyim.Caching.Memcached
 		{
 			return self.StoreAsync(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
+
+		public static IOperationResult Remove(this IMemcachedClientWithResults self, string key)
+		{
+			return self.Remove(key, 0);
+		}
+
+		public static Task<IOperationResult> RemoveAsync(this IMemcachedClientWithResults self, string key)
+		{
+			return self.RemoveAsync(key, 0);
+		}
 	}
 }
 

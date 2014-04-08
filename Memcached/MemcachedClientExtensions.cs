@@ -85,6 +85,16 @@ namespace Enyim.Caching.Memcached
 			return self.StoreAsync(StoreMode.Set, key, value, cas, MakeExpiration(validFor, expiresAt));
 		}
 
+		public static bool Remove(this IMemcachedClient self, string key)
+		{
+			return self.Remove(key, 0);
+		}
+
+		public static Task<bool> RemoveAsync(this IMemcachedClient self, string key)
+		{
+			return self.RemoveAsync(key, 0);
+		}
+
 		internal static DateTime MakeExpiration(TimeSpan? validFor, DateTime? expiresAt)
 		{
 			if (validFor != null)

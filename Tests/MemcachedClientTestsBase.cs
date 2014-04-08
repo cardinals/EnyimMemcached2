@@ -60,11 +60,12 @@ namespace Enyim.Caching.Tests
 			return _Client.Store(mode, key, value);
 		}
 
-		protected IOperationResult ShouldPass(IOperationResult result)
+		protected IOperationResult ShouldPass(IOperationResult result, bool checkCas = true)
 		{
 			Assert.True(result.Success, "Success was false");
-			Assert.True(result.Cas > 0, "Cas value was 0");
 			Assert.True(result.StatusCode == 0, "StatusCode was not 0");
+
+			if (checkCas) Assert.True(result.Cas > 0, "Cas value was 0");
 
 			return result;
 		}
