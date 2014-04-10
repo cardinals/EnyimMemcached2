@@ -7,15 +7,15 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests
+	public partial class MemcachedClientTests
 	{
 		[Fact]
 		public void When_Incrementing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Increment");
 
-			ShouldPass(client.Increment(key, 200, 10), 200);
-			ShouldPass(client.Increment(key, 200, 10), 210);
+			Assert.Equal(200u, client.Increment(key, 200, 10));
+			Assert.Equal(210u, client.Increment(key, 200, 10));
 		}
 
 		[Fact]
@@ -23,9 +23,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment_Get");
 
-			ShouldPass(client.Increment(key, 200, 10), 200);
-			ShouldPass(client.Increment(key, 200, 10), 210);
-			ShouldPass(client.Get(key), "210");
+			Assert.Equal(200u, client.Increment(key, 200, 10));
+			Assert.Equal(210u, client.Increment(key, 200, 10));
+			Assert.Equal("210", client.Get(key));
 		}
 
 		[Fact]
@@ -33,9 +33,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment_Store");
 
-			ShouldPass(client.Set(key, "200"));
-			ShouldPass(client.Increment(key, 20, 10), 210);
-			ShouldPass(client.Get(key), "210");
+			Assert.True(client.Set(key, "200"));
+			Assert.Equal(210u, client.Increment(key, 10, 10));
+			Assert.Equal("210", client.Get(key));
 		}
 
 		[Fact]
@@ -43,8 +43,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement");
 
-			ShouldPass(client.Decrement(key, 200, 10), 200);
-			ShouldPass(client.Decrement(key, 200, 10), 190);
+			Assert.Equal(200u, client.Decrement(key, 200, 10));
+			Assert.Equal(190u, client.Decrement(key, 200, 10));
 		}
 
 		[Fact]
@@ -52,9 +52,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement_Get");
 
-			ShouldPass(client.Decrement(key, 200, 10), 200);
-			ShouldPass(client.Decrement(key, 200, 10), 190);
-			ShouldPass(client.Get(key), "190");
+			Assert.Equal(200u, client.Decrement(key, 200, 10));
+			Assert.Equal(190u, client.Decrement(key, 200, 10));
+			Assert.Equal("190", client.Get(key));
 		}
 
 		[Fact]
@@ -62,9 +62,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement_Store");
 
-			ShouldPass(client.Set(key, "200"));
-			ShouldPass(client.Decrement(key, 10, 10), 190);
-			ShouldPass(client.Get(key), "190");
+			Assert.True(client.Set(key, "200"));
+			Assert.Equal(190u, client.Decrement(key, 10, 10));
+			Assert.Equal("190", client.Get(key));
 		}
 
 	}

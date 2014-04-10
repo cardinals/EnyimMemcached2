@@ -8,7 +8,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests
+	public partial class MemcachedClientTests
 	{
 		[Fact]
 		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
@@ -16,18 +16,16 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Existing");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Get(key), value);
+			Assert.True(Store(key: key, value: value));
+			Assert.Equal(value, client.Get(key));
 		}
 
 		[Fact]
 		public void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Get_Invalid");
-			var getResult = client.Get<object>(key);
 
-			Assert.Equal((int)StatusCode.KeyNotFound, getResult.StatusCode);
-			ShouldFail(getResult);
+			Assert.Null(client.Get<object>(key));
 		}
 
 		[Fact]
@@ -36,22 +34,23 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Generic_Get");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Get<string>(key), value);
+			Assert.True(Store(key: key, value: value));
+			Assert.Equal(value, client.Get<string>(key));
 		}
 
 		[Fact]
 		public void When_Getting_Multiple_Keys_Result_Is_Successful()
 		{
-			var keys = GetUniqueKeys().Distinct().ToArray();
-			foreach (var key in keys)
-			{
-				ShouldPass(Store(key: key, value: "Value for" + key));
-			}
+			var data = GetUniqueKeys().ToDictionary(k => "Value for " + k);
 
-			var dict = client.Get(keys);
-			Assert.Equal(keys.OrderBy(_ => _), dict.Keys.OrderBy(_ => _));
-			Assert.True(dict.All(kvp => kvp.Value.Success));
+			foreach (var kvp in data)
+				Assert.True(Store(key: kvp.Key, value: kvp.Value));
+
+			var results = client.Get(data.Keys).OrderBy(kvp => kvp.Key).ToArray();
+			var source = data.OrderBy(kvp => kvp.Key).ToArray();
+
+			Assert.Equal(source.Select(kvp => kvp.Key), results.Select(kvp => kvp.Key));
+			Assert.Equal(source.Select(kvp => kvp.Value), results.Select(kvp => kvp.Value));
 		}
 
 		[Fact]
@@ -60,8 +59,8 @@ namespace Enyim.Caching.Tests
 			const byte expectedValue = 1;
 			var key = GetUniqueKey("Get_Byte");
 
-			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(client.Get(key), expectedValue);
+			Assert.True(Store(key: key, value: expectedValue));
+			Assert.Equal(expectedValue, client.Get(key));
 		}
 
 		[Fact]
@@ -70,8 +69,8 @@ namespace Enyim.Caching.Tests
 			const sbyte expectedValue = 1;
 			var key = GetUniqueKey("Get_Sbyte");
 
-			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(client.Get(key), expectedValue);
+			Assert.True(Store(key: key, value: expectedValue));
+			Assert.Equal(expectedValue, client.Get(key));
 		}
 	}
 }

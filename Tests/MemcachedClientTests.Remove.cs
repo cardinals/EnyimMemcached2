@@ -7,26 +7,25 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests 
+	public partial class MemcachedClientTests 
 	{
 		[Fact]
-		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
+		public void When_Removing_A_Valid_Key_Result_Is_Successful()
 		{
-			var key = GetUniqueKey("Cas_Success");
-			var value = GetRandomString();
+			var key = GetUniqueKey("Remove_Valid");
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldPass(client.Set(key, value, storeResult.Cas));
+			Assert.True(Store(key: key));
+			Assert.True(client.Remove(key));
+			Assert.Null(client.Get(key));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+		public void When_Removing_An_Invalid_Key_Result_Is_Not_Successful()
 		{
-			var key = GetUniqueKey("Cas_Fail");
-			var value = GetRandomString();
+			var key = GetUniqueKey("Remove_Invalid");
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldFail(client.Set(key, value, storeResult.Cas - 1));
+			Assert.Null(client.Get(key)); // sanity-check
+			Assert.False(client.Remove(key));
 		}
 	}
 }

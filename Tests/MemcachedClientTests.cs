@@ -1,32 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
-using Xunit;
 using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Configuration;
+using Enyim.Caching.Memcached.Results;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests 
+	public partial class MemcachedClientTests : MemcachedClientTestBase, IUseFixture<ClientTestSetupFixture>
 	{
-		[Fact]
-		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
-		{
-			var key = GetUniqueKey("Cas_Success");
-			var value = GetRandomString();
+		private IMemcachedClient client;
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldPass(client.Set(key, value, storeResult.Cas));
+		public MemcachedClientTests() : base("MemcachedClientTests") { }
+
+		public void SetFixture(ClientTestSetupFixture data)
+		{
+			client = new MemcachedClient(data.ClientConfig);
 		}
 
-		[Fact]
-		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+		protected bool Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
 		{
-			var key = GetUniqueKey("Cas_Fail");
-			var value = GetRandomString();
+			if (key == null) key = GetUniqueKey("store");
+			if (value == null) value = GetRandomString();
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldFail(client.Set(key, value, storeResult.Cas - 1));
+			return client.Store(mode, key, value);
 		}
 	}
 }

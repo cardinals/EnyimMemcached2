@@ -54,7 +54,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Stress_Test_Inserts()
 		{
-			const int ITER = 3000;
+			const int ITER = 5000;
 			const int NORM = 2;
 			const int GUARD = 254;
 
@@ -69,16 +69,15 @@ namespace Enyim.Caching.Tests
 
 				Assert.True(queue.SequenceEqual(Enumerable
 													.Repeat(GUARD, inserts)
-													.Concat(Enumerable.Repeat(NORM, queue.Count - inserts))),
-							"insert 1, count: " + queue.Count);
+													.Concat(Enumerable.Repeat(NORM, queue.Count - inserts))));
 
 				for (var i = 0; i < inserts; i++)
 				{
-					Assert.True(GUARD == queue.Dequeue(), "1st dequeue, count: " + queue.Count);
+					Assert.True(GUARD == queue.Dequeue());
 				}
 
-				Assert.True(NORM == queue.Dequeue(), "2nd dequeue, count: " + queue.Count);
-				Assert.True(NORM == queue.Dequeue(), "3nd dequeue, count: " + queue.Count);
+				Assert.True(NORM == queue.Dequeue());
+				Assert.True(NORM == queue.Dequeue());
 
 				inserts++;
 			}
@@ -117,6 +116,18 @@ namespace Enyim.Caching.Tests
 			}.SelectMany(a => a);
 
 			Assert.True(queue.SequenceEqual(expected), "final");
+		}
+
+		[Fact]
+		public void Enqueing_A_Queue_Into_Another_Should_Empty_The_Original()
+		{
+			var one = new AdvQueue<int>(Enumerable.Repeat(1, 10));
+			var other = new AdvQueue<int>(Enumerable.Repeat(2, 10));
+
+			one.Enqueue(other);
+
+			Assert.Equal(0, other.Count);
+			Assert.Equal(20, one.Count);
 		}
 
 		[Fact]

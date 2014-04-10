@@ -15,9 +15,19 @@ namespace Enyim.Caching.Memcached
 			return self.GetAsync<object>(key);
 		}
 
+		public static bool Append(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.Append(key, new ArraySegment<byte>(data), cas);
+		}
+
 		public static bool Append(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.Concate(ConcatenationMode.Append, key, data, cas);
+		}
+
+		public static bool Prepend(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.Prepend(key, new ArraySegment<byte>(data), cas);
 		}
 
 		public static bool Prepend(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
@@ -35,9 +45,19 @@ namespace Enyim.Caching.Memcached
 			return self.Mutate(MutationMode.Decrement, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
 		}
 
+		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.AppendAsync(key, new ArraySegment<byte>(data), cas);
+		}
+
 		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
 		{
 			return self.ConcateAsync(ConcatenationMode.Append, key, data, cas);
+		}
+
+		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		{
+			return self.PrependAsync(key, new ArraySegment<byte>(data), cas);
 		}
 
 		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
@@ -83,6 +103,16 @@ namespace Enyim.Caching.Memcached
 		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
 			return self.StoreAsync(StoreMode.Set, key, value, cas, MakeExpiration(validFor, expiresAt));
+		}
+
+		public static bool Store(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		{
+			return self.Store(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+		}
+
+		public static Task<bool> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		{
+			return self.StoreAsync(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
 
 		public static bool Remove(this IMemcachedClient self, string key)

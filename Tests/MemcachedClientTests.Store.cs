@@ -8,12 +8,12 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests
+	public partial class MemcachedClientTests 
 	{
 		[Fact]
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()
 		{
-			ShouldPass(Store(StoreMode.Add, key: GetUniqueKey("Add_Once")));
+			Assert.True(Store(StoreMode.Add, key: GetUniqueKey("Add_Once")));
 		}
 
 		[Fact]
@@ -21,23 +21,20 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Add_Twice");
 
-			ShouldPass(Store(StoreMode.Add, key: key));
-			ShouldFail(Store(StoreMode.Add, key: key));
+			Assert.True(Store(StoreMode.Add, key: key));
+			Assert.False(Store(StoreMode.Add, key: key));
 		}
 
 		[Fact]
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
 		{
-			var result = Store(StoreMode.Replace, key: GetUniqueKey("New_Replace"));
-
-			Assert.Equal((int)StatusCode.KeyNotFound, result.StatusCode);
-			ShouldFail(result);
+			Assert.False(Store(StoreMode.Replace, key: GetUniqueKey("New_Replace")));
 		}
 
 		[Fact]
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Set_Result_Is_Successful()
 		{
-			ShouldPass(Store(StoreMode.Set, key: GetUniqueKey("New_Set")));
+			Assert.True(Store(StoreMode.Set, key: GetUniqueKey("New_Set")));
 		}
 
 		[Fact]
@@ -45,8 +42,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Existing_Replace");
 
-			ShouldPass(Store(StoreMode.Add, key));
-			ShouldPass(Store(StoreMode.Replace, key));
+			Assert.True(Store(StoreMode.Add, key));
+			Assert.True(Store(StoreMode.Replace, key));
 		}
 
 		[Fact]
@@ -54,8 +51,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Existing_Set");
 
-			ShouldPass(Store(StoreMode.Add, key));
-			ShouldPass(Store(StoreMode.Set, key));
+			Assert.True(Store(StoreMode.Add, key));
+			Assert.True(Store(StoreMode.Set, key));
 		}
 	}
 }

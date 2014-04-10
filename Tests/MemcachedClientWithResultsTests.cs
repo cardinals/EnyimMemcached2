@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Enyim.Caching.Memcached;
@@ -9,68 +11,15 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClusterSetup : IDisposable
+	public partial class MemcachedClientWithResultsTests : MemcachedClientTestBase, IUseFixture<ClientTestSetupFixture>
 	{
-		private const string ClusterName = "MemcachedClientTests";
-		private IContainer clientConfig;
-
-		public MemcachedClusterSetup()
-		{
-
-			new ClusterBuilder(ClusterName).FromConfiguration().Register();
-			clientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
-			Client = new MemcachedClientWithResults(clientConfig);
-		}
-
-		public IMemcachedClientWithResults Client { get; private set; }
-
-		public void Dispose()
-		{
-			clientConfig.Dispose();
-			ClusterManager.Shutdown(ClusterName);
-		}
-	}
-
-	public partial class MemcachedClientWithResultsTests : IUseFixture<MemcachedClusterSetup>
-	{
-		//static readonly IContainer clientConfig;
-
-		//static MemcachedClientWithResultsTests()
-		//{
-		//	const string ClusterName = "MemcachedClientTests";
-
-		//	new ClusterBuilder(ClusterName).FromConfiguration().Register();
-		//	clientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
-		//}
-
 		private IMemcachedClientWithResults client;
 
-		//public MemcachedClientWithResultsTests()
-		//{
-		//	client = new MemcachedClientWithResults(clientConfig);
-		//}
+		public MemcachedClientWithResultsTests() : base("MemcachedClientWithResultsTests") { }
 
-		protected string GetUniqueKey(string prefix = null)
+		public void SetFixture(ClientTestSetupFixture data)
 		{
-			return (!string.IsNullOrEmpty(prefix) ? prefix + "_" : "") +
-				"unit_test_" + DateTime.Now.Ticks;
-		}
-
-		protected IEnumerable<string> GetUniqueKeys(string prefix = null, int max = 5)
-		{
-			var keys = new List<string>(max);
-			for (int i = 0; i < max; i++)
-			{
-				keys.Add(GetUniqueKey(prefix));
-			}
-
-			return keys;
-		}
-
-		protected string GetRandomString()
-		{
-			var rand = new Random((int)DateTime.Now.Ticks).Next();
-			return "unit_test_value_" + rand;
+			client = new MemcachedClientWithResults(data.ClientConfig);
 		}
 
 		protected IOperationResult Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
@@ -133,53 +82,30 @@ namespace Enyim.Caching.Tests
 
 			Assert.Equal(expectedValue, result.Value);
 		}
-
-		//protected void MutateAssertFail(IMutateOperationResult result)
-		//{
-		//	Assert.That(result.Success, Is.False, "Success was true");
-		//	Assert.That(result.Cas, Is.EqualTo(0), "Cas 0");
-		//	Assert.That(result.StatusCode, Is.Null.Or.Not.EqualTo(0), "StatusCode was 0");
-		//}
-
-		//protected void ConcatAssertPass(IConcatOperationResult result)
-		//{
-		//	Assert.That(result.Success, Is.True, "Success was false");
-		//	Assert.That(result.Cas, Is.GreaterThan(0), "Cas value was 0");
-		//	Assert.That(result.StatusCode, Is.EqualTo(0), "StatusCode was not 0");
-		//}
-
-		//protected void ConcatAssertFail(IConcatOperationResult result)
-		//{
-		//	Assert.That(result.Success, Is.False, "Success was true");
-		//	Assert.That(result.Cas, Is.EqualTo(0), "Cas value was not 0");
-		//	Assert.That(result.StatusCode, Is.Null.Or.GreaterThan(0), "StatusCode not greater than 0");
-		//}
-
-		public void SetFixture(MemcachedClusterSetup data)
-		{
-			client = data.Client;
-		}
 	}
 }
 
 #region [ License information          ]
+
 /* ************************************************************
- * 
+ *
  *    @author Couchbase <info@couchbase.com>
+ *    @author Attila Kiskó <a@enyim.com>
  *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2012 Attila Kiskó, enyim.com
- *    
+ *    @copyright 2014 Attila Kiskó, enyim.com
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
+
 #endregion
