@@ -72,7 +72,12 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Append_Cas_Fail");
 			var value = GetRandomString();
 
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(Store(key: key, value: value));
 			var storeResult = ShouldPass(Store(key: key, value: value));
+
+			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
+
 			ShouldFail(client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas - 1));
 			ShouldPass(client.Get(key), value);
 		}
@@ -96,7 +101,12 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Prepend_Cas_Fail");
 			var value = GetRandomString();
 
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(Store(key: key, value: value));
 			var storeResult = ShouldPass(Store(key: key, value: value));
+
+			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
+
 			ShouldFail(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas - 1));
 			ShouldPass(client.Get(key), value);
 		}

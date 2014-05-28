@@ -7,7 +7,7 @@
     <ProjectGuid>{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Enyim.Caching</RootNamespace>
+    <RootNamespace>Enyim.Caching.Memcached</RootNamespace>
     <AssemblyName>Enyim.Caching.Memcached</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -31,6 +31,7 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="CasResult.cs" />
     <Compile Include="Contracts\ICanBeSilent.cs" />
     <Compile Include="Contracts\IHaveResult.cs" />
     <Compile Include="Contracts\IGetOperation.cs" />

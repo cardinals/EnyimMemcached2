@@ -69,46 +69,46 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public bool Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
+		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return StoreAsync(mode, key, value, cas, expiresAt).Result;
+			return StoreAsync(mode, key, value, expiresAt).Result;
 		}
 
-		public Task<bool> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
+		public Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return HandleErrors(PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt)));
+			return HandleErrors(PerformStoreAsync(mode, key, value, 0, GetExpiration(expiresAt)));
 		}
 
-		public bool Remove(string key, ulong cas)
+		public bool Remove(string key)
 		{
-			return RemoveAsync(key, cas).Result;
+			return RemoveAsync(key).Result;
 		}
 
-		public Task<bool> RemoveAsync(string key, ulong cas)
+		public Task<bool> RemoveAsync(string key)
 		{
-			return HandleErrors(PerformRemove(key, cas));
+			return HandleErrors(PerformRemove(key, 0));
 		}
 
-		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
+		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
-			return ConcateAsync(mode, key, data, cas).Result;
+			return ConcateAsync(mode, key, data).Result;
 		}
 
-		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
+		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
-			return HandleErrors(PerformConcate(mode, key, cas, data));
+			return HandleErrors(PerformConcate(mode, key, 0, data));
 		}
 
-		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
+		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return MutateAsync(mode, key, defaultValue, delta, cas, expiresAt).Result;
+			return MutateAsync(mode, key, defaultValue, delta, expiresAt).Result;
 		}
 
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
 			try
 			{
-				var result = await PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
+				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(expiresAt));
 
 				return result.Value;
 			}
@@ -166,7 +166,6 @@ namespace Enyim.Caching.Memcached
 				return false;
 			}
 		}
-
 	}
 }
 

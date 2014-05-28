@@ -15,114 +15,104 @@ namespace Enyim.Caching.Memcached
 			return self.GetAsync<object>(key);
 		}
 
-		public static bool Append(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		public static bool Append(this IMemcachedClient self, string key, byte[] data)
 		{
-			return self.Append(key, new ArraySegment<byte>(data), cas);
+			return self.Append(key, new ArraySegment<byte>(data));
 		}
 
-		public static bool Append(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
+		public static bool Append(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.Concate(ConcatenationMode.Append, key, data, cas);
+			return self.Concate(ConcatenationMode.Append, key, data);
 		}
 
-		public static bool Prepend(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		public static bool Prepend(this IMemcachedClient self, string key, byte[] data)
 		{
-			return self.Prepend(key, new ArraySegment<byte>(data), cas);
+			return self.Prepend(key, new ArraySegment<byte>(data));
 		}
 
-		public static bool Prepend(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
+		public static bool Prepend(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.Concate(ConcatenationMode.Prepend, key, data, cas);
+			return self.Concate(ConcatenationMode.Prepend, key, data);
 		}
 
-		public static ulong Increment(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static ulong Increment(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Mutate(MutationMode.Increment, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
+			return self.Mutate(MutationMode.Increment, key, defaultValue, delta, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static ulong Decrement(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static ulong Decrement(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Mutate(MutationMode.Decrement, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
+			return self.Mutate(MutationMode.Decrement, key, defaultValue, delta, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, byte[] data)
 		{
-			return self.AppendAsync(key, new ArraySegment<byte>(data), cas);
+			return self.AppendAsync(key, new ArraySegment<byte>(data));
 		}
 
-		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
+		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.ConcateAsync(ConcatenationMode.Append, key, data, cas);
+			return self.ConcateAsync(ConcatenationMode.Append, key, data);
 		}
 
-		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = 0)
+		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, byte[] data)
 		{
-			return self.PrependAsync(key, new ArraySegment<byte>(data), cas);
+			return self.PrependAsync(key, new ArraySegment<byte>(data));
 		}
 
-		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = 0)
+		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.ConcateAsync(ConcatenationMode.Prepend, key, data, cas);
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, data);
 		}
 
-		public static Task<ulong> IncrementAsync(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<ulong> IncrementAsync(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.MutateAsync(MutationMode.Increment, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
+			return self.MutateAsync(MutationMode.Increment, key, defaultValue, delta, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<ulong> DecrementAsync(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<ulong> DecrementAsync(this IMemcachedClient self, string key, ulong defaultValue, ulong delta, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.MutateAsync(MutationMode.Decrement, key, defaultValue, delta, cas, MakeExpiration(validFor, expiresAt));
+			return self.MutateAsync(MutationMode.Decrement, key, defaultValue, delta, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static bool Add(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static bool Add(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Store(StoreMode.Add, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.Store(StoreMode.Add, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<bool> AddAsync(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<bool> AddAsync(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.StoreAsync(StoreMode.Add, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.StoreAsync(StoreMode.Add, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static bool Replace(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static bool Replace(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Store(StoreMode.Replace, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.Store(StoreMode.Replace, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<bool> ReplaceAsync(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<bool> ReplaceAsync(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.StoreAsync(StoreMode.Replace, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.StoreAsync(StoreMode.Replace, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static bool Set(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static bool Set(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Store(StoreMode.Set, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.Store(StoreMode.Set, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.StoreAsync(StoreMode.Set, key, value, cas, MakeExpiration(validFor, expiresAt));
+			return self.StoreAsync(StoreMode.Set, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
-		public static bool Store(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static bool Store(this IMemcachedClient self, StoreMode mode, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Store(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+			return self.Store(mode, key, value, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
 
-		public static Task<bool> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = 0, TimeSpan? validFor = null, DateTime? expiresAt = null)
+		public static Task<bool> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.StoreAsync(mode, key, value, cas, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
-		}
-
-		public static bool Remove(this IMemcachedClient self, string key)
-		{
-			return self.Remove(key, 0);
-		}
-
-		public static Task<bool> RemoveAsync(this IMemcachedClient self, string key)
-		{
-			return self.RemoveAsync(key, 0);
+			return self.StoreAsync(mode, key, value, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
 		}
 
 		internal static DateTime MakeExpiration(TimeSpan? validFor, DateTime? expiresAt)

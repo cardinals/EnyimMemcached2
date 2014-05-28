@@ -7,7 +7,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests 
+	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
 		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
@@ -25,8 +25,12 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Cas_Fail");
 			var value = GetRandomString();
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldFail(client.Set(key, value, storeResult.Cas - 1));
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(Store(StoreMode.Set, key, value));
+			var storeResult = ShouldPass(Store(StoreMode.Set, key, value));
+
+			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
+			ShouldFail(client.Set(key, value, cas: storeResult.Cas - 1));
 		}
 	}
 }

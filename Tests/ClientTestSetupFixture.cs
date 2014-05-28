@@ -13,21 +13,11 @@ namespace Enyim.Caching.Tests
 	public class ClientTestSetupFixture : IDisposable
 	{
 		private const string ClusterName = "MemcachedClientTests";
-		private Process process;
+		private IDisposable server;
 
 		public ClientTestSetupFixture()
 		{
-			var path = AppDomain.CurrentDomain.BaseDirectory;
-			path = Path.Combine(path, "Tools");
-
-			process = Process.Start(new ProcessStartInfo
-			{
-				Arguments = "-E default_engine.so",
-				FileName = path + "\\memcached.exe",
-				WorkingDirectory = path,
-				WindowStyle = ProcessWindowStyle.Hidden
-			});
-
+			server = MemcachedServer.Run();
 			new ClusterBuilder(ClusterName).FromConfiguration().Register();
 			ClientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
 		}
@@ -36,10 +26,12 @@ namespace Enyim.Caching.Tests
 
 		public void Dispose()
 		{
+			server.Dispose();
 			ClientConfig.Dispose();
-			ClientConfig = null;
 			ClusterManager.Shutdown(ClusterName);
-			process.Kill();
+
+			server = null;
+			ClientConfig = null;
 		}
 	}
 }

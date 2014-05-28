@@ -42,6 +42,7 @@
     <Compile Include="ConfigurationSectionTests.cs" />
     <Compile Include="Fakes.cs" />
     <Compile Include="MemcachedClientTestBase.cs" />
+    <Compile Include="MemcachedClientFailoverTests.cs" />
     <Compile Include="MemcachedClientTests.Cas.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
     </Compile>
@@ -80,6 +81,7 @@
     <Compile Include="MemcachedClientWithResultsTests.Store.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
     </Compile>
+    <Compile Include="MemcachedServer.cs" />
     <Compile Include="PeriodicReconnectPolicyTests.cs" />
     <Compile Include="StepRecorder.cs" />
     <Compile Include="ObjectUpdaterTests.cs" />

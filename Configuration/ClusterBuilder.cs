@@ -20,8 +20,10 @@ namespace Enyim.Caching.Memcached.Configuration
 			builder = new Ω(this);
 		}
 
+		/// <summary>
+		/// Gets the name of the current builder.
+		/// </summary>
 		public string Name { get; private set; }
-		public IClusterBuilderServices Add { get { return builder; } }
 
 		/// <summary>
 		/// Specify the nodes of the clusters.
