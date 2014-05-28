@@ -35,7 +35,6 @@ namespace Enyim.Caching.Memcached.Operations
 		public BinaryRequest(byte commandCode, byte extraLength)
 		{
 			this.Operation = commandCode;
-			//this.CorrelationId = (uint)(++InstanceCounter);
 			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
 
 			this.headerLength = Protocol.HeaderLength + extraLength;

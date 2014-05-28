@@ -32,6 +32,10 @@ namespace Enyim.Caching.Memcached
 		AppendQ = 0x19,
 		PrependQ = 0x1A,
 
+		Touch = 0x1c,
+		GAT = 0x1d,
+		GATQ = 0x1e,
+
 		// SASL authentication op-codes
 		SaslList = 0x20,
 		SaslStart = 0x21,

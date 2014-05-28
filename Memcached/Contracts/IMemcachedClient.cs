@@ -9,6 +9,9 @@ namespace Enyim.Caching.Memcached
 		T Get<T>(string key);
 		IDictionary<string, object> Get(IEnumerable<string> keys);
 
+		T GetAndTouch<T>(string key, DateTime expiration);
+		bool Touch(string key, DateTime expiration);
+
 		bool Store(StoreMode mode, string key, object value, DateTime expires);
 		bool Remove(string key);
 		bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data);
@@ -16,6 +19,9 @@ namespace Enyim.Caching.Memcached
 
 		Task<T> GetAsync<T>(string key);
 		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
+
+		Task<T> GetAndTouchAsync<T>(string key, DateTime expiration);
+		Task<bool> TouchAsync(string key, DateTime expiration);
 
 		Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expires);
 		Task<bool> RemoveAsync(string key);

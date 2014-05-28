@@ -50,6 +50,14 @@ namespace Enyim.Caching.Memcached
 			return op.Result;
 		}
 
+		protected virtual async Task<IGetOperationResult> PerformGetAndTouchCore(string key, uint expires)
+		{
+			var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires);
+			await cluster.Execute(op);
+
+			return op.Result;
+		}
+
 		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, ulong cas, uint expires)
 		{
 			var ci = transcoder.Serialize(value);
@@ -138,6 +146,14 @@ namespace Enyim.Caching.Memcached
 			}
 
 			return retval ?? new StatsOperationResult { Value = new ServerStats() }.Fail();
+		}
+
+		protected async Task<IOperationResult> PerformTouch(string key, uint expires)
+		{
+			var op = opFactory.Touch(keyTransformer.Transform(key), expires);
+			await cluster.Execute(op);
+
+			return op.Result;
 		}
 
 		#region [ Value helpers                ]

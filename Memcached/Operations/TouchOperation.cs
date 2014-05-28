@@ -4,51 +4,30 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class StoreOperation : BinarySingleItemOperation<IOperationResult>, IStoreOperation
+	public class TouchOperation : BinarySingleItemOperation<IOperationResult>, ITouchOperation
 	{
-		protected const int ExtraLength = 8;
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StoreOperation));
+		protected const int ExtraLength = 4;
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(TouchOperation));
 
-		private readonly CacheItem value;
-
-		public StoreOperation(StoreMode mode, byte[] key, CacheItem value, uint expires) :
+		public TouchOperation(byte[] key, uint expires) :
 			base(key)
 		{
-			Mode = mode;
 			Expires = expires;
-			this.value = value;
 		}
 
-		public StoreMode Mode { get; private set; }
 		public uint Expires { get; private set; }
-		public bool Silent { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
-			OpCode op;
-
-			// figure out the op code
-			if (Mode == StoreMode.Add) op = OpCode.Add;
-			else if (Mode == StoreMode.Replace) op = OpCode.Replace;
-			else if (Mode == StoreMode.Set) op = OpCode.Set;
-			else throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
-
-			// make it silent
-			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);
-
-			var request = new BinaryRequest(op, ExtraLength)
+			var request = new BinaryRequest(OpCode.Touch, ExtraLength)
 			{
 				Key = Key,
-				Cas = Cas,
-				Data = value.Data
+				Cas = Cas
 			};
 
-			var extra = request.Extra.Array;
-			var offset = request.Extra.Offset;
-
-			// store the extra values
-			BinaryConverter.EncodeUInt32((uint)value.Flags, extra, offset);
-			BinaryConverter.EncodeUInt32(Expires, extra, offset + 4);
+			// store expiration in Extra
+			var extra = request.Extra;
+			BinaryConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
 
 			return request;
 		}

@@ -141,6 +141,16 @@ namespace Enyim.Caching.Tests
 		{
 			throw new NotImplementedException();
 		}
+
+		public IGetAndTouchOperation GetAndTouch(byte[] key, uint expires)
+		{
+			throw new NotImplementedException();
+		}
+
+		public ITouchOperation Touch(byte[] key, uint expires)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
 

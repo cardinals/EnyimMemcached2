@@ -36,6 +36,12 @@
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AdvQueueTests.cs" />
+    <Compile Include="MemcachedClientWithResultsTests.Touch.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientTests.Touch.cs">
+      <DependentUpon>MemcachedClientTests.cs</DependentUpon>
+    </Compile>
     <Compile Include="ClientTestSetupFixture.cs" />
     <Compile Include="ClusterBuilderTests.cs" />
     <Compile Include="ConfigurationHelperTests.cs" />

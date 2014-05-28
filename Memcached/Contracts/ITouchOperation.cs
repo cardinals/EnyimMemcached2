@@ -3,9 +3,8 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IStoreOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
+	public interface ITouchOperation : IItemOperation, IHaveResult<IOperationResult>
 	{
-		StoreMode Mode { get; }
 		uint Expires { get; }
 	}
 }

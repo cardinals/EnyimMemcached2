@@ -14,6 +14,11 @@ namespace Enyim.Caching.Memcached
 			return new GetOperation(key) { Silent = false };
 		}
 
+		public IGetAndTouchOperation GetAndTouch(byte[] key, uint expires)
+		{
+			return new GetAndTouchOperation(key, expires);
+		}
+
 		public IStoreOperation Store(StoreMode mode, byte[] key, CacheItem value, ulong cas, uint expires)
 		{
 			return new StoreOperation(mode, key, value, expires) { Cas = cas, Silent = false };
@@ -27,6 +32,11 @@ namespace Enyim.Caching.Memcached
 		public IMutateOperation Mutate(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
 			return new MutateOperation(mode, key, defaultValue, delta, expires) { Cas = cas };
+		}
+
+		public ITouchOperation Touch(byte[] key, uint expires)
+		{
+			return new TouchOperation(key, expires);
 		}
 
 		public IConcatOperation Concat(ConcatenationMode mode, byte[] key, ulong cas, ArraySegment<byte> data)

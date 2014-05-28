@@ -1,12 +1,36 @@
 ﻿using System;
+using System.Text;
 using Enyim.Caching.Memcached.Results;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Memcached.Operations
 {
-	public interface IStoreOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
+	public class GetAndTouchOperation : GetOperation, IGetAndTouchOperation
 	{
-		StoreMode Mode { get; }
-		uint Expires { get; }
+		protected const int ExtraLength = 4;
+		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(TouchOperation));
+
+		public GetAndTouchOperation(byte[] key, uint expires) :
+			base(key)
+		{
+			Expires = expires;
+		}
+
+		public uint Expires { get; private set; }
+
+		protected override BinaryRequest CreateRequest()
+		{
+			var request = new BinaryRequest(Silent ? OpCode.GATQ : OpCode.GAT, ExtraLength)
+			{
+				Key = Key,
+				Cas = Cas
+			};
+
+			// store expiration in Extra
+			var extra = request.Extra;
+			BinaryConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
+
+			return request;
+		}
 	}
 }
 

@@ -14,12 +14,12 @@ namespace Enyim.Caching.Memcached
 
 		public IGetOperationResult<T> Get<T>(string key)
 		{
-			return ((IMemcachedClientWithResults)this).GetAsync<T>(key).Result;
+			return GetAsync<T>(key).Result;
 		}
 
 		public IDictionary<string, IGetOperationResult<object>> Get(IEnumerable<string> keys)
 		{
-			return ((IMemcachedClientWithResults)this).GetAsync(keys).Result;
+			return GetAsync(keys).Result;
 		}
 
 		public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
@@ -41,6 +41,29 @@ namespace Enyim.Caching.Memcached
 			}
 
 			return retval;
+		}
+
+		public IGetOperationResult<T> GetAndTouch<T>(string key, DateTime expiration)
+		{
+			return GetAndTouchAsync<T>(key, expiration).Result;
+		}
+
+		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiration)
+		{
+			var result = await PerformGetAndTouchCore(key, GetExpiration(expiration));
+			var converted = ConvertToResult<T>(result);
+
+			return converted;
+		}
+
+		public IOperationResult Touch(string key, DateTime expiration)
+		{
+			return TouchAsync(key, expiration).Result;
+		}
+
+		public Task<IOperationResult> TouchAsync(string key, DateTime expiration)
+		{
+			return PerformTouch(key, GetExpiration(expiration));
 		}
 
 		public IOperationResult Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
