@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
@@ -34,5 +36,42 @@ namespace Enyim.Caching.Tests
 		{
 			return "unit_test_value_" + random.Next();
 		}
+
+		public async static Task<T> IfThrowsAsync<T>(Func<Task> testCode) where T : Exception
+		{
+			try
+			{
+				await testCode();
+				Assert.Throws<T>(() => { });
+			}
+			catch (T exception)
+			{
+				return exception;
+			}
+
+			return null;
+		}
+
+		public async static Task<T> IfThrowsAsync<T>(Task testCode) where T : Exception
+		{
+			try
+			{
+				await testCode;
+				Assert.Throws<T>(() => { });
+			}
+			catch (T exception)
+			{
+				return exception;
+			}
+
+			return null;
+		}
+
+		public static void IfThrows<T>(IOperationResult result) where T : Exception
+		{
+			Assert.False(result.Success);
+			Assert.IsType<T>(result.Exception);
+		}
+
 	}
 }

@@ -98,6 +98,7 @@
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MemcachedClientWithResultsFailoverTests.cs" />
     <Compile Include="MemcachedClientWithResultsTests.Cas.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
       <SubType>Code</SubType>
