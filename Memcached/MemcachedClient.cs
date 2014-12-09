@@ -15,12 +15,28 @@ namespace Enyim.Caching.Memcached
 
 		public T Get<T>(string key)
 		{
-			return GetAsync<T>(key).Result;
+			try
+			{
+				return GetAsync<T>(key).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public IDictionary<string, object> Get(IEnumerable<string> keys)
 		{
-			return GetAsync(keys).Result;
+			try
+			{
+				return GetAsync(keys).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public async Task<T> GetAsync<T>(string key)
@@ -56,6 +72,7 @@ namespace Enyim.Caching.Memcached
 					catch (Exception e)
 					{
 						if (log.IsErrorEnabled) log.Error(e);
+						retval[kvp.Key] = null;
 					}
 				}
 
@@ -71,7 +88,17 @@ namespace Enyim.Caching.Memcached
 
 		public T GetAndTouch<T>(string key, DateTime expiration)
 		{
-			return GetAndTouchAsync<T>(key, expiration).Result;
+			try
+			{
+				return GetAndTouchAsync<T>(key, expiration).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1)
+					throw ae.InnerExceptions[0];
+
+				else throw ae.Flatten();
+			}
 		}
 
 		public async Task<T> GetAndTouchAsync<T>(string key, DateTime expiration)
@@ -93,7 +120,15 @@ namespace Enyim.Caching.Memcached
 
 		public bool Touch(string key, DateTime expiration)
 		{
-			return TouchAsync(key, expiration).Result;
+			try
+			{
+				return TouchAsync(key, expiration).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public Task<bool> TouchAsync(string key, DateTime expiration)
@@ -103,7 +138,15 @@ namespace Enyim.Caching.Memcached
 
 		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return StoreAsync(mode, key, value, expiresAt).Result;
+			try
+			{
+				return StoreAsync(mode, key, value, expiresAt).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
@@ -113,7 +156,15 @@ namespace Enyim.Caching.Memcached
 
 		public bool Remove(string key)
 		{
-			return RemoveAsync(key).Result;
+			try
+			{
+				return RemoveAsync(key).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public Task<bool> RemoveAsync(string key)
@@ -123,7 +174,15 @@ namespace Enyim.Caching.Memcached
 
 		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
-			return ConcateAsync(mode, key, data).Result;
+			try
+			{
+				return ConcateAsync(mode, key, data).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data)
@@ -133,7 +192,15 @@ namespace Enyim.Caching.Memcached
 
 		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
 		{
-			return MutateAsync(mode, key, defaultValue, delta, expiresAt).Result;
+			try
+			{
+				return MutateAsync(mode, key, defaultValue, delta, expiresAt).Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
@@ -154,7 +221,15 @@ namespace Enyim.Caching.Memcached
 
 		public ServerStats Stats(string key)
 		{
-			return PerformStats(key).Result.Value;
+			try
+			{
+				return PerformStats(key).Result.Value;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public async Task<ServerStats> StatsAsync(string key)
@@ -175,7 +250,15 @@ namespace Enyim.Caching.Memcached
 
 		public bool FlushAll()
 		{
-			return FlushAllAsync().Result;
+			try
+			{
+				return FlushAllAsync().Result;
+			}
+			catch (AggregateException ae)
+			{
+				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
+				else throw ae.Flatten();
+			}
 		}
 
 		public Task<bool> FlushAllAsync()

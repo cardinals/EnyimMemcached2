@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
+using System.IO;
 
 namespace Enyim.Caching.Memcached
 {
@@ -44,51 +45,93 @@ namespace Enyim.Caching.Memcached
 
 		protected virtual async Task<IGetOperationResult> PerformGetCore(string key)
 		{
-			var op = opFactory.Get(keyTransformer.Transform(key));
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.Get(keyTransformer.Transform(key));
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new GetOperationResult().Fail(e);
+			}
 		}
 
 		protected virtual async Task<IGetOperationResult> PerformGetAndTouchCore(string key, uint expires)
 		{
-			var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires);
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new GetOperationResult().Fail(e);
+			}
 		}
 
 		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, ulong cas, uint expires)
 		{
-			var ci = transcoder.Serialize(value);
-			var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
-			await cluster.Execute(op);
+			try
+			{
+				var ci = transcoder.Serialize(value);
+				var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new BinaryOperationResult().Fail(e);
+			}
 		}
 
 		protected async Task<IOperationResult> PerformRemove(string key, ulong cas)
 		{
-			var op = opFactory.Delete(keyTransformer.Transform(key), cas);
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.Delete(keyTransformer.Transform(key), cas);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new BinaryOperationResult().Fail(e);
+			}
 		}
 
 		protected async Task<IOperationResult> PerformConcate(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
 		{
-			var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new BinaryOperationResult().Fail(e);
+			}
 		}
 
 		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
-			var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new MutateOperationResult().Fail(e);
+			}
 		}
 
 		protected async Task<Dictionary<string, IGetOperation>> MultiGetCore(IEnumerable<string> keys)
@@ -99,8 +142,16 @@ namespace Enyim.Caching.Memcached
 			foreach (var key in keys)
 			{
 				var op = opFactory.Get(keyTransformer.Transform(key));
-				tasks.Add(cluster.Execute(op));
-				ops[key] = op;
+
+				try
+				{
+					tasks.Add(cluster.Execute(op));
+					ops[key] = op;
+				}
+				catch (IOException e)
+				{
+					tasks.Add(Task.FromResult(new GetOperationResult().Fail(e)));
+				}
 			}
 
 			await Task.WhenAll(tasks);
@@ -150,10 +201,17 @@ namespace Enyim.Caching.Memcached
 
 		protected async Task<IOperationResult> PerformTouch(string key, uint expires)
 		{
-			var op = opFactory.Touch(keyTransformer.Transform(key), expires);
-			await cluster.Execute(op);
+			try
+			{
+				var op = opFactory.Touch(keyTransformer.Transform(key), expires);
+				await cluster.Execute(op);
 
-			return op.Result;
+				return op.Result;
+			}
+			catch (IOException e)
+			{
+				return new BinaryOperationResult().Fail(e);
+			}
 		}
 
 		#region [ Value helpers                ]
