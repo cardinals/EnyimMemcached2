@@ -25,7 +25,7 @@ namespace Enyim.Caching.Tests
 
 			return new KillProcess(process);
 		}
-		
+
 		#region [ KillProcess                  ]
 
 		class KillProcess : IDisposable

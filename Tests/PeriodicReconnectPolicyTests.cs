@@ -17,7 +17,7 @@ namespace Enyim.Caching.Tests
 
 			var node1 = new Mock<INode>().Object;
 			var node2 = new Mock<INode>().Object;
-			
+
 			Assert.Equal(policy.Schedule(node1), interval);
 			Assert.Equal(policy.Schedule(node2), interval);
 

@@ -31,7 +31,7 @@ namespace Enyim.Caching.Tests
 					.Endpoints("localhost:11300"/*, "localhost:11302", "localhost:11304"*/)
 					.SocketOpts(connectionTimeout: TimeSpan.FromMilliseconds(100))
 					.Use
-						//.NodeLocator<PortPrefixBasedLocator>()
+				//.NodeLocator<PortPrefixBasedLocator>()
 						.ReconnectPolicy(() => new PeriodicReconnectPolicy { Interval = TimeSpan.FromHours(1) })
 					.Register();
 

@@ -42,7 +42,7 @@ namespace Enyim.Caching.Memcached.Operations
 			pool.ReturnBuffer(buffer);
 		}
 
-#region Leak detection
+		#region Leak detection
 
 #if TRACK_ALLOCATIONS
 

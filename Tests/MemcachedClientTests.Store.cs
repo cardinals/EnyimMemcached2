@@ -8,7 +8,7 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientTests 
+	public partial class MemcachedClientTests
 	{
 		[Fact]
 		public void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()

@@ -7,7 +7,7 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientTests 
+	public partial class MemcachedClientTests
 	{
 		[Fact]
 		public void When_Removing_A_Valid_Key_Result_Is_Successful()
