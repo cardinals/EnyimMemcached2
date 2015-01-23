@@ -267,5 +267,27 @@ namespace Enyim.Caching.Tests
 
 			return retval;
 		}
+
+		[Fact]
+		public void Enumeration_Works()
+		{
+			var queue = new AdvQueue<int>();
+			var range = Enumerable.Range(1, 100).ToArray();
+			EnqueueRange(queue, range);
+
+			Assert.Equal(queue, range);
+		}
+
+		[Fact]
+		public void Enumeration_Works_In_Wrapped_Queues()
+		{
+			var range = Enumerable.Range(1, 100).ToArray();
+
+			var queue = MkSpaceWrappedQueue(100, range);
+			Assert.Equal(queue, range);
+
+			queue = MkDataWrappedQueue(100, range);
+			Assert.Equal(queue, range);
+		}
 	}
 }

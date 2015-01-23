@@ -192,27 +192,70 @@ namespace Enyim.Caching
 
 		#region [ Enumeration                  ]
 
-		public IEnumerator<T> GetEnumerator()
+		public Enumerator GetEnumerator()
 		{
-			return Enumerate().GetEnumerator();
+			return new Enumerator(this);
+		}
+
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		{
+			return new Enumerator(this);
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return Enumerate().GetEnumerator();
+			return new Enumerator(this);
 		}
 
-		private IEnumerable<T> Enumerate()
+		public struct Enumerator : IEnumerator<T>
 		{
-			var initialVersion = version;
+			private readonly AdvQueue<T> owner;
+			private readonly int ownerVersion;
+			private int i;
+			private T current;
 
-			for (var i = 0; i < count; i++)
+			internal Enumerator(AdvQueue<T> owner)
 			{
-				if (initialVersion != version)
+				this.owner = owner;
+				this.ownerVersion = owner.version;
+				this.i = 0;
+				this.current = default(T);
+			}
+
+			public T Current
+			{
+				get { return current; }
+			}
+
+			public void Reset()
+			{
+				if (ownerVersion != owner.version)
 					throw new InvalidOperationException("Queue has changed during enumeration.");
 
-				yield return data[(head + i) % data.Length];
+				i = 0;
+				current = default(T);
 			}
+
+			public bool MoveNext()
+			{
+				if (ownerVersion == owner.version && i < owner.count)
+				{
+					current = owner.data[(owner.head + i) % owner.data.Length];
+					i++;
+
+					return true;
+				}
+
+				if (ownerVersion != owner.version) throw new InvalidOperationException("Queue has changed during enumeration.");
+
+				i = owner.count;
+				current = default(T);
+
+				return false;
+			}
+
+			object IEnumerator.Current { get { return Current; } }
+			public void Dispose() { }
 		}
 
 		#endregion
