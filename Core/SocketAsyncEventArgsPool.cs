@@ -11,184 +11,215 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	internal class SocketAsyncEventArgsPool : IDisposable
+	/// <summary>
+	/// Provides an efficient way of creating SocketAsyncEventArgs that are using pinned buffers.
+	/// It assumes that the returned SocketAsyncEventArgs are long-lived and not allocated frequently.
+	/// (Which is true for the AsyncSocket/ClusterBase.)
+	/// </summary>
+	internal class SocketAsyncEventArgsFactory : IDisposable
 	{
-		internal static readonly SocketAsyncEventArgsPool Instance = new SocketAsyncEventArgsPool(1024 * 1024);
+		internal static readonly SocketAsyncEventArgsFactory Instance = new SocketAsyncEventArgsFactory(1 * 1024 * 1024);
 
+		private readonly object UpdateLock;
 		private readonly int chunkSize;
-		private readonly object ExtendLock;
 
-		private ConcurrentStack<Entry> entries;
-		private ConcurrentDictionary<SocketAsyncEventArgs, Entry> returnIndex;
-		private ConcurrentDictionary<SocketAsyncEventArgs, ArraySegment<byte>> sliceIndex;
+		// list of factories; the empty one is always at the top
+		private ConcurrentStack<BufferFactory> factories;
+		// tracks which SAEA's inner buffer belongs to which factory
+		private ConcurrentDictionary<SocketAsyncEventArgs, Tuple<BufferFactory, ArraySegment<byte>>> knownEventArgs;
 
-		private SocketAsyncEventArgsPool(int chunkSize)
+		private SocketAsyncEventArgsFactory(int chunkSize)
 		{
-			this.ExtendLock = new object();
+			this.UpdateLock = new object();
 			this.chunkSize = chunkSize;
-			this.entries = new ConcurrentStack<Entry>();
-			this.returnIndex = new ConcurrentDictionary<SocketAsyncEventArgs, Entry>();
-			this.sliceIndex = new ConcurrentDictionary<SocketAsyncEventArgs, ArraySegment<byte>>();
+
+			this.factories = new ConcurrentStack<BufferFactory>();
+			this.knownEventArgs = new ConcurrentDictionary<SocketAsyncEventArgs, Tuple<BufferFactory, ArraySegment<byte>>>();
 		}
 
-		public SocketAsyncEventArgs Take(int size)
+		internal SocketAsyncEventArgs Take(int size)
 		{
-			Require.Value("size", size <= chunkSize, "Max size: " + chunkSize);
+			if (size > chunkSize)
+				throw new ArgumentOutOfRangeException(String.Format("Required buffer {0} size is larger than the chunk size {1}", size, chunkSize));
 
-			ArraySegment<byte> slice;
-			Entry last;
+			BufferFactory bufferFactory;
+			ArraySegment<byte> segment;
+			bool success;
 
-			while (!entries.TryPeek(out last) || !last.TryAlloc(size, out slice))
+			// allocate new pools until we can acquire a buffer with the required size
+			// The way SAEAs and buffers are used we're fine with continously allocating
+			// new BufferFactories when we run out of space (and not being able to reuse them)
+			while (!factories.TryPeek(out bufferFactory) || !bufferFactory.TryAlloc(size, out segment))
 			{
-				lock (ExtendLock)
+				lock (UpdateLock)
 				{
-					if (!entries.TryPeek(out last) || !last.TryAlloc(size, out slice))
+					if (!factories.TryPeek(out bufferFactory) || !bufferFactory.TryAlloc(size, out segment))
 					{
-						entries.Push(new Entry(chunkSize));
+						// create & store a new factory, allocation will be handled by the while loop
+						factories.Push(new BufferFactory(chunkSize));
 					}
 				}
 			}
 
 			var retval = new SocketAsyncEventArgs();
-			var b1 = returnIndex.TryAdd(retval, last);
-			var b2 = sliceIndex.TryAdd(retval, slice);
+			retval.SetBuffer(segment.Array, segment.Offset, segment.Count);
 
-			Debug.Assert(b1);
-			Debug.Assert(b2);
-
-			retval.SetBuffer(slice.Array, slice.Offset, slice.Count);
+			success = knownEventArgs.TryAdd(retval, Tuple.Create(bufferFactory, segment));
+			Debug.Assert(success);
 
 			return retval;
 		}
 
-		public void Return(SocketAsyncEventArgs eventArgs)
+		internal void Return(SocketAsyncEventArgs eventArgs)
 		{
-			var buffer = eventArgs.Buffer;
-			Entry entry;
-			ArraySegment<byte> slice;
+			Tuple<BufferFactory, ArraySegment<byte>> entry;
 
-			if (!returnIndex.TryRemove(eventArgs, out entry))
-				throw new InvalidOperationException("Unknown buffer, no entry");
-			if (!sliceIndex.TryRemove(eventArgs, out slice))
-				throw new InvalidOperationException("Unknown buffer, no slice");
+			if (!knownEventArgs.TryRemove(eventArgs, out entry))
+				throw new InvalidOperationException("Unknown SocketAsyncEventArgs, could not map it to a BufferFactory.");
 
-			entry.Release(slice);
+			entry.Item1.Forget(entry.Item2);
 		}
 
-		public void Compact()
+		/// <summary>
+		/// Compacts the buffer list by removing and destroying all empty BufferFactories.
+		/// </summary>
+		internal void Compact()
 		{
-			lock (ExtendLock)
+			lock (UpdateLock)
 			{
-				if (entries.Count == 0) return;
+				if (factories.Count == 0) return;
 
-				var all = new Entry[entries.Count];
-				var didPop = entries.TryPopRange(all);
+				var all = new BufferFactory[factories.Count];
+				var didPop = factories.TryPopRange(all);
 
 				// dispose all empty entries
-				for (var i = 0; i < didPop; i++)
-				{
-					var entry = all[i];
-					if (entry == null || !entry.IsEmpty) continue;
-#if DEBUG
-					foreach (var v in returnIndex.Values)
-						if (v == entry)
-							throw new InvalidOperationException("Entry is still in returnIndex");
-
-					foreach (var v in sliceIndex.Values)
-						if (v.Array == entry.Buffer)
-							throw new InvalidOperationException("Entry's buffer is still in sliceIndex");
-#endif
-					entry.Dispose();
-					all[i] = null;
-				}
-
-				// put all remainig entries back into the stack
+				// and put the rest back into the stack
 				for (var i = didPop - 1; i >= 0; i--)
 				{
-					var entry = all[i];
-					if (entry != null)
-						entries.Push(entry);
+					var current = all[i];
+					Debug.Assert(current != null);
+
+					if (current.IsEmpty)
+					{
+						#region debug checks
+#if DEBUG
+						foreach (var tmp in knownEventArgs.Values)
+						{
+							if (tmp.Item1 == current)
+								throw new InvalidOperationException("Factory is still mapped to a SocketAsyncEventArgs");
+						}
+#endif
+						#endregion
+
+						current.Dispose();
+					}
+					else
+					{
+						factories.Push(current);
+					}
 				}
 			}
 		}
 
 		public void Dispose()
 		{
-			lock (ExtendLock)
+			lock (UpdateLock)
 			{
-				if (entries == null) return;
+				if (factories == null) return;
 
-				Entry entry;
+				BufferFactory factory;
 
-				while (entries.TryPop(out entry))
-					entry.Dispose();
+				foreach (var tmp in knownEventArgs.Keys)
+					try { tmp.Dispose(); }
+					catch { }
 
-				returnIndex.Clear();
-				returnIndex = null;
-				entries = null;
+				while (factories.TryPop(out factory))
+					try { factory.Dispose(); }
+					catch { }
+
+				knownEventArgs.Clear();
+				knownEventArgs = null;
+				factories = null;
 			}
 		}
 
-		#region [ Entry                        ]
+		#region [ BufferFactory                ]
 
-		class Entry : IDisposable
+		/// <summary>
+		/// Implements a buffer factory. Returns ArraySegments using a pinned byte array as underlying storage.
+		/// </summary>
+		/// <remarks>
+		/// The BufferFactory only cares if all buffers created by it are returned without being able to reuse them. 
+		/// (SAEAFactory will clean up the empty BufferFactories during compaction.)
+		/// </remarks>
+		private class BufferFactory : IDisposable
 		{
-			internal byte[] Buffer;
+			private byte[] data;
 			private GCHandle pin;
 			private int offset;
 			private int usage;
 
-			public Entry(int size)
+			public BufferFactory(int size)
 			{
-				Buffer = new byte[size];
-				pin = GCHandle.Alloc(Buffer);
+				data = new byte[size];
+				pin = GCHandle.Alloc(data);
 			}
 
 			public void Dispose()
 			{
-				if (Buffer != null)
+				if (data != null)
 				{
 					pin.Free();
-					Buffer = null;
+					data = null;
 				}
-			}
-
-			public bool TryAlloc(int size, out ArraySegment<byte> retval)
-			{
-				size = ((size + 7) / 8) * 8;
-
-				while (true)
-				{
-					var oldOffset = offset;
-					var newOffset = oldOffset + size;
-					if (newOffset > Buffer.Length)
-						break;
-
-					if (Interlocked.CompareExchange(ref offset, newOffset, oldOffset) == oldOffset)
-					{
-						retval = new ArraySegment<byte>(Buffer, oldOffset, size);
-						Interlocked.Add(ref usage, size);
-						return true;
-					}
-				}
-
-				retval = new ArraySegment<byte>();
-				return false;
-			}
-
-			public void Release(ArraySegment<byte> segment)
-			{
-				Require.That(segment.Array == Buffer, "Segment is not owned by this entry");
-
-				var newValue = Interlocked.Add(ref usage, -segment.Count);
-
-				Debug.Assert(newValue >= 0, "double-release somewhere");
 			}
 
 			public bool IsEmpty
 			{
 				get { return Interlocked.CompareExchange(ref usage, 0, 0) == 0; }
 			}
+
+			public bool TryAlloc(int size, out ArraySegment<byte> buffer)
+			{
+				// round up to multiplies of 8
+				size = ((size + 7) / 8) * 8;
+
+				// repeat until we manage to allocate the buffer or we run out of space
+				while (true)
+				{
+					var oldOffset = offset;
+					var newOffset = oldOffset + size;
+					if (newOffset > data.Length)
+						break;
+
+					if (Interlocked.CompareExchange(ref offset, newOffset, oldOffset) == oldOffset)
+					{
+						buffer = new ArraySegment<byte>(data, oldOffset, size);
+						Interlocked.Add(ref usage, size);
+						return true;
+					}
+				}
+
+				// cannot allocate the required amount
+				buffer = new ArraySegment<byte>();
+				return false;
+			}
+
+			public void Forget(ArraySegment<byte> segment)
+			{
+				Debug.Assert(segment.Array == data, "Segment is not owned by this pool");
+
+				var newValue = Interlocked.Add(ref usage, -segment.Count);
+
+				Debug.Assert(newValue >= 0, "a segment was released twice");
+			}
+
+#if DEBUG
+			public bool IsOwned(ArraySegment<byte> buffer)
+			{
+				return buffer.Array == data;
+			}
+#endif
 		}
 
 		#endregion
