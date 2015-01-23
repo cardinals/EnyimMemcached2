@@ -38,7 +38,7 @@ namespace Enyim.Caching
 			return canRead;
 		}
 
-		internal void Reset(int length)
+		internal void SetAvailableLength(int length)
 		{
 			Debug.Assert(length <= bufferLength, "length cannot be larger than bufferLength");
 

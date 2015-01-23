@@ -51,7 +51,12 @@ namespace Enyim.Caching
 		void Connect(IPEndPoint endpoint, CancellationToken token);
 		void ScheduleSend(Action<bool> whenDone);
 		void ScheduleReceive(Action<bool> whenDone);
+
+		//SocketState State { get; }
+		void WaitOne(CancellationToken token);
 	}
+
+	public enum SocketState { Unspecified, Free, Connecting, Receiving, Sending }
 }
 
 #region [ License information          ]

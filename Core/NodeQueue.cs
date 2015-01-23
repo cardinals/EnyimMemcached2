@@ -6,16 +6,24 @@ using System.Threading;
 
 namespace Enyim.Caching
 {
+	using __IndexSet = NodeQueue.ConcurrentIndexSet;
+
+	/// <summary>
+	/// This is a wrapper of BlockingCollection to prevent adding the same node to the queue multiple times.
+	///
+	/// Depending on the 'set' used inside, it may happen that a node gets added a couple of times,
+	/// but it still won't monopolize the queue.
+	/// </summary>
 	internal class NodeQueue
 	{
 		private readonly BlockingCollection<INode> queue;
-		private readonly NonLockingIndexSet set;
+		private readonly __IndexSet set;
 		private readonly Dictionary<INode, int> nodeIndexes;
 
 		internal NodeQueue(INode[] allNodes)
 		{
 			queue = new BlockingCollection<INode>();
-			set = new NonLockingIndexSet(allNodes.Length);
+			set = new __IndexSet(allNodes.Length);
 			nodeIndexes = Enumerable
 									.Range(0, allNodes.Length)
 									.ToDictionary(k => allNodes[k], k => k);
@@ -37,7 +45,7 @@ namespace Enyim.Caching
 
 		#region [ ConcurrentIndexSet           ]
 
-		private class ConcurrentIndexSet
+		internal class ConcurrentIndexSet
 		{
 			private const int TRUE = 1;
 			private const int FALSE = 0;
@@ -66,9 +74,9 @@ namespace Enyim.Caching
 		}
 
 		#endregion
-		#region [ NonLockingIndexSet           ]
+		#region [ SimpleIndexSet               ]
 		// TODO check if we need memory barriers
-		private class NonLockingIndexSet
+		internal class SimpleIndexSet
 		{
 			private const int TRUE = 1;
 			private const int FALSE = 0;
@@ -76,7 +84,7 @@ namespace Enyim.Caching
 
 			private readonly int[] data;
 
-			public NonLockingIndexSet(int capacity)
+			public SimpleIndexSet(int capacity)
 			{
 				data = new int[capacity * GAP];
 			}

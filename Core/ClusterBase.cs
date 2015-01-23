@@ -22,23 +22,26 @@ namespace Enyim.Caching
 		private readonly IPEndPoint[] endpoints;
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy reconnectPolicy;
+		private readonly object ReconnectLock;
 
 		private readonly CancellationTokenSource shutdownToken;
 
 		private readonly Thread worker;
 		private readonly ManualResetEventSlim workerIsDone;
 
-		private INode[] allNodes;
-		private INode[] workingNodes;
-		private NodeQueue ioQueue;
+
+		private INode[] allNodes; // all nodes in the cluster known by us
+		private INode[] workingNodes; // the nodes that are still working
+		private NodeQueue ioQueue; // the nodes that has IO pending
 
 		protected ClusterBase(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy reconnectPolicy)
 		{
 			this.endpoints = endpoints.ToArray();
 			this.locator = locator;
 			this.reconnectPolicy = reconnectPolicy;
+			this.ReconnectLock = new Object();
 
-			this.worker = new Thread(Worker);
+			this.worker = new Thread(Worker) { Name = "IO Thread" };
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.workerIsDone = new ManualResetEventSlim(false);
@@ -48,6 +51,7 @@ namespace Enyim.Caching
 		{
 			var allDead = new IOException("All nodes are dead.");
 
+			// cached tasks for error reporting
 			failSingle = new TaskCompletionSource<IOperation>();
 			failBroadcast = new TaskCompletionSource<IOperation[]>();
 			failSingle.SetException(allDead);
@@ -68,6 +72,7 @@ namespace Enyim.Caching
 
 		public virtual void Dispose()
 		{
+			// if the cluster is not stopped yet, we should clean up
 			if (!shutdownToken.IsCancellationRequested)
 			{
 				shutdownToken.Cancel();
@@ -84,7 +89,7 @@ namespace Enyim.Caching
 				}
 			}
 
-			SocketAsyncEventArgsPool.Instance.Compact();
+			SocketAsyncEventArgsFactory.Instance.Compact();
 		}
 
 		public virtual Task<IOperation> Execute(IItemOperation op)
@@ -122,6 +127,16 @@ namespace Enyim.Caching
 			return Task.WhenAll(tasks);
 		}
 
+		/// <summary>
+		/// Put the node into the pending work queue.
+		/// </summary>
+		/// <param name="node"></param>
+		public void NeedsIO(INode node)
+		{
+			if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
+			ioQueue.Add(node);
+		}
+
 		private void Worker()
 		{
 			while (!shutdownToken.IsCancellationRequested)
@@ -132,10 +147,12 @@ namespace Enyim.Caching
 
 					try
 					{
-						node.Send();
+						while (!node.Send())
+							log.Info("Queued {0} but cannot send", node.EndPoint);
 						if (shutdownToken.IsCancellationRequested) break;
 
-						node.Receive();
+						while (!node.Receive())
+							log.Info("Queued {0} but cannot receive", node.EndPoint);
 					}
 					catch (Exception e)
 					{
@@ -153,6 +170,46 @@ namespace Enyim.Caching
 			workerIsDone.Set();
 		}
 
+		/// <summary>
+		/// Marks a node as failed.
+		/// </summary>
+		/// <param name="node">The failed node</param>
+		/// <param name="e">The reason of the failure</param>
+		/// <remarks>Only called from the IO thread.</remarks>
+		private void FailNode(INode node, Exception e)
+		{
+			if (log.IsWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
+
+			// serialize the reconnect attempts to make
+			// IReconnectPolicy and INodeLocator implementations simpler
+			lock (ReconnectLock)
+			{
+				var original = Volatile.Read(ref workingNodes);
+
+				// even though we're locking we still do the CAS,
+				// because the IO thread does not use any locking
+				while (true)
+				{
+					var updated = original.Where(n => n != node).ToArray();
+					var previous = Interlocked.CompareExchange(ref workingNodes, updated, original);
+
+					if (Object.ReferenceEquals(original, previous))
+					{
+						locator.Initialize(updated);
+						break;
+					}
+
+					original = previous;
+				}
+			}
+
+			ScheduleReconnect(node);
+		}
+
+		/// <summary>
+		/// Schedules a failed node for reconnection.
+		/// </summary>
+		/// <param name="node"></param>
 		protected virtual void ScheduleReconnect(INode node)
 		{
 			if (LogInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
@@ -169,8 +226,7 @@ namespace Enyim.Caching
 				if (LogInfoEnabled) log.Info("Will reconnect after " + when);
 				Task
 					.Delay(when, shutdownToken.Token)
-					.ContinueWith(_ => ReconnectNow(node, true),
-									TaskContinuationOptions.OnlyOnRanToCompletion);
+					.ContinueWith(_ => ReconnectNow(node, true), TaskContinuationOptions.OnlyOnRanToCompletion);
 			}
 		}
 
@@ -194,61 +250,42 @@ namespace Enyim.Caching
 			}
 		}
 
+		/// <summary>
+		/// Mark the specified node as working.
+		/// </summary>
+		/// <param name="node"></param>
+		/// <remarks>Can be called from a background thread (Task pool)</remarks>
 		private void ReAddNode(INode node)
 		{
 			if (LogDebugEnabled) log.Debug("Node {0} was reconnected", node.EndPoint);
 
-			reconnectPolicy.Reset(node);
-
-			var existing = Volatile.Read(ref workingNodes);
-
-			while (true)
+			// serialize the reconnect attempts to make
+			// IReconnectPolicy and INodeLocator implementations simpler
+			lock (ReconnectLock)
 			{
-				var updated = new INode[existing.Length + 1];
-				Array.Copy(existing, 0, updated, 0, existing.Length);
-				updated[existing.Length] = node;
+				reconnectPolicy.Reset(node);
 
-				var current = Interlocked.CompareExchange(ref workingNodes, updated, existing);
+				var original = Volatile.Read(ref workingNodes);
 
-				if (Object.ReferenceEquals(existing, current))
+				// even though we're locking we still do the CAS,
+				// because the IO thread does not use any locking
+				while (true)
 				{
-					locator.Initialize(updated);
-					break;
+					// append the new node to the list of working nodes
+					var updated = new INode[original.Length + 1];
+					Array.Copy(original, 0, updated, 0, original.Length);
+					updated[original.Length] = node;
+
+					var previous = Interlocked.CompareExchange(ref workingNodes, updated, original);
+					if (Object.ReferenceEquals(original, previous))
+					{
+						locator.Initialize(updated);
+						break;
+					}
+
+					original = previous;
 				}
-
-				existing = current;
 			}
-
-			locator.Initialize(existing);
-		}
-
-		private void FailNode(INode node, Exception e)
-		{
-			if (log.IsWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
-
-			var existing = Volatile.Read(ref workingNodes);
-
-			while (true)
-			{
-				var updated = existing.Where(n => n != node).ToArray();
-				var current = Interlocked.CompareExchange(ref workingNodes, updated, existing);
-
-				if (Object.ReferenceEquals(existing, current))
-				{
-					locator.Initialize(updated);
-					break;
-				}
-
-				existing = current;
-			}
-
-			ScheduleReconnect(node);
-		}
-
-		public void NeedsIO(INode node)
-		{
-			if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
-			ioQueue.Add(node);
 		}
 	}
 }

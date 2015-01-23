@@ -13,7 +13,7 @@ namespace Enyim.Caching
 	{
 		public static class Defaults
 		{
-			public const int MaxBufferSize = 1024 * 1024;
+			public const int MaxBufferSize = 1 * 1024 * 1024;
 			public const int MinBufferSize = 4096;
 
 			public const int SendBufferSize = 32 * 1024;
@@ -38,13 +38,15 @@ namespace Enyim.Caching
 		private int receiveBufferSize;
 
 		private Socket socket;
-		private int state;
+		private int isAlive;
 
 		private SocketAsyncEventArgs recvArgs;
 		private ReadBuffer recvBuffer;
 
 		private SocketAsyncEventArgs sendArgs;
 		private WriteBuffer sendBuffer;
+
+		private ManualResetEventSlim notWorking = new ManualResetEventSlim();
 
 		public AsyncSocket()
 		{
@@ -55,6 +57,19 @@ namespace Enyim.Caching
 			SendBufferSize = Defaults.SendBufferSize;
 			ReceiveBufferSize = Defaults.ReceiveBufferSize;
 		}
+
+		public void WaitOne(CancellationToken token)
+		{
+			notWorking.Wait(token);
+		}
+
+		//private int socketState;
+
+		//public SocketState State
+		//{
+		//	get { return (SocketState)Volatile.Read(ref socketState); }
+		//	private set { Interlocked.Exchange(ref socketState, (int)value); }
+		//}
 
 		public void Connect(IPEndPoint endpoint, CancellationToken token)
 		{
@@ -77,6 +92,9 @@ namespace Enyim.Caching
 				opt.Completed += (a, b) => mre.Set();
 				RecreateSocket();
 
+				//State = SocketState.Connecting;
+				notWorking.Reset();
+
 				if (socket.ConnectAsync(opt)
 					&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
 				{
@@ -92,12 +110,24 @@ namespace Enyim.Caching
 				if (LogDebugEnabled) log.Debug(endpoint + " is connected");
 
 				IsAlive = true;
+				notWorking.Set();
+
+				//State = SocketState.Free;
 			}
 		}
 
 		public void ScheduleSend(Action<bool> whenDone)
 		{
-			if (!IsAlive) whenDone(false);
+			notWorking.Reset();
+			//State = SocketState.Sending;
+
+			if (!IsAlive)
+			{
+				whenDone(false);
+				notWorking.Set();
+
+				//State = SocketState.Free;
+			}
 			else
 			{
 				sendArgs.UserToken = whenDone;
@@ -107,42 +137,49 @@ namespace Enyim.Caching
 
 		private void PerformSend(int sendOffset, int sendCount)
 		{
-			while (true)
+		loop:
+
+			// try sending all our data
+			sendArgs.SetBuffer(sendOffset, sendCount);
+			// send is done asynchrously (SendAsyncCompleted will finish up)
+			if (socket.SendAsync(sendArgs)) return;
+
+			// send was done synchronously
+			var sent = sendArgs.BytesTransferred;
+
+			// check for fail
+			if (sendArgs.SocketError != SocketError.Success || sent < 1)
 			{
-				sendArgs.SetBuffer(sendOffset, sendCount);
-				if (socket.SendAsync(sendArgs)) break; // will finish asynchronously; event will be triggered
-
-				var sent = sendArgs.BytesTransferred;
-
-				if (sendArgs.SocketError != SocketError.Success || sent < 1)
-				{
-					// socket error
-					((Action<bool>)sendArgs.UserToken)(false);
-					break;
-				}
-
-				sendOffset += sent;
-				sendCount -= sent;
-
-				Debug.Assert(sendCount >= 0);
-
-				if (sendCount == 0)
-				{
-					// all sent
-					sendBuffer.Reset();
-					((Action<bool>)sendArgs.UserToken)(true);
-					break;
-				}
+				// socket error
+				FinishSending(false);
+				return;
 			}
+
+			sendOffset += sent;
+			sendCount -= sent;
+
+			Debug.Assert(sendCount >= 0);
+
+			// no data is remaining: quit
+			// otherwise try sending a new chunk
+			if (sendCount == 0)
+			{
+				sendBuffer.Reset();
+				FinishSending(true);
+				return;
+			}
+
+			goto loop;
 		}
 
 		private void SendAsyncCompleted(object sender, SocketAsyncEventArgs e)
 		{
 			var sent = sendArgs.BytesTransferred;
 
+			// failed during send
 			if (sendArgs.SocketError != SocketError.Success || sent < 1)
 			{
-				((Action<bool>)sendArgs.UserToken)(false);
+				FinishSending(false);
 				return;
 			}
 
@@ -151,36 +188,69 @@ namespace Enyim.Caching
 
 			Debug.Assert(sendCount >= 0);
 
+			// OS sent less data than we asked for,
+			// send the remaining data
 			if (sendCount > 0)
 			{
 				PerformSend(sendOffset, sendCount);
 			}
 			else
 			{
+				// all sent successfully
 				sendBuffer.Reset();
-				((Action<bool>)sendArgs.UserToken)(true);
+				FinishSending(true);
 			}
+		}
+
+		private void FinishSending(bool success)
+		{
+			((Action<bool>)sendArgs.UserToken)(success);
+			notWorking.Set();
+			//State = SocketState.Free;
+		}
+
+		private void FinishReceiving(bool success)
+		{
+			((Action<bool>)recvArgs.UserToken)(success);
+			notWorking.Set();
+			//State = SocketState.Free;
 		}
 
 		public void ScheduleReceive(Action<bool> whenDone)
 		{
-			if (!IsAlive) whenDone(false);
+			notWorking.Reset();
+
+			//State = SocketState.Receiving;
+
+			if (!IsAlive)
+			{
+				whenDone(false);
+				notWorking.Set();
+
+				//State = SocketState.Free;
+			}
 			else
 			{
 				recvArgs.UserToken = whenDone;
+
+				if (LogTraceEnabled) log.Trace("Socket {0} is receiving", endpoint);
+
 				if (!socket.ReceiveAsync(recvArgs))
+				{
+					if (LogTraceEnabled) log.Trace("Socket {0} received synchronously", endpoint);
 					RecvAsyncCompleted(null, recvArgs);
+				}
 			}
 		}
 
 		private void RecvAsyncCompleted(object sender, SocketAsyncEventArgs e)
 		{
-			var callback = (Action<bool>)e.UserToken;
 			var success = e.SocketError == SocketError.Success && e.BytesTransferred > 0;
+			if (LogTraceEnabled) log.Trace("Socket {0} success: {1}, bytes {2}", endpoint, success, e.BytesTransferred);
 
-			recvBuffer.Reset(success ? e.BytesTransferred : 0);
+			recvBuffer.SetAvailableLength(success ? e.BytesTransferred : 0);
 
-			callback(success);
+			FinishReceiving(success);
 		}
 
 		private static int ToTimeout(TimeSpan time)
@@ -194,8 +264,8 @@ namespace Enyim.Caching
 
 		public bool IsAlive
 		{
-			get { return state == 1; }
-			private set { Interlocked.Exchange(ref state, value ? 1 : 0); }
+			get { return isAlive == 1; }
+			private set { Interlocked.Exchange(ref isAlive, value ? 1 : 0); }
 		}
 
 		public ReadBuffer ReadBuffer { get { return recvBuffer; } }
@@ -288,8 +358,8 @@ namespace Enyim.Caching
 				sendArgs.Completed -= SendAsyncCompleted;
 				recvArgs.Completed -= RecvAsyncCompleted;
 
-				SocketAsyncEventArgsPool.Instance.Return(recvArgs);
-				SocketAsyncEventArgsPool.Instance.Return(sendArgs);
+				SocketAsyncEventArgsFactory.Instance.Return(recvArgs);
+				SocketAsyncEventArgsFactory.Instance.Return(sendArgs);
 
 				DestroySocket();
 			}
@@ -325,24 +395,24 @@ namespace Enyim.Caching
 		{
 			if (sendArgs == null)
 			{
-				sendArgs = SocketAsyncEventArgsPool.Instance.Take(SendBufferSize);
+				sendArgs = SocketAsyncEventArgsFactory.Instance.Take(SendBufferSize);
 				sendArgs.Completed += SendAsyncCompleted;
 				sendBuffer = new WriteBuffer(sendArgs.Buffer, sendArgs.Offset, sendArgs.Count);
 
-				recvArgs = SocketAsyncEventArgsPool.Instance.Take(ReceiveBufferSize);
+				recvArgs = SocketAsyncEventArgsFactory.Instance.Take(ReceiveBufferSize);
 				recvArgs.Completed += RecvAsyncCompleted;
 				recvBuffer = new ReadBuffer(recvArgs.Buffer, recvArgs.Offset, recvArgs.Count);
 			}
 			else
 			{
 				sendBuffer.Reset();
-				recvBuffer.Reset(0);
+				recvBuffer.SetAvailableLength(0);
 			}
 		}
 
 		private void RecreateSocket()
 		{
-			if (LogTraceEnabled) log.Trace("RecreateSocket");
+			if (LogTraceEnabled) log.Trace("RecreateSocket; destroying previous");
 			DestroySocket();
 
 			socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
@@ -353,6 +423,8 @@ namespace Enyim.Caching
 				ReceiveTimeout = ToTimeout(ReceiveTimeout),
 				SendTimeout = ToTimeout(SendTimeout)
 			};
+
+			if (LogTraceEnabled) log.Trace("Socket was recreated");
 		}
 
 		#endregion
