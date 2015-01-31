@@ -4,6 +4,7 @@ FormatTaskName (("-" * 20) + "[ {0} ]" + ("-" * 20))
 $build_root = Split-Path $psake.build_script_file
 $solution_dir = resolve-path "$build_root\.."
 $out_dir = "$solution_dir\out"
+$nuget_exe = resolve-path "$build_root\nuget.exe"
 
 $package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached2/api/v2/package"; "nuget"=""; }
 $symbol_push_urls = @{ "myget"="https://nuget.symbolsource.org/MyGet/enyimmemcached2"; "nuget"="https://nuget.gw.symbolsource.org/Public/NuGet"; }
@@ -88,7 +89,7 @@ Task Publish -description "publishes the nuget packages" -depends Package {
 
 		$p = join-Path (split-path -Parent $_) "bin\$configuration"
 
-		gci $p *.nupkg | % { . "$solution_dir\.nuget\nuget.exe" push ($_.FullName) $extras }
+		gci $p *.nupkg | % { . $nuget_exe push ($_.FullName) $extras }
 	}
 }
 
