@@ -4,7 +4,11 @@ namespace Enyim.Caching
 {
 	public class ImmediateFailurePolicy : IFailurePolicy
 	{
-		public bool ShouldFail()
+		public void Reset(INode node)
+		{
+		}
+
+		public bool ShouldFail(INode node)
 		{
 			return true;
 		}

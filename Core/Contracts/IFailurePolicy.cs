@@ -4,7 +4,8 @@ namespace Enyim.Caching
 {
 	public interface IFailurePolicy
 	{
-		bool ShouldFail();
+		void Reset(INode node);
+		bool ShouldFail(INode node);
 	}
 }
 

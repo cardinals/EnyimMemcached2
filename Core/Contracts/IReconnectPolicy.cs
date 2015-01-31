@@ -4,8 +4,8 @@ namespace Enyim.Caching
 {
 	public interface IReconnectPolicy
 	{
-		TimeSpan Schedule(INode node);
 		void Reset(INode node);
+		TimeSpan Schedule(INode node);
 	}
 }
 

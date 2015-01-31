@@ -28,7 +28,11 @@ namespace Enyim.Caching
 		public TimeSpan ResetAfter { get; set; }
 		public int Threshold { get; set; }
 
-		public bool ShouldFail()
+		public void Reset(INode node)
+		{
+		}
+
+		public bool ShouldFail(INode node)
 		{
 			var now = DateTime.UtcNow;
 
