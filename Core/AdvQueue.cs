@@ -12,9 +12,10 @@ namespace Enyim.Caching
 	///  A queue which allows to insert items to the beginning, and also supports efficient enqueuing of other AdvQueues
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
+	[DebuggerDisplay("Count = {Count}")]
 	public class AdvQueue<T> : IEnumerable<T>
 	{
-		private const int GrowthFactor = 2;
+		private const double GrowthFactor = 1.5;
 		private const int DefaultCapacity = 4;
 
 		private T[] data;
@@ -54,6 +55,8 @@ namespace Enyim.Caching
 			tail = (tail + 1) % data.Length; // move tail (w/ wrap-around)
 			count++;
 			version++;
+
+			Debug.Assert(count <= data.Length);
 		}
 
 		public void Enqueue(AdvQueue<T> other)
@@ -71,16 +74,17 @@ namespace Enyim.Caching
 
 			if (count == 0 && head > 0)
 			{
+				//we are empty, so reset the pointers
 				head = tail = 0;
 			}
 			else if (head < tail && data.Length - tail < otherCount)
 			{
-				// we do not have enough continous space after tail, so move eveything back a little
-				// this only happens when head is in the middle of the array and the data is continous
-				var diff = otherCount - (data.Length - tail);
-				Array.Copy(data, head, data, head - diff, count);
-				head -= diff;
-				tail -= diff;
+				// head is not at start, but data is continous, and could have
+				// enough space without wrapping if we'd move the data back
+				// (so empty space after tail becomes large enough)
+				Array.Copy(data, head, data, 0, count);
+				head = 0;
+				tail = count;
 			}
 
 			if (otherHead < otherTail)
@@ -100,6 +104,8 @@ namespace Enyim.Caching
 			other.Clear();
 
 			version++;
+
+			Debug.Assert(count <= data.Length);
 		}
 
 		public void Insert(T item)
@@ -113,6 +119,7 @@ namespace Enyim.Caching
 			data[head] = item;
 			count++;
 			version++;
+			Debug.Assert(count <= data.Length);
 		}
 
 		public T Peek()
@@ -122,18 +129,49 @@ namespace Enyim.Caching
 			return this.data[this.head];
 		}
 
+		public bool TryPeek(out T retval)
+		{
+			if (count == 0)
+			{
+				retval = default(T);
+
+				return false;
+			}
+
+			retval = this.data[this.head];
+
+			return true;
+		}
+
 		public T Dequeue()
 		{
-			if (this.count == 0) throw new InvalidOperationException("Empty queue");
+			T retval;
 
-			var retval = data[head];
+			if (!TryDequeue(out retval))
+				throw new InvalidOperationException("Empty queue");
+
+			return retval;
+		}
+
+		public bool TryDequeue(out T retval)
+		{
+			if (count == 0)
+			{
+				retval = default(T);
+
+				return false;
+			}
+
+			retval = data[head];
 			data[head] = default(T); // drop reference
 
 			head = (head + 1) % data.Length; // move head (w/ wrap-around)
 			count--;
 			version++;
 
-			return retval;
+			Debug.Assert(count > -1);
+
+			return true;
 		}
 
 		public void Clear()
