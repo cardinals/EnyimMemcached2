@@ -4,7 +4,7 @@
 		<DebugSymbols>true</DebugSymbols>
 		<DebugType>full</DebugType>
 		<Optimize>false</Optimize>
-		<DefineConstants>DEBUG;TRACE;USE_BUFFER_POOL;TRACK_ALLOCATIONS</DefineConstants>
+		<DefineConstants>DEBUG;TRACE;USE_BUFFER_POOL</DefineConstants>
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 	</PropertyGroup>
