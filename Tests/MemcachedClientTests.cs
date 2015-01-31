@@ -11,13 +11,12 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientTests : MemcachedClientTestBase, IUseFixture<ClientTestSetupFixture>
+	public partial class MemcachedClientTests : MemcachedClientTestBase, IClassFixture<ClientTestSetupFixture>
 	{
 		private IMemcachedClient client;
 
-		public MemcachedClientTests() : base("MemcachedClientTests") { }
-
-		public void SetFixture(ClientTestSetupFixture data)
+		public MemcachedClientTests(ClientTestSetupFixture data)
+			: base("MemcachedClientTests")
 		{
 			client = new MemcachedClient(data.ClientConfig);
 		}

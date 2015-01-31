@@ -4,22 +4,30 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
 	public class ClientTestSetupFixture : IDisposable
 	{
+		static int port = 11211;
 		private const string ClusterName = "MemcachedClientTests";
 		private IDisposable server;
 
+		private string cfg;
+
 		public ClientTestSetupFixture()
 		{
-			server = MemcachedServer.Run();
-			new ClusterBuilder(ClusterName).FromConfiguration().Register();
-			ClientConfig = new ClientConfigurationBuilder().Cluster(ClusterName).Create();
+			var p = Interlocked.Increment(ref port);
+			server = MemcachedServer.Run(p);
+
+			cfg = ClusterName + p;
+			new ClusterBuilder(cfg).Endpoints("localhost:" + p).Register();
+			ClientConfig = new ClientConfigurationBuilder().Cluster(cfg).Create();
 		}
 
 		public IContainer ClientConfig { get; private set; }
@@ -28,7 +36,7 @@ namespace Enyim.Caching.Tests
 		{
 			server.Dispose();
 			ClientConfig.Dispose();
-			ClusterManager.Shutdown(ClusterName);
+			ClusterManager.Shutdown(cfg);
 
 			server = null;
 			ClientConfig = null;

@@ -12,13 +12,16 @@ namespace Enyim.Caching.Tests
 		}
 
 		public int Property { get; set; }
+		public int Counter { get; set; }
 
-		public bool ShouldFail()
+		public void Reset(INode node)
+		{
+		}
+
+		public bool ShouldFail(INode node)
 		{
 			return false;
 		}
-
-		public int Counter { get; set; }
 	}
 
 	public class _NodeLocator : INodeLocator

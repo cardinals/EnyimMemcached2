@@ -19,7 +19,7 @@ namespace Enyim.Caching.Tests
 			var e = Assert.Throws<ArgumentException>(() => new ClusterBuilder(Name).Register());
 
 			Assert.Equal("Cluster is already registered: " + Name, e.Message);
-			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
+			ClusterManager.Shutdown(Name);
 		}
 
 		[Fact]
@@ -30,13 +30,17 @@ namespace Enyim.Caching.Tests
 			for (var i = 0; i < 3; i++)
 			{
 				new ClusterBuilder(Name).Register();
-				Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
+				ClusterManager.Shutdown(Name);
 			}
 		}
 
 		[Fact]
 		public void Can_Build_Using_Extensions()
 		{
+			// Register a StepRecorder instance which will be used
+			// by the fake services to mark themselves initialized.
+			// If any of them is missing from the StepRecorder,
+			// the ClusterBuilder is not initializing a service.
 			const string Name = "Can_Build_Using_Extensions";
 			var c = new ClusterBuilder(Name)
 							.Endpoints("127.0.0.1")
@@ -52,16 +56,21 @@ namespace Enyim.Caching.Tests
 
 			m.AssertSteps("FailurePolicy", "NodeLocator", "ReconnectPolicy");
 
-			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
+			ClusterManager.Shutdown(Name);
 		}
 
 		[Fact]
 		public void Can_Build_From_Config()
 		{
 			const string Name = "Can_Build_From_Config";
+			// Register a StepRecorder instance which will be used
+			// by the fake services to mark themselves initialized.
+			// If any of them is missing from the StepRecorder,
+			// the ClusterBuilder is not initializing a service.
 			var c = new ClusterBuilder(Name)
 							.FromConfiguration("Can_Build_From_Config")
-							.Use.Service<StepRecorder>()
+							.Use
+								.Service<StepRecorder>()
 							.Register();
 
 			var cluster = c.Resolve<ICluster>();
@@ -77,7 +86,7 @@ namespace Enyim.Caching.Tests
 			Assert.Equal("10", ((_NodeLocator)c.Resolve<INodeLocator>()).Property);
 			Assert.Equal(TimeSpan.FromSeconds(10), ((_ReconnectPolicy)c.Resolve<IReconnectPolicy>()).Property);
 
-			Assert.DoesNotThrow(() => ClusterManager.Shutdown(Name));
+			ClusterManager.Shutdown(Name);
 		}
 	}
 }

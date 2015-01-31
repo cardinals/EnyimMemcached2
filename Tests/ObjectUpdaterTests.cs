@@ -28,7 +28,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Calling_With_Empty_Dictionary_Should_Succeed()
 		{
-			Assert.DoesNotThrow(() => ObjectUpdater.Update(new Sample(), new Dictionary<string, string>()));
+			ObjectUpdater.Update(new Sample(), new Dictionary<string, string>());
 		}
 
 		[Fact]
