@@ -4,6 +4,11 @@ namespace Enyim.Caching
 {
 	public class NLogFactory : ILogFactory
 	{
+		public static void Use()
+		{
+			Enyim.Caching.LogManager.AssignFactory(new NLogFactory());
+		}
+
 		public ILog GetLogger(string name)
 		{
 			return new Ω(NLog.LogManager.GetLogger(name));
