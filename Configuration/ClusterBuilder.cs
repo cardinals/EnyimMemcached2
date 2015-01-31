@@ -6,6 +6,9 @@ using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {
+	/// <summary>
+	/// Provides a way of programatically defining Memcached clusters for the <see cref="T:Enyim.Caching.Memcached.MemcachedClient"/>.
+	/// </summary>
 	public class ClusterBuilder : IClusterBuilder, IFluentSyntax
 	{
 		private readonly Ω builder;
@@ -38,6 +41,7 @@ namespace Enyim.Caching.Memcached.Configuration
 		/// <summary>
 		/// Registers the cluster configuration.
 		/// </summary>
+		/// <returns>An IoC container holding all registered services.</returns>
 		public IContainer Register()
 		{
 			return builder.Register();

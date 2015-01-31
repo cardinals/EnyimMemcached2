@@ -43,6 +43,11 @@ namespace Enyim.Caching.Memcached.Configuration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface IClusterBuilder : IHaveName
 	{
+		/// <summary>
+		/// Define the memcached server endpoints used by this cluster.
+		/// </summary>
+		/// <param name="endpoints">List of memcached server addresses.</param>
+		/// <returns></returns>
 		IClusterBuilderNext Endpoints(IEnumerable<IPEndPoint> endpoints);
 	}
 

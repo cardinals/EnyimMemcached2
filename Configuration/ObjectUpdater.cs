@@ -32,7 +32,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				var props = from p in type.GetProperties()
 							let bas = p.GetCustomAttributes(typeof(BrowsableAttribute), true)
 							let b = bas.FirstOrDefault() as BrowsableAttribute
-							where p.CanWrite && (b == null || (b != null && b.Browsable))
+							where p.CanWrite && (b == null || b.Browsable)
 							select p;
 
 				var convert = typeof(Updater).GetMethod("FromString", BindingFlags.Static | BindingFlags.NonPublic);

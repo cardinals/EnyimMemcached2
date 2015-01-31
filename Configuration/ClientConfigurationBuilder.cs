@@ -88,7 +88,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				return this;
 			}
 
-			public IClientBuilderServicesNext Service<TService>(Type implementation, Action<TService> initializer)
+			public IClientBuilderServicesNext Service<TService>(Type implementation, Action<TService> initializer = null)
 				where TService : class
 			{
 				InitCluster(false);

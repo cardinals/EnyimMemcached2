@@ -29,7 +29,6 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="FastActivator.cs" />
     <Compile Include="ClusterBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationSection.cs" />

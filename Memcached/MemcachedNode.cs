@@ -44,7 +44,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		/// <summary>
-		///  Add a NoOp after every 50th continous silent op
+		///  Add a NoOp after every {SilentCountThreshold}th continous silent op
 		/// </summary>
 		/// <param name="op"></param>
 		private void EnqueueNoOpIfNeeded(IOperation op)
@@ -80,7 +80,7 @@ namespace Enyim.Caching.Memcached
 			// * = normal
 			// S = Silent
 			// noop should be at <EOF> otherwise we won't get responses to the last
-			// commands until we get a new op queued up
+			// command until we get a new op queued up
 			lasWasSilent = IsSilent(data.Op);
 
 			base.WriteOp(data);
