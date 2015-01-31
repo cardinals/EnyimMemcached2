@@ -147,12 +147,8 @@ namespace Enyim.Caching
 
 					try
 					{
-						while (!node.Send())
-							log.Info("Queued {0} but cannot send", node.EndPoint);
+						node.Run();
 						if (shutdownToken.IsCancellationRequested) break;
-
-						while (!node.Receive())
-							log.Info("Queued {0} but cannot receive", node.EndPoint);
 					}
 					catch (Exception e)
 					{

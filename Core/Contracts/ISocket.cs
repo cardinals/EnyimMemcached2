@@ -10,6 +10,7 @@ namespace Enyim.Caching
 		/// Gets a value that indicates whether the socket is still connected and can be used for communication.
 		/// </summary>
 		bool IsAlive { get; }
+		bool IsWorking { get; }
 
 		/// <summary>
 		/// Gets or sets a value that specifies the size of the send buffer.
@@ -51,12 +52,7 @@ namespace Enyim.Caching
 		void Connect(IPEndPoint endpoint, CancellationToken token);
 		void ScheduleSend(Action<bool> whenDone);
 		void ScheduleReceive(Action<bool> whenDone);
-
-		//SocketState State { get; }
-		void WaitOne(CancellationToken token);
 	}
-
-	public enum SocketState { Unspecified, Free, Connecting, Receiving, Sending }
 }
 
 #region [ License information          ]

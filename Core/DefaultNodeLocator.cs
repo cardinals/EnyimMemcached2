@@ -118,35 +118,22 @@ namespace Enyim.Caching
 				FailedTask.SetException(new IOException("AlwaysDead"));
 				Instance = new AlreadyFailedNode();
 			}
+			public int BufferSize { get; set; }
+
+			public bool IsAlive { get { return false; } }
+
+			public System.Net.IPEndPoint EndPoint { get { return null; } }
 
 			public void Connect(bool reset, CancellationToken token) { }
 			public void Shutdown() { }
-
-			public int BufferSize { get; set; }
-
-			public bool IsAlive
-			{
-				get { return false; }
-			}
-
-			public System.Net.IPEndPoint EndPoint
-			{
-				get { return null; }
-			}
 
 			public Task<IOperation> Enqueue(IOperation op)
 			{
 				return FailedTask.Task;
 			}
 
-			public bool Send()
+			public void Run()
 			{
-				return true;
-			}
-
-			public bool Receive()
-			{
-				return true;
 			}
 
 			public override string ToString()
