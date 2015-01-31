@@ -11,6 +11,25 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
+		public void Can_Read_Items_Larger_Than_Receive_Buffer()
+		{
+			var key = GetUniqueKey("Large_Buffer");
+			var value = new byte[32768 * 3 + 4];
+
+			value[0] = 100;
+			value[32768] = 100;
+			value[value.Length - 1] = 100;
+
+			Assert.True(Store(key: key, value: value));
+
+			var result = client.Get(key) as byte[];
+			Assert.NotNull(result);
+
+			Assert.Equal(result.Length, value.Length);
+			Assert.Equal(value.AsEnumerable(), result.AsEnumerable());
+		}
+
+		[Fact]
 		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Get_Existing");

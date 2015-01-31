@@ -131,7 +131,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_Data_Wrapped_To_Normal()
+		public void Enqueue_Data_Wrapped_To_Normal()
 		{
 			var src = MkDataWrappedQueue(40, Enumerable.Range(1, 20));
 			var dest = new AdvQueue<int>();
@@ -141,7 +141,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_Normal_To_Data_Wrapped()
+		public void Enqueue_Normal_To_Data_Wrapped()
 		{
 			var src = new AdvQueue<int>(Enumerable.Range(100, 20));
 			var dest = MkDataWrappedQueue(40, Enumerable.Range(1, 20));
@@ -151,7 +151,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_From_Data_Wrapped_To_Data_Wrapped()
+		public void Enqueue_From_Data_Wrapped_To_Data_Wrapped()
 		{
 			var src = MkDataWrappedQueue(40, Enumerable.Range(100, 20));
 			var dest = MkDataWrappedQueue(40, Enumerable.Range(200, 38));
@@ -161,7 +161,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_Normal_To_Space_Wrapped()
+		public void Enqueue_Normal_To_Space_Wrapped()
 		{
 			var src = new AdvQueue<int>(Enumerable.Range(100, 18));
 			var dest = MkSpaceWrappedQueue(64, Enumerable.Range(1, 40));
@@ -171,7 +171,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_From_Space_Wrapped_To_Space_Wrapped()
+		public void Enqueue_From_Space_Wrapped_To_Space_Wrapped()
 		{
 			var src = MkSpaceWrappedQueue(64, Enumerable.Range(100, 40));
 			var dest = MkSpaceWrappedQueue(64, Enumerable.Range(200, 40));
@@ -181,7 +181,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_From_Space_Wrapped_To_Data_Wrapped()
+		public void Enqueue_From_Space_Wrapped_To_Data_Wrapped()
 		{
 			var src = MkSpaceWrappedQueue(64, Enumerable.Range(100, 40));
 			var dest = MkDataWrappedQueue(64, Enumerable.Range(200, 40));
@@ -191,7 +191,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_From_Data_Wrapped_To_Space_Wrapped()
+		public void Enqueue_From_Data_Wrapped_To_Space_Wrapped()
 		{
 			var src = MkDataWrappedQueue(64, Enumerable.Range(100, 40));
 			var dest = MkSpaceWrappedQueue(64, Enumerable.Range(200, 40));
@@ -201,12 +201,12 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Merge_Queues()
+		public void Stress_Enqueue_Queues()
 		{
 			var range = Enumerable.Range(1, 10);
 			var queue = new AdvQueue<int>(range);
 
-			for (var i = 1; i < 5; i++)
+			for (var i = 1; i < 50; i++)
 			{
 				var r2 = Enumerable.Range(i * 100, 50);
 				range = range.Concat(r2);
@@ -215,6 +215,32 @@ namespace Enyim.Caching.Tests
 				queue.Enqueue(tmp);
 
 				Assert.True(range.SequenceEqual(queue), i.ToString());
+			}
+		}
+
+		[Fact]
+		public void Stress_Enqueue_Using_The_Same_Target()
+		{
+			const int VALUE = 1234;
+
+			var source = new AdvQueue<int>();
+			var target = new AdvQueue<int>();
+			var itemCount = 10;
+
+			for (var i = 0; i < 5000; i++)
+			{
+				for (var q = 0; q < itemCount; q++)
+					source.Enqueue(VALUE);
+
+				target.Enqueue(source);
+
+				for (var d = 0; d < itemCount; d++)
+				{
+					Assert.Equal(VALUE, target.Peek());
+					Assert.Equal(VALUE, target.Dequeue());
+				}
+
+				itemCount++;
 			}
 		}
 
@@ -244,6 +270,50 @@ namespace Enyim.Caching.Tests
 			return retval;
 		}
 
+		[Fact]
+		public void Enqueing_Into_Queue_With_Shifted_Head_Should_Move_Data_To_The_Front()
+		{
+			var r1 = Enumerable.Range(1, 10);
+			// data.length will be 13
+			// 4 -> 6 -> 9 -> 13
+			var source = new AdvQueue<int>(r1);
+
+			source.Dequeue();
+			source.Dequeue();
+			source.Dequeue();
+			source.Dequeue();
+
+			var r2 = Enumerable.Range(20, 4);
+			source.Enqueue(new AdvQueue<int>(r2));
+
+			Assert.Equal(source.AsEnumerable(), r1.Skip(4).Concat(r2));
+		}
+
+		[Fact]
+		public void Dequeuing_An_Empty_Queue_Should_Fail()
+		{
+			Assert.Throws<InvalidOperationException>(() => new AdvQueue<int>().Dequeue());
+		}
+
+		[Fact]
+		public void Peeking_An_Empty_Queue_Should_Fail()
+		{
+			Assert.Throws<InvalidOperationException>(() => new AdvQueue<int>().Peek());
+		}
+
+		[Fact]
+		public void TryPeek_Should_Work()
+		{
+			int tmp;
+			var q = new AdvQueue<int>();
+
+			Assert.False(q.TryPeek(out tmp));
+
+			q.Enqueue(1234);
+			Assert.True(q.TryPeek(out tmp));
+			Assert.Equal(1234, tmp);
+		}
+
 		/// <summary>
 		/// Creates a queue where empty space wraps around in the array. (Tail > Head)
 		/// </summary>
@@ -271,11 +341,22 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Enumeration_Works()
 		{
-			var queue = new AdvQueue<int>();
-			var range = Enumerable.Range(1, 100).ToArray();
-			EnqueueRange(queue, range);
+			const int VALUE = 12;
 
+			var queue = new AdvQueue<int>();
+			var range = Enumerable.Repeat(VALUE, 100).ToArray();
+
+			EnqueueRange(queue, range);
 			Assert.Equal(queue, range);
+
+			var c = 0;
+			foreach (var i in queue)
+			{
+				Assert.Equal(VALUE, i);
+				c++;
+			}
+
+			Assert.Equal(range.Length, c);
 		}
 
 		[Fact]
