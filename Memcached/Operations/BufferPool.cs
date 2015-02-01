@@ -1,5 +1,4 @@
-﻿#if USE_BUFFER_POOL
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -80,8 +79,6 @@ namespace Enyim.Caching.Memcached.Operations
 	}
 
 }
-
-#endif
 
 #region [ License information          ]
 

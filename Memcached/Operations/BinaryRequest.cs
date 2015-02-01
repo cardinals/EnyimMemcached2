@@ -18,9 +18,8 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_WRITE_BODY = 3;
 		private const int STATE_DONE = 4;
 
-#if USE_BUFFER_POOL
 		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
-#endif
+
 		private static int InstanceCounter;
 
 		private byte[] header;
@@ -38,27 +37,28 @@ namespace Enyim.Caching.Memcached.Operations
 			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
 
 			this.headerLength = Protocol.HeaderLength + extraLength;
-			// prealloc header so that the extra data an be placed into the same buffer
-#if USE_BUFFER_POOL
+
+			// prealloc header so that the extra data can be placed into the same buffer
 			this.header = bufferPool.Acquire(headerLength);
-#else
-			this.header = new byte[headerLength];
-#endif
 			this.Extra = extraLength == 0
 							? new ArraySegment<byte>()
 							: new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
 		}
 
-		void IDisposable.Dispose()
+		~BinaryRequest()
 		{
-#if USE_BUFFER_POOL
+			GC.WaitForPendingFinalizers();
+			Dispose();
+		}
+
+		public void Dispose()
+		{
 			if (header != null)
 			{
 				GC.SuppressFinalize(this);
 				bufferPool.Release(header);
 				header = null;
 			}
-#endif
 		}
 
 		bool IRequest.WriteTo(WriteBuffer buffer)
@@ -69,8 +69,6 @@ namespace Enyim.Caching.Memcached.Operations
 			// 3. loop on Data, if any
 			// 4. done
 
-			// this is a loop-unrolled version of the preious algorithms
-			// it's not significantly faster but has the least GC pressure
 			switch (state)
 			{
 				case STATE_INITIAL: goto init;

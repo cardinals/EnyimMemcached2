@@ -8,17 +8,15 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class BinaryResponse : IResponse
 	{
-		private const int STATE_NEED_HEADER = 1;
-		private const int STATE_NEED_BODY = 2;
-		private const int STATE_DONE = 3;
+		private const int STATE_NEED_HEADER = 0;
+		private const int STATE_NEED_BODY = 1;
+		private const int STATE_DONE = 2;
 
-		// 128 is the minimum size handled by the BuffferManager
-#if USE_BUFFER_POOL
+		// 128 is the minimum size handled by the BufferManager
 		private const int ArraySize = 128;
 		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
-#endif
-		private string responseMessage;
 
+		private string responseMessage;
 		private byte[] header;
 		private byte[] body;
 
@@ -29,25 +27,31 @@ namespace Enyim.Caching.Memcached.Operations
 		internal BinaryResponse()
 		{
 			StatusCode = -1;
-#if USE_BUFFER_POOL
 			header = bufferPool.Acquire(Protocol.HeaderLength);
-#else
-			header = new byte[Protocol.HeaderLength];
-#endif
 			remainingHeader = Protocol.HeaderLength;
-			state = STATE_NEED_HEADER;
 		}
 
-		void IDisposable.Dispose()
+		~BinaryResponse()
 		{
-#if USE_BUFFER_POOL
+			GC.WaitForPendingFinalizers();
+			Dispose();
+		}
+
+		public void Dispose()
+		{
 			if (header != null)
 			{
 				GC.SuppressFinalize(this);
+
 				bufferPool.Release(header);
 				header = null;
+
+				if (body != null)
+				{
+					bufferPool.Release(body);
+					body = null;
+				}
 			}
-#endif
 		}
 
 		public byte OpCode;
@@ -72,32 +76,31 @@ namespace Enyim.Caching.Memcached.Operations
 
 		bool IResponse.Read(ReadBuffer buffer)
 		{
-			if (state == STATE_NEED_HEADER)
+			switch (state)
 			{
-				remainingHeader -= buffer.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
-				Debug.Assert(remainingHeader >= 0);
+				case STATE_NEED_HEADER:
+					remainingHeader -= buffer.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
+					if (remainingHeader > 0) return true;
 
-				if (remainingHeader > 0)
-					return true;
+					Debug.Assert(remainingHeader == 0);
 
-				if (!ProcessHeader(header, out remainingData))
-				{
+					if (!ProcessHeader(header, out remainingData))
+					{
+						state = STATE_DONE;
+						return false;
+					}
+
+					state = STATE_NEED_BODY;
+					goto case STATE_NEED_BODY;
+
+				case STATE_NEED_BODY:
+					remainingData -= buffer.Read(body, body.Length - remainingData, remainingData);
+					if (remainingData > 0) return true;
+
+					Debug.Assert(remainingHeader == 0);
+
 					state = STATE_DONE;
-					return false;
-				}
-
-				state = STATE_NEED_BODY;
-			}
-
-			if (state == STATE_NEED_BODY)
-			{
-				remainingData -= buffer.Read(body, body.Length - remainingData, remainingData);
-				Debug.Assert(remainingData >= 0);
-
-				if (remainingData > 0)
-					return true;
-
-				state = STATE_DONE;
+					break;
 			}
 
 			return false;
@@ -112,21 +115,26 @@ namespace Enyim.Caching.Memcached.Operations
 		/// <returns></returns>
 		private bool ProcessHeader(byte[] header, out int bodyLength)
 		{
+#if DEBUG
 			if (header[Protocol.HEADER_INDEX_MAGIC] != Protocol.ResponseMagic)
 				throw new InvalidOperationException("Expected magic value " + Protocol.ResponseMagic + ", received: " + header[Protocol.HEADER_INDEX_MAGIC]);
+#endif
 
+			// TODO test if unsafe array gives a perf boost
 			OpCode = header[Protocol.HEADER_INDEX_OPCODE];
 			KeyLength = BinaryConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_KEY);
-			var extraLength = header[Protocol.HEADER_INDEX_EXTRA];
 			DataType = header[Protocol.HEADER_INDEX_DATATYPE];
 			StatusCode = BinaryConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_STATUS);
-			bodyLength = BinaryConverter.DecodeInt32(header, Protocol.HEADER_INDEX_BODY);
 			CorrelationId = unchecked((uint)BinaryConverter.DecodeInt32(header, Protocol.HEADER_INDEX_OPAQUE));
 			CAS = BinaryConverter.DecodeUInt64(header, Protocol.HEADER_INDEX_CAS);
 
+			bodyLength = BinaryConverter.DecodeInt32(header, Protocol.HEADER_INDEX_BODY);
+
 			if (bodyLength > 0)
 			{
-				body = new byte[bodyLength];
+				var extraLength = header[Protocol.HEADER_INDEX_EXTRA];
+
+				body = bufferPool.Acquire(bodyLength);
 
 				Extra = new ArraySegment<byte>(body, 0, extraLength);
 				Data = new ArraySegment<byte>(body, extraLength, bodyLength - extraLength);
