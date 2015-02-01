@@ -1,6 +1,6 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
-		<NugetPath>"$(SolutionDir).nuget\nuget.exe"</NugetPath>
+		<NugetPath>"$(SolutionDir)\build\nuget.exe"</NugetPath>
 		<NuspecPath Condition=" Exists('$(MSBuildProjectDirectory)\.nuget\$(MSBuildProjectName).nuspec') ">$(MSBuildProjectDirectory)\.nuget\$(MSBuildProjectName).nuspec</NuspecPath>
 		<NuspecPath Condition=" Exists('$(MSBuildProjectDirectory)\$(MSBuildProjectName).nuspec') ">$(MSBuildProjectDirectory)\$(MSBuildProjectName).nuspec</NuspecPath>
 	</PropertyGroup>

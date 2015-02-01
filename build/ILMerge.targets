@@ -7,7 +7,7 @@
 		</When>
 		<When Condition=" $(ILMergeEnabled) ">
 			<PropertyGroup>
-				<ILMergePath>"$(SolutionDir)packages\ilmerge.2.13.0307\ILMerge.exe"</ILMergePath>
+				<ILMergePath>"$(SolutionDir)packages\ilmerge.2.14.1208\tools\ILMerge.exe"</ILMergePath>
 				<ResolveReferencesDependsOn>$(ResolveReferencesDependsOn);_FixReferences</ResolveReferencesDependsOn>
 				<BuildDependsOn>$(BuildDependsOn);_MergeAssemblies</BuildDependsOn>
 			</PropertyGroup>

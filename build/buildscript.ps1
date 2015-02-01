@@ -3,7 +3,7 @@ FormatTaskName (("-" * 20) + "[ {0} ]" + ("-" * 20))
 
 $build_root = Split-Path $psake.build_script_file
 $solution_dir = resolve-path "$build_root\.."
-$out_dir = "$solution_dir\out"
+$out_dir = "$solution_dir\!out\"
 $nuget_exe = resolve-path "$build_root\nuget.exe"
 
 $package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached2/api/v2/package"; "nuget"=""; }
@@ -51,7 +51,7 @@ Task Clean -description "removes all files created by the build process" {
 #
 #
 
-Task Build -description "builds the projects" {
+Task Build -description "builds the projects" -depends _Restore {
 
 	invoke-msbuild -target "Build" -project $solution_file
 }
@@ -72,6 +72,17 @@ Task Package -description "builds the nuget packages" -Depends Build {
 }
 
 #
+# LOCAL COPY
+#
+#
+
+Task LocalCopy -description "builds the nuget packages and copies them to the output directory" -Depends Package {
+	if (!(Test-Path $out_dir)) { mkdir $out_dir > $null }
+
+	find-packages | copy -destination $out_dir
+}
+
+#
 # PUBLISH
 #
 #
@@ -85,11 +96,19 @@ Task Publish -description "publishes the nuget packages" -depends Package {
 	$extras = @("-apikey", "$push_key")
 	if ($push_to -ne "") { $extras += "-source", $push_to }
 
-	$package_projects | % {
+	find-packages | % { . $nuget_exe push ($_.FullName) $extras }
+}
 
-		$p = join-Path (split-path -Parent $_) "bin\$configuration"
+#
+# NUGET RESTORE
+#
+#
 
-		gci $p *.nupkg | % { . $nuget_exe push ($_.FullName) $extras }
+Task _Restore -description "restores nuget packages" {
+	Exec {
+		pushd $solution_dir
+		. $nuget_exe restore
+		popd
 	}
 }
 
@@ -121,6 +140,16 @@ function invoke-msbuild($target, $props, $project) {
 	}
 
 	Exec { msbuild $project $extras /t:$target /p:"$p"  }
+}
+
+function find-packages
+{
+	$package_projects | % {
+
+		$p = join-Path (split-path -Parent $_) "bin\$configuration"
+
+		gci $p *.nupkg
+	}
 }
 
 <#

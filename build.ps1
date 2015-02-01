@@ -60,6 +60,7 @@ param(
 	[string]$Platform = "Any CPU",
 	[string]$Target = "myget",
 	[Switch]$Symbols = $false,
+	[Switch]$Docs = $false,
 	[string]$ApiKey = $null,
 	[string]$Verbosity = $null
 )
@@ -73,7 +74,7 @@ try {
 		if (test-path $fn) { $ApiKey = gc $fn }
 	}
 
-	invoke-psake -nologo -buildFile .\build\buildscript.ps1 -TaskList $Tasks -properties @{configuration=$configuration; platform=$platform; push_target=$target; push_symbols=$symbols; push_key = $APIKey; verbosity = $Verbosity }
+	invoke-psake -nologo -docs:$docs -buildFile .\build\buildscript.ps1 -TaskList $Tasks -properties @{configuration=$configuration; platform=$platform; push_target=$target; push_symbols=$symbols; push_key = $APIKey; verbosity = $Verbosity }
 }
 finally { remove-module psake }
 
