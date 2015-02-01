@@ -82,19 +82,18 @@ namespace Enyim.Caching
 
 		public void Connect()
 		{
-			Connect(true, CancellationToken.None);
+			Connect(CancellationToken.None);
 		}
 
-		public virtual void Connect(bool reset, CancellationToken token)
+		public virtual void Connect(CancellationToken token)
 		{
 			Debug.Assert(currentWriteCopier == null);
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 
-			if (LogDebugEnabled) log.Debug("Connecting node to {0}, will reset write queue: {1}", endpoint, reset);
+			if (LogDebugEnabled) log.Debug("Connecting node to "+ endpoint);
 
 			socket.Connect(endpoint, token);
-			if (reset) writeQueue.Clear();
 
 			mustReconnect = false;
 			IsAlive = true;
@@ -154,7 +153,7 @@ namespace Enyim.Caching
 
 			try
 			{
-				if (mustReconnect) Connect(false, CancellationToken.None);
+				if (mustReconnect) Connect(CancellationToken.None);
 				if (!IsAlive) throw new IOException("Node is dead: " + EndPoint);
 
 				// socket still working but we got requeued, so quit

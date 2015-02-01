@@ -24,11 +24,11 @@ namespace Enyim.Caching.Memcached
 		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, Func<ISocket> socket)
 			: base(endpoint, owner, failurePolicy, socket) { }
 
-		public override void Connect(bool reset, CancellationToken token)
+		public override void Connect(CancellationToken token)
 		{
 			silentCount = 0;
 
-			base.Connect(reset, token);
+			base.Connect(token);
 		}
 
 		protected override IResponse CreateResponse()

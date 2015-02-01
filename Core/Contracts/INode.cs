@@ -7,16 +7,14 @@ namespace Enyim.Caching
 {
 	public interface INode
 	{
-		void Connect(bool reset, CancellationToken token);
-		void Shutdown();
-
 		bool IsAlive { get; }
-
 		IPEndPoint EndPoint { get; }
 
+		void Run();
 		Task<IOperation> Enqueue(IOperation op);
 
-		void Run();
+		void Connect(CancellationToken token);
+		void Shutdown();
 	}
 }
 

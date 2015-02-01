@@ -215,24 +215,24 @@ namespace Enyim.Caching
 			if (when == TimeSpan.Zero)
 			{
 				if (LogInfoEnabled) log.Info("Will reconnect now");
-				ReconnectNow(node, false);
+				ReconnectNow(node);
 			}
 			else
 			{
 				if (LogInfoEnabled) log.Info("Will reconnect after " + when);
 				Task
 					.Delay(when, shutdownToken.Token)
-					.ContinueWith(_ => ReconnectNow(node, true), TaskContinuationOptions.OnlyOnRanToCompletion);
+					.ContinueWith(_ => ReconnectNow(node), TaskContinuationOptions.OnlyOnRanToCompletion);
 			}
 		}
 
-		protected virtual void ReconnectNow(INode node, bool reset)
+		protected virtual void ReconnectNow(INode node)
 		{
 			try
 			{
 				if (shutdownToken.IsCancellationRequested) return;
 
-				node.Connect(reset, shutdownToken.Token);
+				node.Connect(shutdownToken.Token);
 
 				ReAddNode(node);
 				ioQueue.Add(node); // trigger IO on this node
