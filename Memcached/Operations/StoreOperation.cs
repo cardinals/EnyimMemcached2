@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -28,10 +29,13 @@ namespace Enyim.Caching.Memcached.Operations
 			OpCode op;
 
 			// figure out the op code
-			if (Mode == StoreMode.Add) op = OpCode.Add;
-			else if (Mode == StoreMode.Replace) op = OpCode.Replace;
-			else if (Mode == StoreMode.Set) op = OpCode.Set;
-			else throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
+			switch (Mode)
+			{
+				case StoreMode.Add: op = OpCode.Add; break;
+				case StoreMode.Replace: op = OpCode.Replace; break;
+				case StoreMode.Set: op = OpCode.Set; break;
+				default: throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
+			}
 
 			// make it silent
 			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);

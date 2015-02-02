@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
-using Enyim.Caching.Memcached.Results;
 using Xunit;
 
 namespace Enyim.Caching.Tests

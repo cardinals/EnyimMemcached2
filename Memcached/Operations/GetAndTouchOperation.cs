@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Text;
-using Enyim.Caching.Memcached.Results;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Enyim.Caching.Memcached.Operations
 {

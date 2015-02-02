@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
 using Xunit;
-using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests
 {

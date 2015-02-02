@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
 	public struct CasResult<T>
 	{
-		private T result;
-		private ulong cas;
-		private int statusCode;
+		private readonly T result;
+		private readonly ulong cas;
+		private readonly int statusCode;
 
 		public CasResult(T result, ulong cas, int statusCode)
 		{

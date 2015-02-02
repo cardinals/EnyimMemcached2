@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
-using System.IO;
 
 namespace Enyim.Caching.Memcached
 {
@@ -250,6 +250,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		#endregion
+
 		#region [ Expiration helpers           ]
 
 		protected const int MaxSeconds = 60 * 60 * 24 * 30;

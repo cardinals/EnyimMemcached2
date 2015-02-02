@@ -91,7 +91,7 @@ namespace Enyim.Caching
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 
-			if (LogDebugEnabled) log.Debug("Connecting node to "+ endpoint);
+			if (LogDebugEnabled) log.Debug("Connecting node to " + endpoint);
 
 			socket.Connect(endpoint, token);
 

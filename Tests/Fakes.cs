@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Tests

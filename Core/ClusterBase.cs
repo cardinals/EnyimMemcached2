@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,7 +27,6 @@ namespace Enyim.Caching
 
 		private readonly Thread worker;
 		private readonly ManualResetEventSlim workerIsDone;
-
 
 		private INode[] allNodes; // all nodes in the cluster known by us
 		private INode[] workingNodes; // the nodes that are still working
@@ -75,8 +73,8 @@ namespace Enyim.Caching
 			// if the cluster is not stopped yet, we should clean up
 			if (!shutdownToken.IsCancellationRequested)
 			{
-				shutdownToken.Cancel();
-				workerIsDone.Wait();
+				using (shutdownToken) shutdownToken.Cancel();
+				using (workerIsDone) workerIsDone.Wait();
 
 				foreach (var node in allNodes)
 				{

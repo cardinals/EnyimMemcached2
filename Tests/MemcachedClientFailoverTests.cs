@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
-using Enyim.Caching.Memcached.Results;
 using Xunit;
 
 namespace Enyim.Caching.Tests
@@ -31,7 +27,7 @@ namespace Enyim.Caching.Tests
 					.Endpoints("localhost:11300"/*, "localhost:11302", "localhost:11304"*/)
 					.SocketOpts(connectionTimeout: TimeSpan.FromMilliseconds(100))
 					.Use
-				//.NodeLocator<PortPrefixBasedLocator>()
+						//.NodeLocator<PortPrefixBasedLocator>()
 						.ReconnectPolicy(() => new PeriodicReconnectPolicy { Interval = TimeSpan.FromHours(1) })
 					.Register();
 

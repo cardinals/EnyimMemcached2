@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Xunit;
 using Enyim.Caching.Memcached;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
@@ -66,7 +65,6 @@ namespace Enyim.Caching.Tests
 			Assert.Equal(190u, client.Decrement(key, 10, 10));
 			Assert.Equal("190", client.Get(key));
 		}
-
 	}
 }
 

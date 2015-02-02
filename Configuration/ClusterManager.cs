@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration

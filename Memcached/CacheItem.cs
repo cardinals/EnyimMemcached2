@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Net;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
@@ -12,8 +9,8 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public struct CacheItem
 	{
-		private uint flags;
-		private ArraySegment<byte> data;
+		private readonly uint flags;
+		private readonly ArraySegment<byte> data;
 
 		/// <summary>
 		/// Initializes a new instance of <see cref="T:CacheItem"/>.

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Configuration;
-using Enyim.Caching.Configuration;
-using Funq;
-using System.Diagnostics;
+using System.Linq;
 using System.Net;
+using Funq;
 
 namespace Enyim.Caching.Memcached.Configuration
 {

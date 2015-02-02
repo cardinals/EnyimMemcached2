@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.ServiceModel.Channels;
-using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BufferPool : IDisposable
+	public sealed class BufferPool : IDisposable
 	{
 		private readonly BufferManager pool;
 

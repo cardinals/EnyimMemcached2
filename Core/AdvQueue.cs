@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
@@ -293,6 +291,7 @@ namespace Enyim.Caching
 			}
 
 			object IEnumerator.Current { get { return Current; } }
+
 			public void Dispose() { }
 		}
 

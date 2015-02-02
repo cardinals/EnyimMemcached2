@@ -1,5 +1,6 @@
 ﻿using System;
-using Enyim.Caching.Memcached.Results;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Enyim.Caching.Memcached.Operations
 {
@@ -30,6 +31,7 @@ namespace Enyim.Caching.Memcached.Operations
 		}
 
 		protected abstract BinaryRequest CreateRequest();
+
 		protected abstract TResult CreateResult(BinaryResponse response);
 	}
 }

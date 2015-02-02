@@ -1,5 +1,5 @@
-﻿using System.Reflection;
-using System.Runtime.InteropServices;
+﻿using System;
+using System.Reflection;
 
 [assembly: AssemblyCompany("enyim.com")]
 [assembly: AssemblyCopyright("Copyright © enyim.com, Attila Kiskó")]
@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 #if DEBUG
 [assembly: AssemblyConfiguration("DEBUG")]
 #endif
+
 #if RELEASE
 [assembly: AssemblyConfiguration("RELEASE")]
 #endif
@@ -16,7 +17,6 @@ using System.Runtime.InteropServices;
 
 // AssemblyFileVersion & AssemblyInformationalVersion
 // is provided by the VersionInfo.targets
-
 
 #region [ License information          ]
 

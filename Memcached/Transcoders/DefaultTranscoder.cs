@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
@@ -31,8 +30,8 @@ namespace Enyim.Caching.Memcached
 			// raw data is a special case when some1 passes in a buffer (byte[] or ArraySegment<byte>)
 			if (value is ArraySegment<byte>)
 			{
-				// ArraySegment<byte> is only passed in when a part of buffer is being 
-				// serialized, usually from a MemoryStream (To avoid duplicating arrays 
+				// ArraySegment<byte> is only passed in when a part of buffer is being
+				// serialized, usually from a MemoryStream (To avoid duplicating arrays
 				// the byte[] returned by MemoryStream.GetBuffer is placed into an ArraySegment.)
 				return new CacheItem(RawDataFlag, (ArraySegment<byte>)value);
 			}
@@ -46,7 +45,7 @@ namespace Enyim.Caching.Memcached
 			}
 
 			ArraySegment<byte> data;
-			TypeCode code = value == null ? TypeCode.DBNull : Type.GetTypeCode(value.GetType());
+			var code = value == null ? TypeCode.DBNull : Type.GetTypeCode(value.GetType());
 
 			switch (code)
 			{
@@ -115,8 +114,8 @@ namespace Enyim.Caching.Memcached
 				// so treat all 0 flagged items as string
 				// this may help inter-client data management as well
 				//
-				// however we store 'null' as Empty + an empty array, 
-				// so this must special-cased for compatibilty with 
+				// however we store 'null' as Empty + an empty array,
+				// so this must special-cased for compatibility with
 				// earlier versions. we introduced DBNull as null marker in emc2.6
 				case TypeCode.Empty:
 					return (data.Array == null || data.Count == 0)
@@ -236,6 +235,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		#endregion
+
 		#region [ Typed deserialization        ]
 
 		protected virtual String DeserializeString(ArraySegment<byte> value)

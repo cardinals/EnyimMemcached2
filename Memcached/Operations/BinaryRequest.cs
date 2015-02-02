@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.ServiceModel.Channels;
+using System.Linq;
 using System.Threading;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -22,8 +20,8 @@ namespace Enyim.Caching.Memcached.Operations
 
 		private static int InstanceCounter;
 
+		private readonly int headerLength;
 		private byte[] header;
-		private int headerLength;
 
 		private int state;
 		private int writeOffset;
@@ -120,7 +118,7 @@ namespace Enyim.Caching.Memcached.Operations
 			var keyLength = Key == null ? 0 : Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
-			var totalLength = Extra.Count + keyLength + Data.Count; // total payload size
+			var totalLength = Extra.Count + keyLength + Data.Count;	// total payload size
 			var header = this.header;
 
 			header[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic; // magic

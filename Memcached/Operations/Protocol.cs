@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Enyim.Caching.Memcached.Operations
 {
@@ -16,7 +18,7 @@ namespace Enyim.Caching.Memcached.Operations
 		internal const int HEADER_INDEX_KEY = 2; // 2-3
 		internal const int HEADER_INDEX_EXTRA = 4;
 		internal const int HEADER_INDEX_DATATYPE = 5;
-		internal const int HEADER_INDEX_STATUS = 6; // 6-7
+		internal const int HEADER_INDEX_STATUS = 6;	// 6-7
 		internal const int HEADER_INDEX_BODY = 8; // 8-11
 		internal const int HEADER_INDEX_OPAQUE = 12; // 12-15
 		internal const int HEADER_INDEX_CAS = 16; // 16-23

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -8,9 +10,9 @@ namespace Enyim.Caching.Memcached.Operations
 		protected const int ExtraLength = 20;
 		protected const int ResultLength = 8;
 
-		private ulong defaultValue;
-		private ulong delta;
-		private uint expires;
+		private readonly ulong defaultValue;
+		private readonly ulong delta;
+		private readonly uint expires;
 
 		public MutateOperation(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, uint expires)
 			: base(key)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching.Memcached.Configuration
 {

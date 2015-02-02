@@ -5,9 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
@@ -149,7 +147,7 @@ namespace Enyim.Caching
 		/// Implements a buffer factory. Returns ArraySegments using a pinned byte array as underlying storage.
 		/// </summary>
 		/// <remarks>
-		/// The BufferFactory only cares if all buffers created by it are returned without being able to reuse them. 
+		/// The BufferFactory only cares if all buffers created by it are returned without being able to reuse them.
 		/// (SAEAFactory will clean up the empty BufferFactories during compaction.)
 		/// </remarks>
 		private class BufferFactory : IDisposable

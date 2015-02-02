@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Enyim.Caching;
-using Enyim.Caching.Memcached;
+using System.Linq;
 using Moq;
 using Xunit;
 

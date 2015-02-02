@@ -66,7 +66,6 @@ namespace Enyim.Caching.Memcached.Configuration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface IClusterBuilderServicesNext : IClusterBuilderServices, ICanRegisterCluster { }
 
-
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface IClientBuilderServices : ICanAddServices<IClientBuilderServicesNext> { }
 

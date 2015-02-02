@@ -50,6 +50,7 @@ namespace Funq
 			return Register<TService>(container, typeof(TService), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4));
 		}
 #endif
+
 		public static IRegistration<TService> AutoWireAs<TService, TImplementation>(this Container container)
 			where TImplementation : class, TService
 		{
@@ -81,6 +82,7 @@ namespace Funq
 			return Register<TService>(container, typeof(TImplementation), typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4));
 		}
 #endif
+
 		#endregion
 
 		private static IRegistration<TService> Register<TService>(this Container container, Type implType, params Type[] openArgs)
@@ -156,7 +158,7 @@ namespace Funq
 		}
 
 		/// <summary>
-		/// create factory Func<Container, Arg1..ArgN, TService> 
+		/// create factory Func<Container, Arg1..ArgN, TService>
 		/// </summary>
 		private static Type CreateFactoryFunc(Type serviceType, Type[] openArgs)
 		{

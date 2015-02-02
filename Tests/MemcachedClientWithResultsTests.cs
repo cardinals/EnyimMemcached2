@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Configuration;
 using Enyim.Caching.Memcached.Results;
 using Xunit;
 

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Results;
 using Xunit;
 
 namespace Enyim.Caching.Tests
@@ -28,7 +26,6 @@ namespace Enyim.Caching.Tests
 
 			Thread.Sleep(WaitUntilExpires);
 			Assert.Null(client.Get(key));
-
 		}
 
 		[Fact]

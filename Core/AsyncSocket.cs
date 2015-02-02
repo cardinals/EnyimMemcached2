@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -119,7 +120,7 @@ namespace Enyim.Caching
 
 		private void PerformSend(int sendOffset, int sendCount)
 		{
-			for (; ; )
+			for (; ;)
 			{
 				// try sending all our data
 				sendArgs.SetBuffer(sendOffset, sendCount);
@@ -321,6 +322,7 @@ namespace Enyim.Caching
 		}
 
 		#endregion
+
 		#region [ Cleanup                      ]
 
 		~AsyncSocket()
@@ -372,6 +374,7 @@ namespace Enyim.Caching
 		}
 
 		#endregion
+
 		#region [ Init                         ]
 
 		private void InitBuffers()

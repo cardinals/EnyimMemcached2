@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace Enyim.Caching.Memcached
@@ -21,9 +21,11 @@ namespace Enyim.Caching.Memcached
 
 		// Summable StatItems start at OpSum
 		private const int OpSum = 0x100;
+
 		#region readonly string[] StatKeys
+
 		// should map to the StatItem enum
-		private static readonly string[] KeyNames = 
+		private static readonly string[] KeyNames =
 		{
 			"uptime",
 			"time",
@@ -42,6 +44,7 @@ namespace Enyim.Caching.Memcached
 			"bytes_written",
 			"limit_maxbytes",
 		};
+
 		#endregion
 
 		private readonly Dictionary<IPEndPoint, Dictionary<string, string>> results;
@@ -112,7 +115,7 @@ namespace Enyim.Caching.Memcached
 		/// <returns>The version of memcached</returns>
 		public Version GetVersion(IPEndPoint server)
 		{
-			string version = GetRaw(server, StatKeys.Version);
+			var version = GetRaw(server, StatKeys.Version);
 			if (String.IsNullOrEmpty(version))
 				throw new InvalidOperationException("No version found for the server " + server);
 
@@ -126,7 +129,7 @@ namespace Enyim.Caching.Memcached
 		/// <returns>A value indicating how long the server is running</returns>
 		public TimeSpan GetUptime(IPEndPoint server)
 		{
-			string uptime = GetRaw(server, StatKeys.Uptime);
+			var uptime = GetRaw(server, StatKeys.Uptime);
 			if (String.IsNullOrEmpty(uptime))
 				throw new InvalidOperationException("No uptime found for the server " + server);
 
