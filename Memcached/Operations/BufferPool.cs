@@ -36,6 +36,7 @@ namespace Enyim.Caching.Memcached.Operations
 			if (trackers.TryGetValue(buffer, out value))
 				value.Forget();
 #endif
+			Array.Clear(buffer, 0, buffer.Length);
 			pool.ReturnBuffer(buffer);
 		}
 

@@ -32,7 +32,9 @@ namespace Enyim.Caching.Memcached.Operations
 			if (response.StatusCode == 0)
 			{
 				var flags = BinaryConverter.DecodeInt32(response.Extra.Array, 0);
-				retval.Value = new CacheItem((uint)flags, response.Data);
+				var copy = new byte[response.Data.Count];
+				Buffer.BlockCopy(response.Data.Array, response.Data.Offset, copy, 0, copy.Length);
+				retval.Value = new CacheItem((uint)flags, new ArraySegment<byte>(copy));
 			}
 
 			return retval.WithResponse(response);

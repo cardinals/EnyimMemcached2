@@ -436,19 +436,22 @@ namespace Enyim.Caching
 					inprogressResponse = null;
 				}
 
+				runMode = SEND;
+
 				// mark as dead if policy says so
 				if (failurePolicy.ShouldFail(this))
 				{
 					IsAlive = false;
+					Unlock();
 					return true;
 				}
 
 				// otherwise reconnect immediately
 				// (when it's our turn again, to be precise)
 				mustReconnect = true;
-				runMode = SEND;
-				// reconnect from IO thread
 				Unlock();
+
+				// reconnect from IO thread
 				owner.NeedsIO(this);
 
 				return false;

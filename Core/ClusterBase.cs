@@ -71,9 +71,9 @@ namespace Enyim.Caching
 		public virtual void Dispose()
 		{
 			// if the cluster is not stopped yet, we should clean up
-			if (!shutdownToken.IsCancellationRequested)
+			if (shutdownToken != null && !shutdownToken.IsCancellationRequested)
 			{
-				using (shutdownToken) shutdownToken.Cancel();
+				shutdownToken.Cancel();
 				using (workerIsDone) workerIsDone.Wait();
 
 				foreach (var node in allNodes)
@@ -85,6 +85,8 @@ namespace Enyim.Caching
 							log.Error("Error while shutting down " + node, e);
 					}
 				}
+
+				shutdownToken.Dispose();
 			}
 
 			SocketAsyncEventArgsFactory.Instance.Compact();

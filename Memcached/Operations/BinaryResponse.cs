@@ -11,28 +11,24 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_NEED_BODY = 1;
 		private const int STATE_DONE = 2;
 
-		// 128 is the minimum size handled by the BufferManager
-		private const int ArraySize = 128;
-		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
-
 		private string responseMessage;
 		private byte[] header;
-		private byte[] body;
+		private byte[] data;
 
 		private int state;
 		private int remainingHeader;
+		private int dataReadOffset;
 		private int remainingData;
 
 		internal BinaryResponse()
 		{
 			StatusCode = -1;
-			header = bufferPool.Acquire(Protocol.HeaderLength);
+			header = BinaryRequest.bufferPool.Acquire(Protocol.HeaderLength);
 			remainingHeader = Protocol.HeaderLength;
 		}
 
 		~BinaryResponse()
 		{
-			GC.WaitForPendingFinalizers();
 			Dispose();
 		}
 
@@ -42,13 +38,13 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				GC.SuppressFinalize(this);
 
-				bufferPool.Release(header);
+				BinaryRequest.bufferPool.Release(header);
 				header = null;
 
-				if (body != null)
+				if (data != null)
 				{
-					bufferPool.Release(body);
-					body = null;
+					BinaryRequest.bufferPool.Release(data);
+					data = null;
 				}
 			}
 		}
@@ -93,7 +89,10 @@ namespace Enyim.Caching.Memcached.Operations
 					goto case STATE_NEED_BODY;
 
 				case STATE_NEED_BODY:
-					remainingData -= buffer.Read(body, body.Length - remainingData, remainingData);
+					var read = buffer.Read(data, dataReadOffset, remainingData);
+					remainingData -= read;
+					dataReadOffset += read;
+
 					if (remainingData > 0) return true;
 
 					Debug.Assert(remainingHeader == 0);
@@ -133,10 +132,10 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				var extraLength = header[Protocol.HEADER_INDEX_EXTRA];
 
-				body = bufferPool.Acquire(bodyLength);
+				data = BinaryRequest.bufferPool.Acquire(bodyLength);
 
-				Extra = new ArraySegment<byte>(body, 0, extraLength);
-				Data = new ArraySegment<byte>(body, extraLength, bodyLength - extraLength);
+				Extra = new ArraySegment<byte>(data, 0, extraLength);
+				Data = new ArraySegment<byte>(data, extraLength, bodyLength - extraLength);
 
 				return true;
 			}

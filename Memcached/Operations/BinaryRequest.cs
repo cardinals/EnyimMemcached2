@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_WRITE_BODY = 3;
 		private const int STATE_DONE = 4;
 
-		private static readonly BufferPool bufferPool = new BufferPool(ArraySize, ArraySize * 1024);
+		internal static readonly BufferPool bufferPool = new BufferPool(1024 * 1024, 40 * 1024 * 1024);
 
 		private static int InstanceCounter;
 
