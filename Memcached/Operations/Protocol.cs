@@ -25,7 +25,8 @@ namespace Enyim.Caching.Memcached.Operations
 
 		internal const int MUTATE_EXTRA_LENGTH = 20;
 
-		internal const int SILENT_MASK = 0x10;
+		internal const byte SILENT_MASK = 0x10;
+		internal const byte LOUD_MASK = 0x0F;
 
 		public static class Status
 		{

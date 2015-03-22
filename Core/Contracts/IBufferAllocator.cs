@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
-	public interface IItemOperation : IOperation
+	public interface IBufferAllocator : IDisposable
 	{
-		Key Key { get; }
+		byte[] Take(int size);
+		void Return(byte[] buffer);
 	}
 }
 

@@ -10,45 +10,43 @@ namespace Enyim.Caching.Memcached.Operations
 		protected const int ExtraLength = 20;
 		protected const int ResultLength = 8;
 
-		private readonly ulong defaultValue;
-		private readonly ulong delta;
-		private readonly uint expires;
+		private static readonly OpCode[] SilentOps = { OpCode.IncrementQ, OpCode.DecrementQ };
+		private static readonly OpCode[] LoudOps = { OpCode.Increment, OpCode.Decrement };
 
-		public MutateOperation(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, uint expires)
-			: base(key)
+		private OpCode[] operations = LoudOps;
+		private bool silent;
+
+		public MutateOperation(IBufferAllocator allocator, MutationMode mode, Key key)
+			: base(allocator, key)
 		{
-			Require.Value("delta", delta >= 0, "delta must be a positive integer");
-
-			this.defaultValue = defaultValue;
-			this.delta = delta;
-			this.expires = expires;
-
 			Mode = mode;
 		}
 
 		public MutationMode Mode { get; private set; }
-		public bool Silent { get; set; }
+		public ulong DefaultValue { get; set; }
+		public ulong Delta { get; set; }
+		public uint Expires { get; set; }
+
+		public bool Silent
+		{
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operations = value ? SilentOps : LoudOps;
+			}
+		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			OpCode op;
-
-			// figure out the op code
-			if (Mode == MutationMode.Increment) op = OpCode.Increment;
-			else if (Mode == MutationMode.Decrement) op = OpCode.Decrement;
-			else throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
-
-			// make it silent
-			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);
-
-			var request = new BinaryRequest(op, ExtraLength) { Key = Key, Cas = Cas };
-			var extra = request.Extra.Array;
-			var offset = request.Extra.Offset;
+			var request = new BinaryRequest(Allocator, operations[(int)Mode], ExtraLength) { Key = Key, Cas = Cas };
 
 			// store the extra values
-			BinaryConverter.EncodeUInt64(this.delta, extra, offset);
-			BinaryConverter.EncodeUInt64(this.defaultValue, extra, offset + 8);
-			BinaryConverter.EncodeUInt32(this.expires, extra, offset + 16);
+			var extra = request.Extra.Array;
+			var offset = request.Extra.Offset;
+			NetworkOrderConverter.EncodeUInt64(Delta, extra, offset);
+			NetworkOrderConverter.EncodeUInt64(DefaultValue, extra, offset + 8);
+			NetworkOrderConverter.EncodeUInt32(Expires, extra, offset + 16);
 
 			return request;
 		}
@@ -66,7 +64,7 @@ namespace Enyim.Caching.Memcached.Operations
 				if (data.Count != ResultLength)
 					return retval.Fail(this, new InvalidOperationException("Result must be " + ResultLength + " bytes long, received: " + data.Count));
 
-				retval.Value = BinaryConverter.DecodeUInt64(data.Array, data.Offset);
+				retval.Value = NetworkOrderConverter.DecodeUInt64(data.Array, data.Offset);
 			}
 
 			return retval.WithResponse(response);

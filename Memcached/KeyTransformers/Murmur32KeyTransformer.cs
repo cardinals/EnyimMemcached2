@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Enyim.Caching.Memcached.Operations;
 
@@ -7,12 +8,24 @@ namespace Enyim.Caching.Memcached
 {
 	public class Murmur32KeyTransformer : NullKeyTransformer
 	{
-		public override byte[] Transform(string key)
-		{
-			var retval = new byte[4];
-			BinaryConverter.EncodeUInt32(Murmur32.ComputeHash(base.Transform(key)), retval, 0);
+		private readonly IBufferAllocator allocator;
 
-			return retval;
+		public Murmur32KeyTransformer(IBufferAllocator allocator) : base(allocator)
+		{
+			this.allocator = allocator;
+		}
+
+		public override Key Transform(string key)
+		{
+			using (var tmp = base.Transform(key))
+			{
+				var retval = new Key(allocator, 4);
+				var hash = Murmur32.ComputeHash(tmp.Array, 0, tmp.Length);
+
+				NetworkOrderConverter.EncodeUInt32(hash, retval.Array, 0);
+
+				return retval;
+			}
 		}
 	}
 }

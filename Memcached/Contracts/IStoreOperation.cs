@@ -5,8 +5,6 @@ namespace Enyim.Caching.Memcached
 {
 	public interface IStoreOperation : IItemOperation, IHaveResult<IOperationResult>, ICanBeSilent
 	{
-		StoreMode Mode { get; }
-		uint Expires { get; }
 	}
 }
 

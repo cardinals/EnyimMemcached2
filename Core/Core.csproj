@@ -18,6 +18,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -32,6 +33,8 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="AdvQueue.cs" />
+    <Compile Include="TrackingBufferAllocator.cs" />
+    <Compile Include="BufferManagerAllocator.cs" />
     <Compile Include="ConfigurationHelper.cs" />
     <Compile Include="Configuration\NodeElement.cs" />
     <Compile Include="Configuration\NodeElementCollection.cs" />
@@ -39,6 +42,7 @@
     <Compile Include="Configuration\ProviderTypeNameConverter.cs" />
     <Compile Include="Configuration\TextElement.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
+    <Compile Include="Contracts\IBufferAllocator.cs" />
     <Compile Include="Contracts\ICluster.cs" />
     <Compile Include="Contracts\IContainer.cs" />
     <Compile Include="Contracts\IFailurePolicy.cs" />
@@ -55,6 +59,8 @@
     <Compile Include="Metrics.cs" />
     <Compile Include="NodeQueue.cs" />
     <Compile Include="LogManager.cs" />
+    <Compile Include="PooledMemoryStream.cs" />
+    <Compile Include="Key.cs" />
     <Compile Include="ReadBuffer.cs" />
     <Compile Include="SocketAsyncEventArgsPool.cs" />
     <Compile Include="AsyncSocket.cs" />

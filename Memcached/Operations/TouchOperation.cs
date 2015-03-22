@@ -8,19 +8,14 @@ namespace Enyim.Caching.Memcached.Operations
 	public class TouchOperation : BinarySingleItemOperation<IOperationResult>, ITouchOperation
 	{
 		protected const int ExtraLength = 4;
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(TouchOperation));
 
-		public TouchOperation(byte[] key, uint expires) :
-			base(key)
-		{
-			Expires = expires;
-		}
+		public TouchOperation(IBufferAllocator allocator, Key key) : base(allocator, key) { }
 
-		public uint Expires { get; private set; }
+		public uint Expires { get; set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
-			var request = new BinaryRequest(OpCode.Touch, ExtraLength)
+			var request = new BinaryRequest(Allocator, OpCode.Touch, ExtraLength)
 			{
 				Key = Key,
 				Cas = Cas
@@ -28,7 +23,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 			// store expiration in Extra
 			var extra = request.Extra;
-			BinaryConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
+			NetworkOrderConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
 
 			return request;
 		}

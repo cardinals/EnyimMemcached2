@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Channels;
 
-namespace Enyim.Caching.Memcached.Operations
+namespace Enyim.Caching
 {
-	public sealed class BufferPool : IDisposable
+	public sealed class BufferManagerAllocator : IBufferAllocator
 	{
 		private readonly BufferManager pool;
 
-		public BufferPool(int maxBufferSize, long maxBufferPoolSize)
+		public BufferManagerAllocator(int maxBufferSize, long maxBufferPoolSize)
 		{
 			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
 		}
@@ -19,64 +19,19 @@ namespace Enyim.Caching.Memcached.Operations
 			pool.Clear();
 		}
 
-		public byte[] Acquire(int size)
+		public byte[] Take(int size)
 		{
 			var buffer = pool.TakeBuffer(size);
 			Array.Clear(buffer, 0, size);
-#if TRACK_ALLOCATIONS
-			trackers.GetOrCreateValue(buffer).Remember();
-#endif
+
 			return buffer;
 		}
 
-		public void Release(byte[] buffer)
+		public void Return(byte[] buffer)
 		{
-#if TRACK_ALLOCATIONS
-			Tracker value;
-			if (trackers.TryGetValue(buffer, out value))
-				value.Forget();
-#endif
-			Array.Clear(buffer, 0, buffer.Length);
 			pool.ReturnBuffer(buffer);
 		}
-
-		#region Leak detection
-
-#if TRACK_ALLOCATIONS
-
-		private readonly ConditionalWeakTable<byte[], Tracker> trackers = new ConditionalWeakTable<byte[], Tracker>();
-
-		public class Tracker
-		{
-			private StackTrace stackTrace;
-
-			public void Remember()
-			{
-				ThrowIfLeaking();
-
-				stackTrace = new StackTrace(2, true);
-			}
-
-			~Tracker()
-			{
-				ThrowIfLeaking();
-			}
-
-			public void Forget()
-			{
-				stackTrace = null;
-			}
-
-			private void ThrowIfLeaking()
-			{
-				if (stackTrace != null)
-					throw new InvalidOperationException("Buffer leak: " + stackTrace);
-			}
-		}
-#endif
-		#endregion
 	}
-
 }
 
 #region [ License information          ]

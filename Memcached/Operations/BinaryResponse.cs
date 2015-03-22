@@ -11,6 +11,7 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_NEED_BODY = 1;
 		private const int STATE_DONE = 2;
 
+		private readonly IBufferAllocator allocator;
 		private string responseMessage;
 		private byte[] header;
 		private byte[] data;
@@ -20,10 +21,11 @@ namespace Enyim.Caching.Memcached.Operations
 		private int dataReadOffset;
 		private int remainingData;
 
-		internal BinaryResponse()
+		internal BinaryResponse(IBufferAllocator allocator)
 		{
+			this.allocator = allocator;
 			StatusCode = -1;
-			header = BinaryRequest.bufferPool.Acquire(Protocol.HeaderLength);
+			header = allocator.Take(Protocol.HeaderLength);
 			remainingHeader = Protocol.HeaderLength;
 		}
 
@@ -38,12 +40,12 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				GC.SuppressFinalize(this);
 
-				BinaryRequest.bufferPool.Release(header);
+				allocator.Return(header);
 				header = null;
 
 				if (data != null)
 				{
-					BinaryRequest.bufferPool.Release(data);
+					allocator.Return(data);
 					data = null;
 				}
 			}
@@ -120,19 +122,19 @@ namespace Enyim.Caching.Memcached.Operations
 
 			// TODO test if unsafe array gives a perf boost
 			OpCode = header[Protocol.HEADER_INDEX_OPCODE];
-			KeyLength = BinaryConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_KEY);
+			KeyLength = NetworkOrderConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_KEY);
 			DataType = header[Protocol.HEADER_INDEX_DATATYPE];
-			StatusCode = BinaryConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_STATUS);
-			CorrelationId = unchecked((uint)BinaryConverter.DecodeInt32(header, Protocol.HEADER_INDEX_OPAQUE));
-			CAS = BinaryConverter.DecodeUInt64(header, Protocol.HEADER_INDEX_CAS);
+			StatusCode = NetworkOrderConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_STATUS);
+			CorrelationId = unchecked((uint)NetworkOrderConverter.DecodeInt32(header, Protocol.HEADER_INDEX_OPAQUE));
+			CAS = NetworkOrderConverter.DecodeUInt64(header, Protocol.HEADER_INDEX_CAS);
 
-			bodyLength = BinaryConverter.DecodeInt32(header, Protocol.HEADER_INDEX_BODY);
+			bodyLength = NetworkOrderConverter.DecodeInt32(header, Protocol.HEADER_INDEX_BODY);
 
 			if (bodyLength > 0)
 			{
 				var extraLength = header[Protocol.HEADER_INDEX_EXTRA];
 
-				data = BinaryRequest.bufferPool.Acquire(bodyLength);
+				data = allocator.Take(bodyLength);
 
 				Extra = new ArraySegment<byte>(data, 0, extraLength);
 				Data = new ArraySegment<byte>(data, extraLength, bodyLength - extraLength);

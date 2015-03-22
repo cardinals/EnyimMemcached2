@@ -4,13 +4,15 @@ using System.Text;
 namespace Enyim.Caching.Memcached.Operations
 {
 	public abstract class BinarySingleItemOperation<TResult> : MemcachedOperationBase<TResult>, IItemOperation
+		where TResult : class
 	{
-		protected BinarySingleItemOperation(byte[] key)
+		protected BinarySingleItemOperation(IBufferAllocator allocator, Key key)
+			: base(allocator)
 		{
 			Key = key;
 		}
 
-		public byte[] Key { get; private set; }
+		public Key Key { get; private set; }
 		public ulong Cas { get; set; }
 	}
 }

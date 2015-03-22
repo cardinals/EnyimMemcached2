@@ -8,51 +8,41 @@ namespace Enyim.Caching.Memcached.Operations
 	public class StoreOperation : BinarySingleItemOperation<IOperationResult>, IStoreOperation
 	{
 		protected const int ExtraLength = 8;
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StoreOperation));
 
-		private readonly CacheItem value;
+		private static readonly OpCode[] SilentOps = { OpCode.AddQ, OpCode.ReplaceQ, OpCode.SetQ };
+		private static readonly OpCode[] LoudOps = { OpCode.Add, OpCode.Replace, OpCode.Set };
 
-		public StoreOperation(StoreMode mode, byte[] key, CacheItem value, uint expires) :
-			base(key)
+		private OpCode[] operations = LoudOps;
+		private bool silent;
+
+		public StoreOperation(IBufferAllocator allocator, StoreMode mode, Key key, CacheItem value)
+			: base(allocator, key)
 		{
 			Mode = mode;
-			Expires = expires;
-			this.value = value;
+			Value = value;
 		}
 
 		public StoreMode Mode { get; private set; }
-		public uint Expires { get; private set; }
-		public bool Silent { get; set; }
+		public CacheItem Value { get; private set; }
+		public uint Expires { get; set; }
+
+		public bool Silent
+		{
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operations = value ? SilentOps : LoudOps;
+			}
+		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			OpCode op;
-
-			// figure out the op code
-			switch (Mode)
-			{
-				case StoreMode.Add: op = OpCode.Add; break;
-				case StoreMode.Replace: op = OpCode.Replace; break;
-				case StoreMode.Set: op = OpCode.Set; break;
-				default: throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
-			}
-
-			// make it silent
-			if (Silent) op = (OpCode)((byte)op | Protocol.SILENT_MASK);
-
-			var request = new BinaryRequest(op, ExtraLength)
+			var request = new StoreRequest(Allocator, operations[(int)Mode], Value, Expires)
 			{
 				Key = Key,
-				Cas = Cas,
-				Data = value.Data
+				Cas = Cas
 			};
-
-			var extra = request.Extra.Array;
-			var offset = request.Extra.Offset;
-
-			// store the extra values
-			BinaryConverter.EncodeUInt32((uint)value.Flags, extra, offset);
-			BinaryConverter.EncodeUInt32(Expires, extra, offset + 4);
 
 			return request;
 		}
@@ -66,6 +56,26 @@ namespace Enyim.Caching.Memcached.Operations
 
 			return retval.WithResponse(response);
 		}
+
+		#region [ StoreRequest                 ]
+
+		private class StoreRequest : BinaryRequest
+		{
+			public StoreRequest(IBufferAllocator allocator, OpCode operation, CacheItem value, uint expires)
+				: base(allocator, operation, ExtraLength)
+			{
+				var extra = Extra.Array;
+				var offset = Extra.Offset;
+
+				// store the extra values
+				NetworkOrderConverter.EncodeUInt32(value.Flags, extra, offset);
+				NetworkOrderConverter.EncodeUInt32(expires, extra, offset + 4);
+
+				Data = value.Segment.AsArraySegment();
+			}
+		}
+
+		#endregion
 	}
 }
 

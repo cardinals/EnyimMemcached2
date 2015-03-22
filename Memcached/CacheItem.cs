@@ -1,42 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 namespace Enyim.Caching.Memcached
 {
-	/// <summary>
-	/// Represents an object either being retrieved from the cache
-	/// or being sent to the cache.
-	/// </summary>
-	public struct CacheItem
+	[SuppressMessage("Potential Code Quality Issues", "NonReadonlyReferencedInGetHashCodeIssue:Non-readonly field referenced in 'GetHashCode()'", Justification = "Only Dispose() changes the array")]
+	public struct CacheItem : IDisposable
 	{
-		private readonly uint flags;
-		private readonly ArraySegment<byte> data;
+		public static readonly CacheItem Empty = new CacheItem(0, PooledSegment.Empty);
 
-		/// <summary>
-		/// Initializes a new instance of <see cref="T:CacheItem"/>.
-		/// </summary>
-		/// <param name="flags">Custom item data.</param>
-		/// <param name="data">The serialized item.</param>
-		public CacheItem(uint flags, ArraySegment<byte> data)
+		private readonly uint flags;
+		private readonly PooledSegment segment;
+
+		public CacheItem(uint flags, PooledSegment segment)
 		{
 			this.flags = flags;
-			this.data = data;
+			this.segment = segment;
 		}
 
-		/// <summary>
-		/// Flags set for this instance.
-		/// </summary>
-		public uint Flags
+		public uint Flags { get { return flags; } }
+		public PooledSegment Segment { get { return segment; } }
+
+		public void Dispose()
 		{
-			get { return this.flags; }
+			segment.Dispose();
 		}
 
-		/// <summary>
-		/// The data representing the item being stored/retireved.
-		/// </summary>
-		public ArraySegment<byte> Data
+		public override bool Equals(object obj)
 		{
-			get { return this.data; }
+			return obj is CacheItem && Equals((CacheItem)obj);
+		}
+
+		public bool Equals(CacheItem obj)
+		{
+			return obj.flags == flags && obj.segment.Equals(segment);
+		}
+
+		public override int GetHashCode()
+		{
+			return flags.GetHashCode() ^ segment.GetHashCode();
+		}
+
+		public static bool operator ==(CacheItem a, CacheItem b)
+		{
+			return a.Equals(b);
+		}
+
+		public static bool operator !=(CacheItem a, CacheItem b)
+		{
+			return !a.Equals(b);
 		}
 	}
 }

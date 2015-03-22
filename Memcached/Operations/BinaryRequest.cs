@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
@@ -7,66 +8,62 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class BinaryRequest : IRequest
 	{
-		// 128 is the minimum size handled by the BuffferManager
-		private const int ArraySize = 128;
-
 		private const int STATE_INITIAL = 0;
 		private const int STATE_WRITE_HEADER = 1;
 		private const int STATE_WRITE_KEY = 2;
+		private const int STATE_PREPARE_BODY = 30;
 		private const int STATE_WRITE_BODY = 3;
 		private const int STATE_DONE = 4;
 
-		internal static readonly BufferPool bufferPool = new BufferPool(1024 * 1024, 40 * 1024 * 1024);
-
 		private static int InstanceCounter;
 
+		private readonly IBufferAllocator allocator;
 		private readonly int headerLength;
 		private byte[] header;
 
 		private int state;
 		private int writeOffset;
 
-		public BinaryRequest(OpCode operation) : this((byte)operation, 0) { }
-		public BinaryRequest(OpCode operation, byte extraLength) : this((byte)operation, extraLength) { }
+		public BinaryRequest(IBufferAllocator allocator, OpCode operation, byte extraLength = 0)
+			: this(allocator, (byte)operation, extraLength) { }
 
-		public BinaryRequest(byte commandCode, byte extraLength)
+		protected BinaryRequest(IBufferAllocator allocator, byte commandCode, byte extraLength)
 		{
-			this.Operation = commandCode;
-			this.CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
+			this.allocator = allocator;
 
-			this.headerLength = Protocol.HeaderLength + extraLength;
+			Operation = commandCode;
+			CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
 
 			// prealloc header so that the extra data can be placed into the same buffer
-			this.header = bufferPool.Acquire(headerLength);
-			this.Extra = extraLength == 0
-							? new ArraySegment<byte>()
-							: new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
+			headerLength = Protocol.HeaderLength + extraLength;
+			header = allocator.Take(headerLength);
+
+			if (extraLength > 0)
+				Extra = new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
 		}
 
 		~BinaryRequest()
 		{
-			GC.WaitForPendingFinalizers();
 			Dispose();
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			if (header != null)
 			{
 				GC.SuppressFinalize(this);
-				bufferPool.Release(header);
+				allocator.Return(header);
 				header = null;
 			}
 		}
 
-		bool IRequest.WriteTo(WriteBuffer buffer)
+		public bool WriteTo(WriteBuffer buffer)
 		{
 			// 0. init header
 			// 1. loop on header
 			// 2. loop on Key, if any
 			// 3. loop on Data, if any
 			// 4. done
-
 			switch (state)
 			{
 				case STATE_INITIAL: goto init;
@@ -76,6 +73,7 @@ namespace Enyim.Caching.Memcached.Operations
 				default: return false;
 			}
 
+			// TODO put these inside switch..case
 		init:
 			PrepareHeader();
 			state = STATE_WRITE_HEADER;
@@ -84,7 +82,7 @@ namespace Enyim.Caching.Memcached.Operations
 			writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
 			if (writeOffset < headerLength) return true;
 
-			if (Key != null && Key.Length > 0)
+			if (Key.Length > 0)
 			{
 				writeOffset = 0;
 				state = STATE_WRITE_KEY;
@@ -92,7 +90,7 @@ namespace Enyim.Caching.Memcached.Operations
 			else goto pre_body;
 
 		write_key:
-			writeOffset += buffer.Append(Key, writeOffset, Key.Length - writeOffset);
+			writeOffset += buffer.Append(Key.Array, writeOffset, Key.Length - writeOffset);
 			if (writeOffset < Key.Length) return true;
 
 		pre_body:
@@ -113,55 +111,109 @@ namespace Enyim.Caching.Memcached.Operations
 			return false;
 		}
 
-		private void PrepareHeader()
+		public bool WriteTo2(WriteBuffer buffer)
 		{
-			var keyLength = Key == null ? 0 : Key.Length;
+			// 0. init header
+			// 1. loop on header
+			// 2. loop on Key, if any
+			// 3. loop on Data, if any
+			// 4. done
+			switch (state)
+			{
+				case STATE_INITIAL:
+					PrepareHeader();
+					state = STATE_WRITE_HEADER;
+					goto case STATE_WRITE_HEADER;
+
+				case STATE_WRITE_HEADER:
+					writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
+					if (writeOffset < headerLength) return true;
+
+					if (Key.Length > 0)
+					{
+						writeOffset = 0;
+						state = STATE_WRITE_KEY;
+						goto case STATE_WRITE_KEY;
+					}
+					goto case STATE_PREPARE_BODY;
+
+				case STATE_WRITE_KEY:
+					writeOffset += buffer.Append(Key.Array, writeOffset, Key.Length - writeOffset);
+					if (writeOffset < Key.Length) return true;
+					goto case STATE_PREPARE_BODY;
+
+				case STATE_PREPARE_BODY:
+					if (Data.Count > 0)
+					{
+						writeOffset = 0;
+						state = STATE_WRITE_BODY;
+						goto case STATE_WRITE_BODY;
+					}
+
+					break;
+
+				case STATE_WRITE_BODY:
+					writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
+					if (writeOffset < Data.Count) return true;
+					break;
+			}
+
+			state = STATE_DONE;
+
+			return false;
+		}
+
+		private unsafe void PrepareHeader()
+		{
+			var keyLength = Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
 			var totalLength = Extra.Count + keyLength + Data.Count;	// total payload size
-			var header = this.header;
 
-			header[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic; // magic
-			header[Protocol.HEADER_INDEX_OPCODE] = Operation;
-
-			header[Protocol.HEADER_INDEX_KEY + 0] = (byte)(keyLength >> 8);
-			header[Protocol.HEADER_INDEX_KEY + 1] = (byte)(keyLength & 255);
-			header[Protocol.HEADER_INDEX_EXTRA] = (byte)(Extra.Count);
-
-			// 5 -- data type, 0 (RAW)
-			// 6,7 -- reserved, always 0
-			//buffer[0x05] = 0;
-			//buffer[0x06] = (byte)(Reserved >> 8);
-			//buffer[0x07] = (byte)(Reserved & 255);
-
-			header[Protocol.HEADER_INDEX_BODY + 0] = (byte)(totalLength >> 24);
-			header[Protocol.HEADER_INDEX_BODY + 1] = (byte)(totalLength >> 16);
-			header[Protocol.HEADER_INDEX_BODY + 2] = (byte)(totalLength >> 8);
-			header[Protocol.HEADER_INDEX_BODY + 3] = (byte)(totalLength & 255);
-
-			var cid = CorrelationId;
-			header[Protocol.HEADER_INDEX_OPAQUE + 0] = (byte)(cid >> 24);
-			header[Protocol.HEADER_INDEX_OPAQUE + 1] = (byte)(cid >> 16);
-			header[Protocol.HEADER_INDEX_OPAQUE + 2] = (byte)(cid >> 8);
-			header[Protocol.HEADER_INDEX_OPAQUE + 3] = (byte)(cid & 255);
-
-			var cas = Cas; // skip this if no cas is specified
-			if (cas > 0)
+			fixed (byte* headerPtr = this.header)
 			{
-				header[Protocol.HEADER_INDEX_CAS + 0] = (byte)(cas >> 56);
-				header[Protocol.HEADER_INDEX_CAS + 1] = (byte)(cas >> 48);
-				header[Protocol.HEADER_INDEX_CAS + 2] = (byte)(cas >> 40);
-				header[Protocol.HEADER_INDEX_CAS + 3] = (byte)(cas >> 32);
-				header[Protocol.HEADER_INDEX_CAS + 4] = (byte)(cas >> 24);
-				header[Protocol.HEADER_INDEX_CAS + 5] = (byte)(cas >> 16);
-				header[Protocol.HEADER_INDEX_CAS + 6] = (byte)(cas >> 8);
-				header[Protocol.HEADER_INDEX_CAS + 7] = (byte)(cas & 255);
+				headerPtr[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic;	// magic
+				headerPtr[Protocol.HEADER_INDEX_OPCODE] = Operation;
+
+				headerPtr[Protocol.HEADER_INDEX_KEY + 0] = (byte)(keyLength >> 8);
+				headerPtr[Protocol.HEADER_INDEX_KEY + 1] = (byte)(keyLength & 255);
+				headerPtr[Protocol.HEADER_INDEX_EXTRA] = (byte)(Extra.Count);
+
+				//// 5 -- data type, 0 (RAW)
+				//// 6,7 -- reserved, always 0
+				//headerPtr[0x05] = 0;
+				//headerPtr[0x06] = (byte)(Reserved >> 8);
+				//headerPtr[0x07] = (byte)(Reserved);
+
+				headerPtr[Protocol.HEADER_INDEX_BODY + 0] = (byte)(totalLength >> 24);
+				headerPtr[Protocol.HEADER_INDEX_BODY + 1] = (byte)(totalLength >> 16);
+				headerPtr[Protocol.HEADER_INDEX_BODY + 2] = (byte)(totalLength >> 8);
+				headerPtr[Protocol.HEADER_INDEX_BODY + 3] = (byte)(totalLength);
+
+				var cid = CorrelationId;
+				headerPtr[Protocol.HEADER_INDEX_OPAQUE + 0] = (byte)(cid >> 24);
+				headerPtr[Protocol.HEADER_INDEX_OPAQUE + 1] = (byte)(cid >> 16);
+				headerPtr[Protocol.HEADER_INDEX_OPAQUE + 2] = (byte)(cid >> 8);
+				headerPtr[Protocol.HEADER_INDEX_OPAQUE + 3] = (byte)(cid);
+
+				var cas = Cas; // skip this if no cas is specified
+				if (cas > 0)
+				{
+					headerPtr[Protocol.HEADER_INDEX_CAS + 0] = (byte)(cas >> 56);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 1] = (byte)(cas >> 48);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 2] = (byte)(cas >> 40);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 3] = (byte)(cas >> 32);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 4] = (byte)(cas >> 24);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 5] = (byte)(cas >> 16);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 6] = (byte)(cas >> 8);
+					headerPtr[Protocol.HEADER_INDEX_CAS + 7] = (byte)(cas);
+				}
 			}
 		}
 
 		public readonly byte Operation;
 		public readonly uint CorrelationId;
-		public byte[] Key;
+		public Key Key;
 		public ulong Cas;
 		//public ushort Reserved;
 		public readonly ArraySegment<byte> Extra;

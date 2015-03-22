@@ -7,9 +7,11 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class FlushOperation : MemcachedOperationBase<IOperationResult>, IFlushOperation
 	{
+		public FlushOperation(IBufferAllocator allocator) : base(allocator) { }
+
 		protected override BinaryRequest CreateRequest()
 		{
-			return new BinaryRequest(OpCode.Flush);
+			return new BinaryRequest(Allocator, OpCode.Flush);
 		}
 
 		protected override IOperationResult CreateResult(BinaryResponse response)

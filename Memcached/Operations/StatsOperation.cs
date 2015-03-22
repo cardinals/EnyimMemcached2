@@ -7,21 +7,20 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class StatsOperation : MemcachedOperationBase<INodeStatsOperationResult>, IStatsOperation
 	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
-
 		private readonly string type;
 		private Dictionary<string, string> stats;
 
-		public StatsOperation(string type)
+		public StatsOperation(IBufferAllocator allocator, string type)
+			: base(allocator)
 		{
 			this.type = type;
 		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			var request = new BinaryRequest(OpCode.Stat);
+			var request = new BinaryRequest(Allocator, OpCode.Stat);
 			if (!String.IsNullOrEmpty(type))
-				request.Key = BinaryConverter.EncodeKey(type);
+				request.Key = NetworkOrderConverter.EncodeKey(Allocator, type);
 
 			return request;
 		}
@@ -42,8 +41,8 @@ namespace Enyim.Caching.Memcached.Operations
 			}
 
 			// decode stat key/value
-			var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-			var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+			var key = NetworkOrderConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
+			var value = NetworkOrderConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
 
 			stats[key] = value;
 

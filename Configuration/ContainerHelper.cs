@@ -12,21 +12,27 @@ namespace Enyim.Caching.Memcached.Configuration
 		/// Adds the default cluster services to a container.
 		/// </summary>
 		/// <param name="container"></param>
-		internal static void AddClusterDefauls(this Funq.Container container)
+		internal static void AddClusterDefauls(this Container container)
 		{
+			container.Register<ICluster>(_ => { throw new InvalidOperationException("Must register an ICluster implementation!"); });
 			container.Register<Func<ISocket>>(_ => () => new AsyncSocket());
+
 			container.AutoWireAs<INodeLocator, DefaultNodeLocator>();
 			container.AutoWireAs<IFailurePolicy, ImmediateFailurePolicy>();
 			container.AutoWireAs<IReconnectPolicy, PeriodicReconnectPolicy>();
 
-			container.Register<ICluster>(_ => { throw new InvalidOperationException("Must register an ICluster implementation!"); });
+#if TRACK_ALLOCATIONS
+			container.Register<IBufferAllocator>(new TrackingBufferAllocator(1024 * 1024, 1024 * 1024 * 20));
+#else
+			container.Register<IBufferAllocator>(new BufferManagerAllocator(1024 * 1024, 1024 * 1024 * 20));
+#endif
 		}
 
 		/// <summary>
 		/// Adds the default client services to a container.
 		/// </summary>
 		/// <param name="container"></param>
-		internal static void AddClientDefauls(this Funq.Container container)
+		internal static void AddClientDefauls(this Container container)
 		{
 			container.AutoWireAs<IOperationFactory, MemcachedOperationFactory>();
 			container.AutoWireAs<ITranscoder, DefaultTranscoder>();
@@ -36,14 +42,15 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		internal static void RegisterCluster(this Container container, IEnumerable<IPEndPoint> endpoints)
 		{
-			var clone = endpoints.ToArray();
+			var endpointsSnapshot = endpoints.ToArray();
 
 			// such uglies
 			container
 				.Register<ICluster>(c =>
-					new MemcachedCluster(clone,
-											c.Resolve<INodeLocator>(), c.Resolve<IReconnectPolicy>(),
-											c.Resolve<IFailurePolicy>(), c.Resolve<Func<ISocket>>()))
+					new MemcachedCluster(endpointsSnapshot,
+						c.Resolve<IBufferAllocator>(),
+						c.Resolve<INodeLocator>(), c.Resolve<IReconnectPolicy>(),
+						c.Resolve<IFailurePolicy>(), c.Resolve<Func<ISocket>>()))
 				.InitializedBy((_, cluster) => cluster.Start());
 		}
 	}

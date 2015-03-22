@@ -6,6 +6,15 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public abstract class MemcachedOperationBase<TResult> : IOperation, IHaveResult<TResult>
 	{
+		protected MemcachedOperationBase(IBufferAllocator allocator)
+		{
+			Allocator = allocator;
+		}
+
+		protected abstract BinaryRequest CreateRequest();
+		protected abstract TResult CreateResult(BinaryResponse response);
+
+		protected IBufferAllocator Allocator { get; private set; }
 		public TResult Result { get; private set; }
 		protected uint CorrelationId { get; private set; }
 
@@ -29,10 +38,6 @@ namespace Enyim.Caching.Memcached.Operations
 
 			return result == null;
 		}
-
-		protected abstract BinaryRequest CreateRequest();
-
-		protected abstract TResult CreateResult(BinaryResponse response);
 	}
 }
 

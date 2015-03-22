@@ -10,29 +10,34 @@ namespace Enyim.Caching.Memcached.Operations
 	/// </summary>
 	public class ConcatOperation : BinarySingleItemOperation<IOperationResult>, IConcatOperation
 	{
-		public ConcatOperation(ConcatenationMode mode, byte[] key, ArraySegment<byte> data)
-			: base(key)
+		private static readonly OpCode[] SilentOps = { OpCode.AppendQ, OpCode.PrependQ };
+		private static readonly OpCode[] LoudOps = { OpCode.Append, OpCode.Prepend };
+
+		private OpCode[] operations = LoudOps;
+		private bool silent;
+
+		public ConcatOperation(IBufferAllocator allocator, ConcatenationMode mode, Key key)
+			: base(allocator, key)
 		{
-			Data = data;
 			Mode = mode;
 		}
 
 		public ConcatenationMode Mode { get; private set; }
-		public ArraySegment<byte> Data { get; private set; }
-		public bool Silent { get; set; }
+		public ArraySegment<byte> Data { get; set; }
+
+		public bool Silent
+		{
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operations = value ? SilentOps : LoudOps;
+			}
+		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			OpCode op;
-
-			switch (Mode)
-			{
-				case ConcatenationMode.Append: op = Silent ? OpCode.AppendQ : OpCode.Append; break;
-				case ConcatenationMode.Prepend: op = Silent ? OpCode.PrependQ : OpCode.Prepend; break;
-				default: throw new ArgumentOutOfRangeException("Unknown mode: " + Mode);
-			}
-
-			return new BinaryRequest(op)
+			return new BinaryRequest(Allocator, operations[(int)Mode])
 			{
 				Key = Key,
 				Cas = Cas,

@@ -27,8 +27,9 @@ namespace Enyim.Caching
 		private readonly AdvQueue<Data> readQueue;
 
 		private int state;
-		private IRequest currentWriteCopier;
+
 		private Data currentWriteOp;
+		private IRequest currentWriteCopier;
 		private IResponse inprogressResponse;
 
 		private bool mustReconnect;
@@ -43,8 +44,20 @@ namespace Enyim.Caching
 		private readonly ICounter counterReadQueue;
 		private readonly IGauge gaugeSendSpeed;
 
-		protected NodeBase(IPEndPoint endpoint, ICluster owner, IFailurePolicy failurePolicy, Func<ISocket> socket)
+		protected NodeBase(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 		{
+			this.owner = owner;
+			this.endpoint = endpoint;
+			this.socket = socket;
+			this.failurePolicy = failurePolicy;
+
+			failLock = new Object();
+			writeQueue = new ConcurrentQueue<Data>();
+			readQueue = new AdvQueue<Data>();
+
+			mustReconnect = true;
+			IsAlive = true;
+
 			counterEnqueuePerSec = Metrics.Meter("node write enqueue/sec", endpoint.ToString(), Interval.Seconds);
 			counterDequeuePerSec = Metrics.Meter("node write dequeue/sec", endpoint.ToString(), Interval.Seconds);
 			counterOpReadPerSec = Metrics.Meter("node op read/sec", endpoint.ToString(), Interval.Seconds);
@@ -55,18 +68,6 @@ namespace Enyim.Caching
 			counterErrorPerSec = Metrics.Meter("node in error/sec", endpoint.ToString(), Interval.Seconds);
 			counterItemCount = Metrics.Counter("commands", endpoint.ToString());
 			gaugeSendSpeed = Metrics.Gauge("send speed", endpoint.ToString());
-
-			this.owner = owner;
-			this.endpoint = endpoint;
-			this.socket = socket();
-			this.failurePolicy = failurePolicy;
-
-			this.failLock = new Object();
-			this.writeQueue = new ConcurrentQueue<Data>();
-			this.readQueue = new AdvQueue<Data>();
-
-			this.mustReconnect = true;
-			IsAlive = true;
 		}
 
 		protected abstract IResponse CreateResponse();
@@ -172,15 +173,15 @@ namespace Enyim.Caching
 			}
 		}
 
-		private const int SEND = 0;
-		private const int RECEIVE = 1;
+		private const int MODE_SEND = 0;
+		private const int MODE_RECEIVE = 1;
 		private int runMode;
 
 		private void DoRun()
 		{
 			switch (runMode)
 			{
-				case SEND:
+				case MODE_SEND:
 					// write the current (in progress) op into the write buffer
 					// - or -
 					// start writing a new one (until we run out of ops or space)
@@ -209,7 +210,7 @@ namespace Enyim.Caching
 
 					break;
 
-				case RECEIVE:
+				case MODE_RECEIVE:
 					// do we have ops queued to be read?
 					if (readQueue.Count > 0)
 					{
@@ -217,15 +218,15 @@ namespace Enyim.Caching
 					}
 					else
 					{
-						runMode = SEND;
-						goto case SEND;
+						runMode = MODE_SEND;
+						goto case MODE_SEND;
 					}
 					break;
 			}
 		}
 
 		/// <summary>
-		/// Sends the current chunked op. Happens when an ops data cannot fit the write buffer in one pass.
+		/// Sends the current chunked op. Happens when an op's data cannot fit the write buffer in one pass.
 		/// </summary>
 		/// <returns>returns true if further IO is required; false if no inprogress op present or the last chunk was successfully added to the buffer</returns>
 		private bool ContinueWritingCurrentOp()
@@ -258,7 +259,7 @@ namespace Enyim.Caching
 			{
 				if (success)
 				{
-					Volatile.Write(ref runMode, RECEIVE);
+					Volatile.Write(ref runMode, MODE_RECEIVE);
 					Unlock();
 					owner.NeedsIO(this);
 				}
@@ -291,11 +292,11 @@ namespace Enyim.Caching
 		protected virtual void WriteOp(Data data)
 		{
 			if (currentWriteCopier != null)
-				throw new InvalidOperationException("Cannot write operation while another is in progress.");
+				throw new InvalidOperationException("Cannot write an operation while another is in progress.");
 
 			var request = data.Op.CreateRequest();
 
-			if (!request.WriteTo(socket.WriteBuffer)) // fully written
+			if (!request.WriteTo(socket.WriteBuffer)) // no pending IO => fully written
 			{
 				readQueue.Enqueue(data);
 				counterReadQueue.Increment();
@@ -392,7 +393,7 @@ namespace Enyim.Caching
 			}
 
 			// set the node into receive mode and requeue for IO
-			runMode = SEND;
+			runMode = MODE_SEND;
 			Unlock();
 			owner.NeedsIO(this);
 		}
@@ -436,7 +437,7 @@ namespace Enyim.Caching
 					inprogressResponse = null;
 				}
 
-				runMode = SEND;
+				runMode = MODE_SEND;
 
 				// mark as dead if policy says so
 				if (failurePolicy.ShouldFail(this))

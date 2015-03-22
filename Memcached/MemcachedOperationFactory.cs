@@ -7,49 +7,80 @@ namespace Enyim.Caching.Memcached
 {
 	public class MemcachedOperationFactory : IOperationFactory
 	{
-		public IGetOperation Get(byte[] key)
+		private readonly IBufferAllocator allocator;
+
+		public MemcachedOperationFactory(IBufferAllocator allocator)
 		{
-			return new GetOperation(key) { Silent = false };
+			this.allocator = allocator;
 		}
 
-		public IGetAndTouchOperation GetAndTouch(byte[] key, uint expires)
+		public IGetOperation Get(Key key)
 		{
-			return new GetAndTouchOperation(key, expires);
+			return new GetOperation(allocator, key);
 		}
 
-		public IStoreOperation Store(StoreMode mode, byte[] key, CacheItem value, ulong cas, uint expires)
+		public IGetAndTouchOperation GetAndTouch(Key key, uint expires)
 		{
-			return new StoreOperation(mode, key, value, expires) { Cas = cas, Silent = false };
+			return new GetAndTouchOperation(allocator, key)
+			{
+				Expires = expires
+			};
 		}
 
-		public IDeleteOperation Delete(byte[] key, ulong cas)
+		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, ulong cas, uint expires)
 		{
-			return new DeleteOperation(key) { Cas = cas, Silent = false };
+			return new StoreOperation(allocator, mode, key, value)
+			{
+				Cas = cas,
+				Expires = expires
+			};
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, ulong cas, uint expires)
+		public IDeleteOperation Delete(Key key, ulong cas)
 		{
-			return new MutateOperation(mode, key, defaultValue, delta, expires) { Cas = cas };
+			return new DeleteOperation(allocator, key)
+			{
+				Cas = cas
+			};
 		}
 
-		public ITouchOperation Touch(byte[] key, uint expires)
+		public IMutateOperation Mutate(MutationMode mode, Key key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
-			return new TouchOperation(key, expires);
+			return new MutateOperation(allocator, mode, key)
+			{
+				DefaultValue = defaultValue,
+				Delta = delta,
+				Cas = cas,
+				Expires = expires
+			};
+
 		}
 
-		public IConcatOperation Concat(ConcatenationMode mode, byte[] key, ulong cas, ArraySegment<byte> data)
+		public ITouchOperation Touch(Key key, uint expires)
 		{
-			return new ConcatOperation(mode, key, data) { Cas = cas, Silent = false };
+			return new TouchOperation(allocator, key)
+			{
+				Expires = expires
+			};
+		}
+
+		public IConcatOperation Concat(ConcatenationMode mode, Key key, ulong cas, ArraySegment<byte> data)
+		{
+			return new ConcatOperation(allocator, mode, key)
+			{
+				Cas = cas,
+				Data = data
+			};
 		}
 
 		public IFlushOperation Flush()
 		{
-			return new FlushOperation();
+			return new FlushOperation(allocator);
 		}
 
 		public IStatsOperation Stats(string type)
 		{
-			return new StatsOperation(type);
+			return new StatsOperation(allocator, type);
 		}
 	}
 }

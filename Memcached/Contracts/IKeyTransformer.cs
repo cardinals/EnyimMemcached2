@@ -4,7 +4,7 @@ namespace Enyim.Caching.Memcached
 {
 	public interface IKeyTransformer
 	{
-		byte[] Transform(string key);
+		Key Transform(string key);
 	}
 }
 

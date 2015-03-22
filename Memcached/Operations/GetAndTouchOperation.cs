@@ -7,19 +7,29 @@ namespace Enyim.Caching.Memcached.Operations
 	public class GetAndTouchOperation : GetOperation, IGetAndTouchOperation
 	{
 		protected const int ExtraLength = 4;
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(TouchOperation));
+		private const OpCode LoudOp = OpCode.GAT;
+		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
 
-		public GetAndTouchOperation(byte[] key, uint expires) :
-			base(key)
+		private OpCode operation = LoudOp;
+		private bool silent;
+
+		public GetAndTouchOperation(IBufferAllocator allocator, Key key) : base(allocator, key) { }
+
+		public uint Expires { get; set; }
+
+		public override bool Silent
 		{
-			Expires = expires;
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operation = value ? SilentOp : LoudOp;
+			}
 		}
-
-		public uint Expires { get; private set; }
 
 		protected override BinaryRequest CreateRequest()
 		{
-			var request = new BinaryRequest(Silent ? OpCode.GATQ : OpCode.GAT, ExtraLength)
+			var request = new BinaryRequest(Allocator, operation, ExtraLength)
 			{
 				Key = Key,
 				Cas = Cas
@@ -27,7 +37,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 			// store expiration in Extra
 			var extra = request.Extra;
-			BinaryConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
+			NetworkOrderConverter.EncodeUInt32(Expires, extra.Array, extra.Offset);
 
 			return request;
 		}

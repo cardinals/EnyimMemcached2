@@ -7,9 +7,20 @@ namespace Enyim.Caching.Memcached
 {
 	public class NullKeyTransformer : IKeyTransformer
 	{
-		public virtual byte[] Transform(string key)
+		private readonly IBufferAllocator allocator;
+
+		public NullKeyTransformer(IBufferAllocator allocator)
 		{
-			return Encoding.UTF8.GetBytes(key);
+			this.allocator = allocator;
+		}
+
+		public virtual Key Transform(string key)
+		{
+			var max = Encoding.UTF8.GetMaxByteCount(key.Length);
+			var buffer = allocator.Take(max);
+			var count = Encoding.UTF8.GetBytes(key, 0, key.Length, buffer, 0);
+
+			return new Key(allocator, buffer, count);
 		}
 	}
 }

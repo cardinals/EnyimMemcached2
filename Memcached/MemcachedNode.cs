@@ -14,11 +14,15 @@ namespace Enyim.Caching.Memcached
 		private const int SilentCountThreshold = 50;
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
+		private readonly IBufferAllocator allocator;
 		private int silentCount;
 		private bool lasWasSilent = false;
 
-		public MemcachedNode(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, Func<ISocket> socket)
-			: base(endpoint, owner, failurePolicy, socket) { }
+		public MemcachedNode(IBufferAllocator allocator, ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
+			: base(owner, endpoint, failurePolicy, socket)
+		{
+			this.allocator = allocator;
+		}
 
 		public override void Connect(CancellationToken token)
 		{
@@ -29,7 +33,7 @@ namespace Enyim.Caching.Memcached
 
 		protected override IResponse CreateResponse()
 		{
-			return new BinaryResponse();
+			return new BinaryResponse(allocator);
 		}
 
 		public override Task<IOperation> Enqueue(IOperation op)
@@ -54,7 +58,7 @@ namespace Enyim.Caching.Memcached
 
 				if (log.IsTraceEnabled) log.Trace("Got to threshold, injecting NoOp");
 
-				base.Enqueue(new NoOp());
+				base.Enqueue(new NoOp(allocator));
 			}
 
 			silentCount = 0;
@@ -88,7 +92,7 @@ namespace Enyim.Caching.Memcached
 
 			// we've temporarily ran out of commands
 			if (data.IsEmpty && lasWasSilent)
-				return new Data { Op = new NoOp() };
+				return new Data { Op = new NoOp(allocator) };
 
 			return data;
 		}

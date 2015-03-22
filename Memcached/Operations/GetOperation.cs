@@ -7,18 +7,30 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class GetOperation : BinarySingleItemOperation<IGetOperationResult>, IGetOperation
 	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(GetOperation));
+		private const OpCode LoudOp = OpCode.Get;
+		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
 
-		public GetOperation(byte[] key) : base(key) { }
+		private OpCode operation = LoudOp;
+		private bool silent;
 
-		public bool Silent { get; set; }
+		public GetOperation(IBufferAllocator allocator, Key key) : base(allocator, key) { }
+
+		public virtual bool Silent
+		{
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operation = value ? SilentOp : LoudOp;
+			}
+		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			return new BinaryRequest(Silent ? OpCode.GetQ : OpCode.Get)
+			return new BinaryRequest(Allocator, operation)
 			{
-				Key = this.Key,
-				Cas = this.Cas
+				Key = Key,
+				Cas = Cas
 			};
 		}
 
@@ -31,10 +43,11 @@ namespace Enyim.Caching.Memcached.Operations
 
 			if (response.StatusCode == 0)
 			{
-				var flags = BinaryConverter.DecodeInt32(response.Extra.Array, 0);
-				var copy = new byte[response.Data.Count];
-				Buffer.BlockCopy(response.Data.Array, response.Data.Offset, copy, 0, copy.Length);
-				retval.Value = new CacheItem((uint)flags, new ArraySegment<byte>(copy));
+				var flags = NetworkOrderConverter.DecodeInt32(response.Extra.Array, 0);
+				// HACK
+				var copy = new PooledSegment(Allocator, response.Data.Count);
+				Buffer.BlockCopy(response.Data.Array, response.Data.Offset, copy.Array, 0, copy.Count);
+				retval.Value = new CacheItem((uint)flags, copy);
 			}
 
 			return retval.WithResponse(response);

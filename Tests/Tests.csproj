@@ -50,6 +50,7 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="AdvQueueTests.cs" />
+    <Compile Include="PooledMemoryStreamTests.cs" />
     <Compile Include="ClientTestSetupFixture.cs">
       <SubType>Code</SubType>
     </Compile>

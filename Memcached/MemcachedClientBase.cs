@@ -77,11 +77,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var ci = transcoder.Serialize(value);
-				var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
-				await cluster.Execute(op);
+				using (var ci = transcoder.Serialize(value))
+				{
+					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
+					await cluster.Execute(op);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{

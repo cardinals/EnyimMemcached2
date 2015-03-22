@@ -8,9 +8,11 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class NoOp : MemcachedOperationBase<IOperationResult>
 	{
+		public NoOp(IBufferAllocator allocator) : base(allocator) { }
+
 		protected override BinaryRequest CreateRequest()
 		{
-			return new BinaryRequest(OpCode.NoOp);
+			return new BinaryRequest(Allocator, OpCode.NoOp);
 		}
 
 		protected override IOperationResult CreateResult(BinaryResponse response)

@@ -7,18 +7,30 @@ namespace Enyim.Caching.Memcached.Operations
 {
 	public class DeleteOperation : BinarySingleItemOperation<IOperationResult>, IDeleteOperation
 	{
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(DeleteOperation));
+		private const OpCode LoudOp = OpCode.Delete;
+		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
 
-		public DeleteOperation(byte[] key) : base(key) { }
+		private OpCode operation = LoudOp;
+		private bool silent;
 
-		public bool Silent { get; set; }
+		public DeleteOperation(IBufferAllocator allocator, Key key) : base(allocator, key) { }
+
+		public bool Silent
+		{
+			get { return silent; }
+			set
+			{
+				silent = value;
+				operation = value ? SilentOp : LoudOp;
+			}
+		}
 
 		protected override BinaryRequest CreateRequest()
 		{
-			var request = new BinaryRequest(Silent ? OpCode.DeleteQ : OpCode.Delete)
+			var request = new BinaryRequest(Allocator, operation)
 			{
-				Key = this.Key,
-				Cas = this.Cas
+				Key = Key,
+				Cas = Cas
 			};
 
 			return request;

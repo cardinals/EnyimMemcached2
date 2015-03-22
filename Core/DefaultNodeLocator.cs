@@ -50,14 +50,15 @@ namespace Enyim.Caching
 			return Murmur32.ComputeHash(NoPreambleUtf8.GetBytes(key));
 		}
 
-		private static uint GetKeyHash(byte[] key)
+		private static uint GetKeyHash(byte[] key, int count)
 		{
-			return Murmur32.ComputeHash(key);
+			return Murmur32.ComputeHash(key, 0, count);
 		}
 
-		public INode Locate(byte[] key)
+		public INode Locate(Key key)
 		{
-			if (key == null) throw new ArgumentNullException("key");
+			var keyArray = key.Array;
+			if (keyArray == null) throw new ArgumentNullException("key");
 
 			switch (nodes.Length)
 			{
@@ -65,25 +66,27 @@ namespace Enyim.Caching
 				case 1: return nodes[0];
 				default:
 
-					var retval = LocateNode(GetKeyHash(key));
+					var retval = LocateNode(GetKeyHash(keyArray, key.Length));
 
 					// if the result is not alive then try to mutate the item key and find another node
 					// this way we do not have to reinitialize every time a node dies/comes back
 					// (DefaultServerPool will resurrect the nodes in the background without affecting the hashring)
+					//
+					// Key mutation logic is taken from spymemcached (https://code.google.com/p/spymemcached/)
 					if (!retval.IsAlive)
 					{
 						var alteredKey = new byte[key.Length + 1];
-						Array.Copy(key, 0, alteredKey, 1, key.Length);
+						Buffer.BlockCopy(keyArray, 0, alteredKey, 1, key.Length);
 
 						for (var i = (byte)'0'; i < (byte)'7'; i++)
 						{
-							alteredKey[0] = i;
 							// -- this is from spymemcached
-							var tmpKey = (ulong)GetKeyHash(alteredKey);
+							alteredKey[0] = i;
+							var tmpKey = (ulong)GetKeyHash(alteredKey, alteredKey.Length);
 							tmpKey += (uint)(tmpKey ^ (tmpKey >> 32));
 							tmpKey &= 0xffffffffL; /* truncate to 32-bits */
-							// -- end
 							retval = LocateNode((uint)tmpKey);
+							// -- end
 
 							if (retval.IsAlive) return retval;
 						}
