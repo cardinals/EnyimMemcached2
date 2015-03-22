@@ -15,7 +15,7 @@ namespace Enyim.Caching.Tests
 			var section = System.Configuration.ConfigurationManager.GetSection("enyim.com/memcached/client") as ClientConfigurationSection;
 			Assert.NotNull(section);
 
-			Assert.Equal(typeof(_Operationfactory), section.OperationFactory.Type);
+			Assert.Equal(typeof(_OperationFactory), section.OperationFactory.Type);
 			Assert.Equal(typeof(_Transcoder), section.Transcoder.Type);
 			Assert.Equal(typeof(_KeyTransformer), section.KeyTransformer.Type);
 		}

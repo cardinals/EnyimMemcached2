@@ -327,7 +327,6 @@ namespace Enyim.Caching
 
 		~AsyncSocket()
 		{
-			GC.WaitForPendingFinalizers();
 			Dispose();
 		}
 

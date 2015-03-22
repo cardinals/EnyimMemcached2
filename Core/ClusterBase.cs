@@ -189,7 +189,7 @@ namespace Enyim.Caching
 					var updated = original.Where(n => n != node).ToArray();
 					var previous = Interlocked.CompareExchange(ref workingNodes, updated, original);
 
-					if (Object.ReferenceEquals(original, previous))
+					if (ReferenceEquals(original, previous))
 					{
 						locator.Initialize(updated);
 						break;
@@ -273,7 +273,7 @@ namespace Enyim.Caching
 					updated[original.Length] = node;
 
 					var previous = Interlocked.CompareExchange(ref workingNodes, updated, original);
-					if (Object.ReferenceEquals(original, previous))
+					if (ReferenceEquals(original, previous))
 					{
 						locator.Initialize(updated);
 						break;

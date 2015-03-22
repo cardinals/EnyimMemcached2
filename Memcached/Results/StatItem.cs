@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached
 	/// <summary>
 	/// Represent a stat item returned by Memcached.
 	/// </summary>
-	public enum StatKeys : int
+	public enum StatKeys
 	{
 		/// <summary>
 		/// The number of seconds the server has been running.

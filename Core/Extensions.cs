@@ -18,7 +18,7 @@ namespace Enyim.Caching
 		{
 			T tmp;
 
-			while (self.TryDequeue(out tmp)) ;
+			while (self.TryDequeue(out tmp)) { }
 		}
 	}
 }

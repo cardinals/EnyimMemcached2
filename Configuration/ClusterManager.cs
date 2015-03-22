@@ -49,12 +49,12 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		private static ArgumentException AlreadyExists(string name)
 		{
-			return new ArgumentException("Cluster is already registered: " + FixDisplayName(name)); ;
+			return new ArgumentException("Cluster is already registered: " + FixDisplayName(name));
 		}
 
 		private static ArgumentException NotRegistered(string name)
 		{
-			return new ArgumentException("Cluster is not registered: " + FixDisplayName(name)); ;
+			return new ArgumentException("Cluster is not registered: " + FixDisplayName(name));
 		}
 	}
 }

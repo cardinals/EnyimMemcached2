@@ -43,7 +43,7 @@ namespace Enyim.Caching
 			Debug.Assert(length <= bufferLength, "length cannot be larger than bufferLength");
 
 			this.position = 0;
-			this.length = (int)length;
+			this.length = length;
 		}
 	}
 }

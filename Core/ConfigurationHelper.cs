@@ -121,7 +121,7 @@ namespace Enyim.Caching.Configuration
 			{
 				// not an ip, resolve from dns
 				// TODO we need to find a way to specify whihc ip should be used when the host has several
-				var entry = System.Net.Dns.GetHostEntry(host);
+				var entry = Dns.GetHostEntry(host);
 				address = entry.AddressList.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork); // TODO ipv6
 
 				if (address == null)

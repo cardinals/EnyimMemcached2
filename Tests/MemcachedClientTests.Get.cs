@@ -77,7 +77,9 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Byte");
 
 			Assert.True(Store(key: key, value: expectedValue));
-			Assert.Equal(expectedValue, client.Get(key));
+
+			var value = client.Get(key);
+			Assert.Equal(expectedValue, value);
 		}
 
 		[Fact]
@@ -87,7 +89,9 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Sbyte");
 
 			Assert.True(Store(key: key, value: expectedValue));
-			Assert.Equal(expectedValue, client.Get(key));
+
+			var value = client.Get(key);
+			Assert.Equal(expectedValue, value);
 		}
 	}
 }

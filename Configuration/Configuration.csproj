@@ -28,6 +28,9 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\GlobalSuppressions.cs">
+      <Link>Properties\GlobalSuppressions.cs</Link>
+    </Compile>
     <Compile Include="ClusterBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationSection.cs" />
@@ -39,6 +42,7 @@
     <Compile Include="ContainerHelper.cs" />
     <Compile Include="ConfigurationExtensions.cs" />
     <Compile Include="FunqContainerWrapper.cs" />
+    <Compile Include="Properties\LocalSupressions.cs" />
     <Compile Include="ObjectUpdater.cs" />
     <Compile Include="Syntax.cs" />
     <Compile Include="ClientConfigurationBuilder.cs" />

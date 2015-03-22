@@ -52,12 +52,12 @@ namespace Enyim.Caching.Memcached.Configuration
 		private class Ω : IClusterBuilderServicesNext, IClusterBuilderNext
 		{
 			private ClusterBuilder owner;
-			private Funq.Container container;
+			private Container container;
 
 			public Ω(ClusterBuilder owner)
 			{
 				this.owner = owner;
-				this.container = new Funq.Container();
+				this.container = new Container();
 				this.container.AddClusterDefauls();
 			}
 

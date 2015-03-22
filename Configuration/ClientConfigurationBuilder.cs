@@ -43,7 +43,7 @@ namespace Enyim.Caching.Memcached.Configuration
 		private class Ω : IClientBuilderServicesNext
 		{
 			private ClientConfigurationBuilder owner;
-			private Funq.Container container;
+			private Container container;
 			private string clusterName;
 			private bool isReadOnly;
 

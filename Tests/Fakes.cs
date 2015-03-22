@@ -38,9 +38,9 @@ namespace Enyim.Caching.Tests
 		{
 		}
 
-		public INode Locate(byte[] key)
+		public INode Locate(Key key)
 		{
-			return null;
+			throw new NotImplementedException();
 		}
 	}
 
@@ -65,7 +65,7 @@ namespace Enyim.Caching.Tests
 
 	public class _KeyTransformer : IKeyTransformer
 	{
-		public byte[] Transform(string key)
+		public Key Transform(string key)
 		{
 			throw new NotImplementedException();
 		}
@@ -82,31 +82,21 @@ namespace Enyim.Caching.Tests
 		{
 			throw new NotImplementedException();
 		}
+
+		public CacheItem Serialize2(object value)
+		{
+			throw new NotImplementedException();
+		}
 	}
 
-	public class _Operationfactory : IOperationFactory
+	public class _OperationFactory : IOperationFactory
 	{
-		public IGetOperation Get(string key)
+		public IConcatOperation Concat(ConcatenationMode mode, Key key, ulong cas, ArraySegment<byte> data)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IStoreOperation Store(StoreMode mode, string key, CacheItem value, ulong cas, uint expires)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IDeleteOperation Delete(string key, ulong cas)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IMutateOperation Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IConcatOperation Concat(ConcatenationMode mode, string key, ulong cas, ArraySegment<byte> data)
+		public IDeleteOperation Delete(Key key, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
@@ -116,27 +106,17 @@ namespace Enyim.Caching.Tests
 			throw new NotImplementedException();
 		}
 
-		public IGetOperation Get(byte[] key)
+		public IGetOperation Get(Key key)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IStoreOperation Store(StoreMode mode, byte[] key, CacheItem value, ulong cas, uint expires)
+		public IGetAndTouchOperation GetAndTouch(Key key, uint expires)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IDeleteOperation Delete(byte[] key, ulong cas)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IMutateOperation Mutate(MutationMode mode, byte[] key, ulong defaultValue, ulong delta, ulong cas, uint expires)
-		{
-			throw new NotImplementedException();
-		}
-
-		public IConcatOperation Concat(ConcatenationMode mode, byte[] key, ulong cas, ArraySegment<byte> data)
+		public IMutateOperation Mutate(MutationMode mode, Key key, ulong defaultValue, ulong delta, ulong cas, uint expires)
 		{
 			throw new NotImplementedException();
 		}
@@ -146,12 +126,12 @@ namespace Enyim.Caching.Tests
 			throw new NotImplementedException();
 		}
 
-		public IGetAndTouchOperation GetAndTouch(byte[] key, uint expires)
+		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, ulong cas, uint expires)
 		{
 			throw new NotImplementedException();
 		}
 
-		public ITouchOperation Touch(byte[] key, uint expires)
+		public ITouchOperation Touch(Key key, uint expires)
 		{
 			throw new NotImplementedException();
 		}

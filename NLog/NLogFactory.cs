@@ -6,7 +6,7 @@ namespace Enyim.Caching
 	{
 		public static void Use()
 		{
-			Enyim.Caching.LogManager.AssignFactory(new NLogFactory());
+			LogManager.AssignFactory(new NLogFactory());
 		}
 
 		public ILog GetLogger(string name)

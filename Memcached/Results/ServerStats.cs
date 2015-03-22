@@ -16,8 +16,7 @@ namespace Enyim.Caching.Memcached
 		/// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
 		/// </summary>
 		public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
-
-		private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetCurrentClassLogger();
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
 		// Summable StatItems start at OpSum
 		private const int OpSum = 0x100;

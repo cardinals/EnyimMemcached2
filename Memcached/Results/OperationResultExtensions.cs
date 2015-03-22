@@ -9,7 +9,7 @@ namespace Enyim.Caching.Memcached.Results
 	public static class OperationResultExtensions
 	{
 		public static T Success<T>(this T self, BinarySingleItemOperation<T> op)
-			where T : IOperationResult
+			where T : class, IOperationResult
 		{
 			self.Success = true;
 			self.Cas = op.Cas;
@@ -18,7 +18,7 @@ namespace Enyim.Caching.Memcached.Results
 		}
 
 		public static T Fail<T>(this T self, BinarySingleItemOperation<T> op, Exception exception)
-			where T : IOperationResult
+			where T : class, IOperationResult
 		{
 			self.Success = false;
 			self.Cas = op.Cas;
@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached.Results
 		}
 
 		public static T Fail<T>(this T self, Exception exception = null)
-			where T : IOperationResult
+			where T : class, IOperationResult
 		{
 			self.Success = false;
 			self.StatusCode = (int)StatusCode.InternalError;
@@ -44,12 +44,12 @@ namespace Enyim.Caching.Memcached.Results
 		}
 
 		public static T NotFound<T>(this T self, BinarySingleItemOperation<T> op)
-			where T : IOperationResult
+			where T : class, IOperationResult
 		{
 			self.Success = false;
 			self.Cas = op.Cas;
 			self.Message = "NOT_FOUND";
-			self.Exception = new KeyNotFoundException(Encoding.UTF8.GetString(op.Key));
+			self.Exception = new KeyNotFoundException(Encoding.UTF8.GetString(op.Key.Array, 0, op.Key.Length));
 			self.StatusCode = 1;
 
 			return self;

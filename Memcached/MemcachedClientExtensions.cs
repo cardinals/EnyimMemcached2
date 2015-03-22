@@ -107,12 +107,12 @@ namespace Enyim.Caching.Memcached
 
 		public static bool Store(this IMemcachedClient self, StoreMode mode, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.Store(mode, key, value, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+			return self.Store(mode, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
 		public static Task<bool> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, TimeSpan? validFor = null, DateTime? expiresAt = null)
 		{
-			return self.StoreAsync(mode, key, value, MemcachedClientExtensions.MakeExpiration(validFor, expiresAt));
+			return self.StoreAsync(mode, key, value, MakeExpiration(validFor, expiresAt));
 		}
 
 		internal static DateTime MakeExpiration(TimeSpan? validFor, DateTime? expiresAt)

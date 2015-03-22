@@ -28,6 +28,9 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\GlobalSuppressions.cs">
+      <Link>Properties\GlobalSuppressions.cs</Link>
+    </Compile>
     <Compile Include="AdvQueue.cs" />
     <Compile Include="ConfigurationHelper.cs" />
     <Compile Include="Configuration\NodeElement.cs" />
@@ -49,7 +52,6 @@
     <Compile Include="Contracts\IResponse.cs" />
     <Compile Include="Contracts\IItemOperation.cs" />
     <Compile Include="Contracts\ISocket.cs" />
-    <Compile Include="Contracts\ISupportInitialize.cs" />
     <Compile Include="Metrics.cs" />
     <Compile Include="NodeQueue.cs" />
     <Compile Include="LogManager.cs" />
