@@ -8,3 +8,4 @@ Sql/Sql.dbmdl
 enyim.snk
 out/
 *.apikey
+.vs
