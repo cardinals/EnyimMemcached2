@@ -10,6 +10,7 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
+		[Trait("slow", "yes")]
 		public void When_Getting_An_Expired_Item_It_Should_Be_Null()
 		{
 			var key = GetUniqueKey("Get_Expired");
@@ -24,6 +25,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
+		[Trait("slow", "yes")]
 		public void When_Getting_And_Touching_An_Item_It_Should_Not_Expire()
 		{
 			var key = GetUniqueKey("Get_And_Touch");
@@ -38,6 +40,7 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
+		[Trait("slow", "yes")]
 		public void When_Touching_An_Item_It_Should_Not_Expire()
 		{
 			var key = GetUniqueKey("Get_And_Touch");
