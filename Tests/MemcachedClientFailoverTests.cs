@@ -10,46 +10,22 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientFailoverTests : MemcachedClientTestBase, IDisposable
 	{
 		private IMemcachedClient client;
-		//private IDisposable[] servers;
 		private IContainer config;
 
 		public MemcachedClientFailoverTests()
 			: base("MemcachedClientFailoverTests")
 		{
-			//servers = new[]
-			//{
-			//	MemcachedServer.Run(11300),
-			//	MemcachedServer.Run(11302)
-			//};
-
 			// note: we're intentionally adding a dead server
 			new ClusterBuilder("MemcachedClientFailoverTests")
-					.Endpoints("localhost:11300"/*, "localhost:11302", "localhost:11304"*/)
+					.Endpoints("localhost:11300")
 					.SocketOpts(connectionTimeout: TimeSpan.FromMilliseconds(100))
 					.Use
-						//.NodeLocator<PortPrefixBasedLocator>()
 						.ReconnectPolicy(() => new PeriodicReconnectPolicy { Interval = TimeSpan.FromHours(1) })
 					.Register();
 
 			config = new ClientConfigurationBuilder().Cluster("MemcachedClientFailoverTests").Create();
 			client = new MemcachedClient(config);
 		}
-
-		//class PortPrefixBasedLocator : INodeLocator
-		//{
-		//	IDictionary<int, INode> nodes;
-
-		//	public void Initialize(IEnumerable<INode> nodes)
-		//	{
-		//		if (this.nodes == null)
-		//			this.nodes = nodes.ToDictionary(n => n.EndPoint.Port);
-		//	}
-
-		//	public INode Locate(byte[] key)
-		//	{
-		//		return nodes[Int32.Parse(Encoding.UTF8.GetString(key).Split('_')[0])];
-		//	}
-		//}
 
 		protected bool Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
 		{

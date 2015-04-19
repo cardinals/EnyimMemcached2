@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
 using Xunit;
 
@@ -15,6 +16,12 @@ namespace Enyim.Caching.Tests
 		protected MemcachedClientTestBase(string name)
 		{
 			this.name = name + "_";
+			this.random = new Random();
+		}
+
+		protected MemcachedClientTestBase()
+		{
+			this.name = GetType().Name + "_";
 			this.random = new Random();
 		}
 
