@@ -120,7 +120,7 @@ namespace Enyim.Caching
 
 		private void PerformSend(int sendOffset, int sendCount)
 		{
-			for (; ;)
+			for (; ; )
 			{
 				// try sending all our data
 				sendArgs.SetBuffer(sendOffset, sendCount);
@@ -239,14 +239,14 @@ namespace Enyim.Caching
 
 		public bool IsAlive
 		{
-			get { return isAlive == 1; }
-			private set { Interlocked.Exchange(ref isAlive, value ? 1 : 0); }
+			get { return Volatile.Read(ref isAlive) == 1; }
+			private set { Volatile.Write(ref isAlive, value ? 1 : 0); }
 		}
 
 		public bool IsWorking
 		{
-			get { return isWorking == 1; }
-			private set { Interlocked.Exchange(ref isWorking, value ? 1 : 0); }
+			get { return Volatile.Read(ref isWorking) == 1; }
+			private set { Volatile.Write(ref isWorking, value ? 1 : 0); }
 		}
 
 		public ReadBuffer ReadBuffer { get { return recvBuffer; } }

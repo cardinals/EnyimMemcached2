@@ -242,7 +242,7 @@ namespace Enyim.Caching
 					{
 						Report();
 
-						await Task.Delay(delay, cancellationToken);
+						await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
 					}
 				}
 				catch { }
@@ -321,7 +321,7 @@ namespace Enyim.Caching
 						data.Add(Tuple.Create(DateTime.Now, visitor.GetCurrent()));
 						Console.WriteLine("saved");
 
-						await Task.Delay(delay, cancellationToken);
+						await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
 					}
 				}
 				catch { }

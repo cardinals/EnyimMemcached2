@@ -40,7 +40,7 @@ namespace Enyim.Caching.Memcached
 
 		public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
 		{
-			var result = await PerformGetCore(key);
+			var result = await PerformGetCore(key).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
 
 			return converted;
@@ -48,7 +48,7 @@ namespace Enyim.Caching.Memcached
 
 		public async Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<string> keys)
 		{
-			var ops = await MultiGetCore(keys);
+			var ops = await MultiGetCore(keys).ConfigureAwait(false);
 			var retval = new Dictionary<string, IGetOperationResult<object>>();
 
 			foreach (var kvp in ops)
@@ -74,7 +74,7 @@ namespace Enyim.Caching.Memcached
 
 		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiration)
 		{
-			var result = await PerformGetAndTouchCore(key, GetExpiration(expiration));
+			var result = await PerformGetAndTouchCore(key, GetExpiration(expiration)).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
 
 			return converted;

@@ -43,7 +43,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var result = await PerformGetCore(key);
+				var result = await PerformGetCore(key).ConfigureAwait(false);
 				var converted = ConvertToValue(result);
 
 				return (T)converted;
@@ -60,7 +60,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var ops = await MultiGetCore(keys);
+				var ops = await MultiGetCore(keys).ConfigureAwait(false);
 				var retval = new Dictionary<string, object>();
 
 				foreach (var kvp in ops)
@@ -105,7 +105,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var result = await PerformGetAndTouchCore(key, GetExpiration(expiration));
+				var result = await PerformGetAndTouchCore(key, GetExpiration(expiration)).ConfigureAwait(false);
 				var converted = ConvertToValue(result);
 
 				return (T)converted;
@@ -207,7 +207,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(expiresAt));
+				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(expiresAt)).ConfigureAwait(false);
 
 				return result.Value;
 			}
@@ -236,7 +236,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var result = await PerformStats(key);
+				var result = await PerformStats(key).ConfigureAwait(false);
 
 				return result.Value;
 			}
@@ -270,7 +270,7 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var result = await task;
+				var result = await task.ConfigureAwait(false);
 
 				return result.Success;
 			}

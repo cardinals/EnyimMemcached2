@@ -48,7 +48,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.Get(keyTransformer.Transform(key));
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
@@ -63,7 +63,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires);
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
@@ -80,7 +80,7 @@ namespace Enyim.Caching.Memcached
 				using (var ci = transcoder.Serialize(value))
 				{
 					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
-					await cluster.Execute(op);
+					await cluster.Execute(op).ConfigureAwait(false);
 
 					return op.Result;
 				}
@@ -96,7 +96,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.Delete(keyTransformer.Transform(key), cas);
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
@@ -111,7 +111,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
@@ -126,7 +126,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
@@ -156,14 +156,14 @@ namespace Enyim.Caching.Memcached
 				}
 			}
 
-			await Task.WhenAll(tasks);
+			await Task.WhenAll(tasks).ConfigureAwait(false);
 
 			return ops;
 		}
 
 		protected async Task<IOperationResult> PerformFlushAll()
 		{
-			var parts = await cluster.Broadcast(n => opFactory.Flush());
+			var parts = await cluster.Broadcast(n => opFactory.Flush()).ConfigureAwait(false);
 
 			return new BinaryOperationResult { Success = true };
 		}
@@ -177,7 +177,7 @@ namespace Enyim.Caching.Memcached
 				ops.Add(Tuple.Create(op, n));
 
 				return op;
-			});
+			}).ConfigureAwait(false);
 
 			var stats = new ServerStats();
 			StatsOperationResult retval = null;
@@ -206,7 +206,7 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				var op = opFactory.Touch(keyTransformer.Transform(key), expires);
-				await cluster.Execute(op);
+				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}

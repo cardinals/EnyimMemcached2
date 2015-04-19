@@ -39,7 +39,7 @@ namespace Enyim.Caching
 			this.reconnectPolicy = reconnectPolicy;
 			this.ReconnectLock = new Object();
 
-			this.worker = new Thread(Worker) { Name = "IO Thread" };
+			this.worker = new Thread(Worker) { Name = "IO Thread {" + String.Join(", ", endpoints.Select(ep => ep.ToString())) + "}" };
 
 			this.shutdownToken = new CancellationTokenSource();
 			this.workerIsDone = new ManualResetEventSlim(false);

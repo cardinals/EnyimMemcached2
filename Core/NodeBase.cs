@@ -11,6 +11,12 @@ namespace Enyim.Caching
 {
 	public abstract class NodeBase : INode
 	{
+		private const int MODE_SEND = 0;
+		private const int MODE_RECEIVE = 1;
+
+		private const int ALIVE = 1;
+		private const int DEAD = 0;
+
 		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
 		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
@@ -22,11 +28,13 @@ namespace Enyim.Caching
 
 		private readonly ISocket socket;
 
+		private int runMode; // state machine flag, if it should sending (MODE_SEND) or receiving (MODE_RECEIVE) data
+		private int isAlive; // if the socket is alive (ALIVE) or not (DEAD)
+		private int workLock; // if it is "running", to prevent re-entrancy when a node is queued for IO multiple times
 		private object failLock;
+
 		private readonly ConcurrentQueue<Data> writeQueue;
 		private readonly AdvQueue<Data> readQueue;
-
-		private int state;
 
 		private Data currentWriteOp;
 		private IRequest currentWriteCopier;
@@ -77,8 +85,8 @@ namespace Enyim.Caching
 
 		public bool IsAlive
 		{
-			get { return state == 1; }
-			private set { Interlocked.Exchange(ref state, value ? 1 : 0); }
+			get { return Volatile.Read(ref isAlive) == ALIVE; }
+			private set { Volatile.Write(ref isAlive, value ? ALIVE : DEAD); }
 		}
 
 		public void Connect()
@@ -131,31 +139,19 @@ namespace Enyim.Caching
 			return tcs.Task;
 		}
 
-		private int __working;
-
-		private bool Lock()
-		{
-			return Interlocked.CompareExchange(ref __working, 1, 0) == 0;
-		}
-
-		private void Unlock()
-		{
-#if DEBUG
-			var v = Interlocked.CompareExchange(ref __working, 0, 1);
-			Debug.Assert(v == 1);
-#else
-			Interlocked.Exchange(ref __working, 0);
-#endif
-		}
-
 		public virtual void Run()
 		{
-			if (!Lock()) return;
+			if (!MarkWorking()) return;
 
 			try
 			{
 				if (mustReconnect) Connect(CancellationToken.None);
-				if (!IsAlive) throw new IOException("Node is dead: " + EndPoint);
+				if (!IsAlive)
+				{
+					var dead = new IOException("Node is dead: " + EndPoint);
+					FailQueue(writeQueue, dead);
+					throw dead;
+				}
 
 				// socket still working but we got requeued, so quit
 				// happens when OPs are coming in, but we're still processing the previous batch
@@ -173,9 +169,20 @@ namespace Enyim.Caching
 			}
 		}
 
-		private const int MODE_SEND = 0;
-		private const int MODE_RECEIVE = 1;
-		private int runMode;
+		private bool MarkWorking()
+		{
+			return Interlocked.CompareExchange(ref workLock, 1, 0) == 0;
+		}
+
+		private void MarkUnworking()
+		{
+#if DEBUG
+			var v = Interlocked.CompareExchange(ref workLock, 0, 1);
+			Debug.Assert(v == 1);
+#else
+			Interlocked.Exchange(ref __working, 0);
+#endif
+		}
 
 		private void DoRun()
 		{
@@ -205,7 +212,7 @@ namespace Enyim.Caching
 					else
 					{
 						// did not have any ops to send, quit
-						Unlock();
+						MarkUnworking();
 					}
 
 					break;
@@ -218,7 +225,8 @@ namespace Enyim.Caching
 					}
 					else
 					{
-						runMode = MODE_SEND;
+						// nothing to receive, switch to send mode
+						Volatile.Write(ref runMode, MODE_SEND);
 						goto case MODE_SEND;
 					}
 					break;
@@ -259,8 +267,9 @@ namespace Enyim.Caching
 			{
 				if (success)
 				{
+					// successfully sent the buffer, switch to receive mode
 					Volatile.Write(ref runMode, MODE_RECEIVE);
-					Unlock();
+					MarkUnworking();
 					owner.NeedsIO(this);
 				}
 				else
@@ -326,7 +335,7 @@ namespace Enyim.Caching
 				{
 					if (success)
 					{
-						Unlock();
+						MarkUnworking();
 						owner.NeedsIO(this);
 					}
 					else
@@ -392,9 +401,9 @@ namespace Enyim.Caching
 				response.Dispose();
 			}
 
-			// set the node into receive mode and requeue for IO
-			runMode = MODE_SEND;
-			Unlock();
+			// set the node into send mode and requeue for IO
+			Volatile.Write(ref runMode, MODE_SEND);
+			MarkUnworking();
 			owner.NeedsIO(this);
 		}
 
@@ -437,20 +446,20 @@ namespace Enyim.Caching
 					inprogressResponse = null;
 				}
 
-				runMode = MODE_SEND;
+				Volatile.Write(ref runMode, MODE_SEND);
 
 				// mark as dead if policy says so
 				if (failurePolicy.ShouldFail(this))
 				{
 					IsAlive = false;
-					Unlock();
+					MarkUnworking();
 					return true;
 				}
 
 				// otherwise reconnect immediately
 				// (when it's our turn again, to be precise)
 				mustReconnect = true;
-				Unlock();
+				MarkUnworking();
 
 				// reconnect from IO thread
 				owner.NeedsIO(this);
@@ -483,13 +492,15 @@ namespace Enyim.Caching
 			var have = queue.Count;
 			var i = 0;
 
-			while (queue.TryDequeue(out data) && i < have)
+			while (queue.TryDequeue(out data))// && i < have)
 			{
 				var t = data.Task;
 				if (t != null) t.SetException(e);
 				counterErrorPerSec.IncrementBy(have);
 				i++;
 			}
+
+			Debug.Assert(queue.Count == 0);
 		}
 
 		#endregion
