@@ -7,32 +7,25 @@ namespace Enyim.Caching.Memcached
 {
 	public interface IMemcachedClientWithResults
 	{
-		IGetOperationResult<T> Get<T>(string key);
-		IDictionary<string, IGetOperationResult<object>> Get(IEnumerable<string> keys);
-
-		IGetOperationResult<T> GetAndTouch<T>(string key, DateTime expiration);
-		IOperationResult Touch(string key, DateTime expiration);
-
-		IOperationResult Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt);
-		IOperationResult Remove(string key, ulong cas);
-		IOperationResult Concate(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas);
-		IMutateOperationResult Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt);
-
-		Task<IGetOperationResult<T>> GetAsync<T>(string key);
+		Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas = Protocol.NO_CAS);
 		Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<string> keys);
 
-		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiration);
-		Task<IOperationResult> TouchAsync(string key, DateTime expiration);
+		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
+		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
 
-		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt);
-		Task<IOperationResult> RemoveAsync(string key, ulong cas);
-		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas);
-		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt);
+		Task<IOperationResult> TouchAsync(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
+		Task<IOperationResult> TouchAsync(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
 
-		IOperationResult FlushAll();
+		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
+		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
+
+		Task<IOperationResult> RemoveAsync(string key, ulong cas = Protocol.NO_CAS);
+
+		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas = Protocol.NO_CAS);
+		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong cas = Protocol.NO_CAS);
+		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong cas = Protocol.NO_CAS);
+
 		Task<IOperationResult> FlushAllAsync();
-
-		IStatsOperationResult Stats(string key);
 		Task<IStatsOperationResult> StatsAsync(string key);
 	}
 }

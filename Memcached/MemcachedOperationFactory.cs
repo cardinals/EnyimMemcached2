@@ -14,20 +14,21 @@ namespace Enyim.Caching.Memcached
 			this.allocator = allocator;
 		}
 
-		public IGetOperation Get(Key key)
+		public IGetOperation Get(Key key, ulong cas)
 		{
-			return new GetOperation(allocator, key);
+			return new GetOperation(allocator, key) { Cas = cas };
 		}
 
-		public IGetAndTouchOperation GetAndTouch(Key key, uint expires)
+		public IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas)
 		{
 			return new GetAndTouchOperation(allocator, key)
 			{
-				Expires = expires
+				Expires = expires,
+				Cas = cas
 			};
 		}
 
-		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, ulong cas, uint expires)
+		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas)
 		{
 			return new StoreOperation(allocator, mode, key, value)
 			{
@@ -44,7 +45,7 @@ namespace Enyim.Caching.Memcached
 			};
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, Key key, ulong defaultValue, ulong delta, ulong cas, uint expires)
+		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong defaultValue, ulong delta, ulong cas)
 		{
 			return new MutateOperation(allocator, mode, key)
 			{
@@ -56,15 +57,16 @@ namespace Enyim.Caching.Memcached
 
 		}
 
-		public ITouchOperation Touch(Key key, uint expires)
+		public ITouchOperation Touch(Key key, uint expires, ulong cas)
 		{
 			return new TouchOperation(allocator, key)
 			{
-				Expires = expires
+				Expires = expires,
+				Cas = cas
 			};
 		}
 
-		public IConcatOperation Concat(ConcatenationMode mode, Key key, ulong cas, ArraySegment<byte> data)
+		public IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas)
 		{
 			return new ConcatOperation(allocator, mode, key)
 			{

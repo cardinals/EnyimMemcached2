@@ -10,37 +10,12 @@ namespace Enyim.Caching.Memcached
 		public MemcachedClientWithResults() : base() { }
 		public MemcachedClientWithResults(IContainer container) : base(container) { }
 		public MemcachedClientWithResults(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
-			: base(cluster, opFactory, keyTransformer, transcoder) { }
+			: base(cluster, opFactory, keyTransformer, transcoder)
+		{ }
 
-		public IGetOperationResult<T> Get<T>(string key)
+		public async Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas = Protocol.NO_CAS)
 		{
-			try
-			{
-				return GetAsync<T>(key).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public IDictionary<string, IGetOperationResult<object>> Get(IEnumerable<string> keys)
-		{
-			try
-			{
-				return GetAsync(keys).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
-		{
-			var result = await PerformGetCore(key).ConfigureAwait(false);
+			var result = await PerformGetCore(key, cas).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
 
 			return converted;
@@ -59,22 +34,17 @@ namespace Enyim.Caching.Memcached
 			return retval;
 		}
 
-		public IGetOperationResult<T> GetAndTouch<T>(string key, DateTime expiration)
+		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS)
 		{
-			try
-			{
-				return GetAndTouchAsync<T>(key, expiration).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			var result = await PerformGetAndTouchCore(key, GetExpiration(expiresAt)).ConfigureAwait(false);
+			var converted = ConvertToResult<T>(result);
+
+			return converted;
 		}
 
-		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiration)
+		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS)
 		{
-			var result = await PerformGetAndTouchCore(key, GetExpiration(expiration)).ConfigureAwait(false);
+			var result = await PerformGetAndTouchCore(key, GetExpiration(validFor)).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
 
 			return converted;
@@ -93,40 +63,24 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public Task<IOperationResult> TouchAsync(string key, DateTime expiration)
+		public Task<IOperationResult> TouchAsync(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS)
 		{
-			return PerformTouch(key, GetExpiration(expiration));
+			return PerformTouch(key, GetExpiration(expiresAt), cas);
 		}
 
-		public IOperationResult Store(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
+		public Task<IOperationResult> TouchAsync(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS)
 		{
-			try
-			{
-				return PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt)).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			return PerformTouch(key, GetExpiration(validFor), cas);
 		}
 
-		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, ulong cas, DateTime expiresAt)
+		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
 		{
-			return PerformStoreAsync(mode, key, value, cas, GetExpiration(expiresAt));
+			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas);
 		}
 
-		public IOperationResult Remove(string key, ulong cas)
+		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
 		{
-			try
-			{
-				return PerformRemove(key, cas).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			return PerformStoreAsync(mode, key, value, GetExpiration(validFor), cas);
 		}
 
 		public Task<IOperationResult> RemoveAsync(string key, ulong cas)
@@ -134,71 +88,24 @@ namespace Enyim.Caching.Memcached
 			return PerformRemove(key, cas);
 		}
 
-		public IOperationResult Concate(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
-		{
-			try
-			{
-				return PerformConcate(mode, key, cas, data).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
 		public Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
 		{
 			return PerformConcate(mode, key, cas, data);
 		}
 
-		public IMutateOperationResult Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
-		{
-			try
-			{
-				return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt)).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, DateTime expiresAt)
+		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue, ulong delta, ulong cas)
 		{
 			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
 		}
 
-		public IOperationResult FlushAll()
+		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue, ulong delta, ulong cas)
 		{
-			try
-			{
-				return PerformFlushAll().Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(validFor));
 		}
 
 		public Task<IOperationResult> FlushAllAsync()
 		{
 			return PerformFlushAll();
-		}
-
-		public IStatsOperationResult Stats(string key)
-		{
-			try
-			{
-				return PerformStats(key).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
 		}
 
 		public Task<IStatsOperationResult> StatsAsync(string key)

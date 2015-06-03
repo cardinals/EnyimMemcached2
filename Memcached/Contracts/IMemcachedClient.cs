@@ -6,33 +6,26 @@ namespace Enyim.Caching.Memcached
 {
 	public interface IMemcachedClient
 	{
-		T Get<T>(string key);
-		IDictionary<string, object> Get(IEnumerable<string> keys);
-
-		T GetAndTouch<T>(string key, DateTime expiration);
-		bool Touch(string key, DateTime expiration);
-
-		bool Store(StoreMode mode, string key, object value, DateTime expires);
-		bool Remove(string key);
-		bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expires);
-
 		Task<T> GetAsync<T>(string key);
 		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
 
-		Task<T> GetAndTouchAsync<T>(string key, DateTime expiration);
+		Task<T> GetAndTouchAsync<T>(string key, DateTime expiresAt);
+		Task<T> GetAndTouchAsync<T>(string key, TimeSpan validFor);
+
 		Task<bool> TouchAsync(string key, DateTime expiration);
+		Task<bool> TouchAsync(string key, TimeSpan validFor);
 
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expires);
+		Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt);
+		Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor);
+
 		Task<bool> RemoveAsync(string key);
+
 		Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expires);
+		Task<ulong> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA);
+		Task<ulong> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA);
 
-		ServerStats Stats(string key);
-		Task<ServerStats> StatsAsync(string key);
-
-		bool FlushAll();
 		Task<bool> FlushAllAsync();
+		Task<ServerStats> StatsAsync(string key);
 	}
 }
 

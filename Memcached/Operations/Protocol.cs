@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Enyim.Caching.Memcached.Operations
+namespace Enyim.Caching.Memcached
 {
 	public static class Protocol
 	{
@@ -32,6 +32,10 @@ namespace Enyim.Caching.Memcached.Operations
 		{
 			public const int Success = 0;
 		}
+
+		public const ulong NO_CAS = 0;
+		public const ulong MUTATE_DEFAULT_DELTA = 1;
+		public const ulong MUTATE_DEFAULT_VALUE = 1;
 	}
 }
 

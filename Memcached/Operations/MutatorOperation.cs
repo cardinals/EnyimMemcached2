@@ -62,7 +62,7 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				var data = response.Data;
 				if (data.Count != ResultLength)
-					return retval.Fail(this, new InvalidOperationException("Result must be " + ResultLength + " bytes long, received: " + data.Count));
+					return retval.Failed(this, new InvalidOperationException("Result must be " + ResultLength + " bytes long, received: " + data.Count));
 
 				retval.Value = NetworkOrderConverter.DecodeUInt64(data.Array, data.Offset);
 			}

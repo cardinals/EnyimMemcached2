@@ -1,22 +1,12 @@
-﻿using System;
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-namespace Enyim.Caching.Memcached
-{
-	public interface IOperationFactory
-	{
-		IGetOperation Get(Key key, ulong cas);
-		IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas);
-
-		IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas);
-		IDeleteOperation Delete(Key key, ulong cas);
-		IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong defaultValue, ulong delta, ulong cas);
-		ITouchOperation Touch(Key key, uint expires, ulong cas);
-		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
-
-		IStatsOperation Stats(string type);
-		IFlushOperation Flush();
-	}
-}
+[assembly: AssemblyTitle("Enyim.Caching.Memcached.Extensions")]
+[assembly: AssemblyProduct("Enyim.Caching.Memcached.Extensions")]
+[assembly: AssemblyDescription("Memcached client extensions and helpers")]
+[assembly: ComVisible(false)]
+[assembly: Guid("94d3c245-6702-48ce-8f98-9f72e612a252")]
 
 #region [ License information          ]
 

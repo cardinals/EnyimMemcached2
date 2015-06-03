@@ -11,49 +11,12 @@ namespace Enyim.Caching.Memcached
 		public MemcachedClient() : base() { }
 		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
-			: base(cluster, opFactory, keyTransformer, transcoder) { }
+			: base(cluster, opFactory, keyTransformer, transcoder)
+		{ }
 
-		public T Get<T>(string key)
+		public Task<T> GetAsync<T>(string key)
 		{
-			try
-			{
-				return GetAsync<T>(key).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public IDictionary<string, object> Get(IEnumerable<string> keys)
-		{
-			try
-			{
-				return GetAsync(keys).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public async Task<T> GetAsync<T>(string key)
-		{
-			try
-			{
-				var result = await PerformGetCore(key).ConfigureAwait(false);
-				var converted = ConvertToValue(result);
-
-				return (T)converted;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return default(T);
-			}
+			return DoGet<T>(PerformGetCore(key, 0));
 		}
 
 		public async Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys)
@@ -86,26 +49,21 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public T GetAndTouch<T>(string key, DateTime expiration)
+		public Task<T> GetAndTouchAsync<T>(string key, DateTime expiresAt)
 		{
-			try
-			{
-				return GetAndTouchAsync<T>(key, expiration).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1)
-					throw ae.InnerExceptions[0];
-
-				else throw ae.Flatten();
-			}
+			return DoGet<T>(PerformGetAndTouchCore(key, GetExpiration(expiresAt)));
 		}
 
-		public async Task<T> GetAndTouchAsync<T>(string key, DateTime expiration)
+		public Task<T> GetAndTouchAsync<T>(string key, TimeSpan validFor)
+		{
+			return DoGet<T>(PerformGetAndTouchCore(key, GetExpiration(validFor)));
+		}
+
+		private async Task<T> DoGet<T>(Task<Results.IGetOperationResult> getter)
 		{
 			try
 			{
-				var result = await PerformGetAndTouchCore(key, GetExpiration(expiration)).ConfigureAwait(false);
+				var result = await getter.ConfigureAwait(false);
 				var converted = ConvertToValue(result);
 
 				return (T)converted;
@@ -118,53 +76,24 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public bool Touch(string key, DateTime expiration)
-		{
-			try
-			{
-				return TouchAsync(key, expiration).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
 		public Task<bool> TouchAsync(string key, DateTime expiration)
 		{
-			return HandleErrors(PerformTouch(key, GetExpiration(expiration)));
+			return HandleErrors(PerformTouch(key, GetExpiration(expiration), Protocol.NO_CAS));
 		}
 
-		public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
+		public Task<bool> TouchAsync(string key, TimeSpan validFor)
 		{
-			try
-			{
-				return StoreAsync(mode, key, value, expiresAt).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			return HandleErrors(PerformTouch(key, GetExpiration(validFor), Protocol.NO_CAS));
 		}
 
 		public Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
 		{
-			return HandleErrors(PerformStoreAsync(mode, key, value, 0, GetExpiration(expiresAt)));
+			return HandleErrors(PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), Protocol.NO_CAS));
 		}
 
-		public bool Remove(string key)
+		public Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
 		{
-			try
-			{
-				return RemoveAsync(key).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
+			return HandleErrors(PerformStoreAsync(mode, key, value, GetExpiration(validFor), Protocol.NO_CAS));
 		}
 
 		public Task<bool> RemoveAsync(string key)
@@ -172,38 +101,12 @@ namespace Enyim.Caching.Memcached
 			return HandleErrors(PerformRemove(key, 0));
 		}
 
-		public bool Concate(ConcatenationMode mode, string key, ArraySegment<byte> data)
-		{
-			try
-			{
-				return ConcateAsync(mode, key, data).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
 		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
 			return HandleErrors(PerformConcate(mode, key, 0, data));
 		}
 
-		public ulong Mutate(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
-		{
-			try
-			{
-				return MutateAsync(mode, key, defaultValue, delta, expiresAt).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, DateTime expiresAt)
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue, ulong delta)
 		{
 			try
 			{
@@ -219,16 +122,19 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public ServerStats Stats(string key)
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue, ulong delta)
 		{
 			try
 			{
-				return PerformStats(key).Result.Value;
+				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(validFor)).ConfigureAwait(false);
+
+				return result.Value;
 			}
-			catch (AggregateException ae)
+			catch (Exception e)
 			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
+				if (log.IsErrorEnabled) log.Error(e);
+
+				return 0;
 			}
 		}
 
@@ -245,19 +151,6 @@ namespace Enyim.Caching.Memcached
 				if (log.IsErrorEnabled) log.Error(e);
 
 				return ServerStats.Empty;
-			}
-		}
-
-		public bool FlushAll()
-		{
-			try
-			{
-				return FlushAllAsync().Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
 			}
 		}
 

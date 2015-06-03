@@ -43,18 +43,18 @@ namespace Enyim.Caching.Memcached
 			return retval;
 		}
 
-		protected virtual async Task<IGetOperationResult> PerformGetCore(string key)
+		protected virtual async Task<IGetOperationResult> PerformGetCore(string key, ulong cas )
 		{
 			try
 			{
-				var op = opFactory.Get(keyTransformer.Transform(key));
+				var op = opFactory.Get(keyTransformer.Transform(key), cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
 			catch (IOException e)
 			{
-				return new GetOperationResult().Fail(e);
+				return new GetOperationResult().FailWith(e);
 			}
 		}
 
@@ -62,24 +62,24 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires);
+				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires, Protocol.NO_CAS);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
 			catch (IOException e)
 			{
-				return new GetOperationResult().Fail(e);
+				return new GetOperationResult().FailWith(e);
 			}
 		}
 
-		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, ulong cas, uint expires)
+		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires, ulong cas)
 		{
 			try
 			{
 				using (var ci = transcoder.Serialize(value))
 				{
-					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, cas, expires);
+					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, expires, cas);
 					await cluster.Execute(op).ConfigureAwait(false);
 
 					return op.Result;
@@ -87,7 +87,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (IOException e)
 			{
-				return new BinaryOperationResult().Fail(e);
+				return new BinaryOperationResult().FailWith(e);
 			}
 		}
 
@@ -102,7 +102,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (IOException e)
 			{
-				return new BinaryOperationResult().Fail(e);
+				return new BinaryOperationResult().FailWith(e);
 			}
 		}
 
@@ -110,14 +110,14 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Concat(mode, keyTransformer.Transform(key), cas, data);
+				var op = opFactory.Concat(mode, keyTransformer.Transform(key), data, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
 			catch (IOException e)
 			{
-				return new BinaryOperationResult().Fail(e);
+				return new BinaryOperationResult().FailWith(e);
 			}
 		}
 
@@ -125,14 +125,14 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), defaultValue, delta, cas, expires);
+				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expires, defaultValue, delta, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
 			catch (IOException e)
 			{
-				return new MutateOperationResult().Fail(e);
+				return new MutateOperationResult().FailWith(e);
 			}
 		}
 
@@ -143,7 +143,7 @@ namespace Enyim.Caching.Memcached
 
 			foreach (var key in keys)
 			{
-				var op = opFactory.Get(keyTransformer.Transform(key));
+				var op = opFactory.Get(keyTransformer.Transform(key), Protocol.NO_CAS);
 
 				try
 				{
@@ -152,7 +152,7 @@ namespace Enyim.Caching.Memcached
 				}
 				catch (IOException e)
 				{
-					tasks.Add(Task.FromResult(new GetOperationResult().Fail(e)));
+					tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
 				}
 			}
 
@@ -198,21 +198,21 @@ namespace Enyim.Caching.Memcached
 				stats.Append(pair.Item2.EndPoint, nodeStats);
 			}
 
-			return retval ?? new StatsOperationResult { Value = new ServerStats() }.Fail();
+			return retval ?? new StatsOperationResult { Value = new ServerStats() }.FailWith();
 		}
 
-		protected async Task<IOperationResult> PerformTouch(string key, uint expires)
+		protected async Task<IOperationResult> PerformTouch(string key, uint expires, ulong cas )
 		{
 			try
 			{
-				var op = opFactory.Touch(keyTransformer.Transform(key), expires);
+				var op = opFactory.Touch(keyTransformer.Transform(key), expires, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
 			}
 			catch (IOException e)
 			{
-				return new BinaryOperationResult().Fail(e);
+				return new BinaryOperationResult().FailWith(e);
 			}
 		}
 
@@ -230,7 +230,7 @@ namespace Enyim.Caching.Memcached
 					if (log.IsErrorEnabled) log.Error("Failed to convert result to " + typeof(T), e);
 
 					retval.Value = default(T);
-					retval.Fail(e);
+					retval.FailWith(e);
 				}
 			}
 
@@ -252,7 +252,6 @@ namespace Enyim.Caching.Memcached
 		}
 
 		#endregion
-
 		#region [ Expiration helpers           ]
 
 		protected const int MaxSeconds = 60 * 60 * 24 * 30;
