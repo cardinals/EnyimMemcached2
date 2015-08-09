@@ -180,7 +180,7 @@ namespace Enyim.Caching
 			var v = Interlocked.CompareExchange(ref workLock, 0, 1);
 			Debug.Assert(v == 1);
 #else
-			Interlocked.Exchange(ref __working, 0);
+			Interlocked.Exchange(ref workLock, 0);
 #endif
 		}
 
