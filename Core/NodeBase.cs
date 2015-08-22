@@ -141,7 +141,7 @@ namespace Enyim.Caching
 
 		public virtual void Run()
 		{
-			if (!MarkWorking()) return;
+			if (!MarkAsBusy()) return;
 
 			try
 			{
@@ -155,9 +155,9 @@ namespace Enyim.Caching
 
 				// socket still working but we got requeued, so quit
 				// happens when OPs are coming in, but we're still processing the previous batch
-				if (socket.IsWorking)
+				if (socket.IsBusy)
 				{
-					if (LogTraceEnabled) log.Trace("Node {0}'s socket is working", endpoint);
+					if (LogTraceEnabled) log.Trace("Node {0}'s socket is busy", endpoint);
 					return;
 				}
 
@@ -169,12 +169,12 @@ namespace Enyim.Caching
 			}
 		}
 
-		private bool MarkWorking()
+		private bool MarkAsBusy()
 		{
 			return Interlocked.CompareExchange(ref workLock, 1, 0) == 0;
 		}
 
-		private void MarkUnworking()
+		private void MarkAsReady()
 		{
 #if DEBUG
 			var v = Interlocked.CompareExchange(ref workLock, 0, 1);
@@ -212,7 +212,7 @@ namespace Enyim.Caching
 					else
 					{
 						// did not have any ops to send, quit
-						MarkUnworking();
+						MarkAsReady();
 					}
 
 					break;
@@ -269,7 +269,7 @@ namespace Enyim.Caching
 				{
 					// successfully sent the buffer, switch to receive mode
 					Volatile.Write(ref runMode, MODE_RECEIVE);
-					MarkUnworking();
+					MarkAsReady();
 					owner.NeedsIO(this);
 				}
 				else
@@ -335,7 +335,7 @@ namespace Enyim.Caching
 				{
 					if (success)
 					{
-						MarkUnworking();
+						MarkAsReady();
 						owner.NeedsIO(this);
 					}
 					else
@@ -403,7 +403,7 @@ namespace Enyim.Caching
 
 			// set the node into send mode and requeue for IO
 			Volatile.Write(ref runMode, MODE_SEND);
-			MarkUnworking();
+			MarkAsReady();
 			owner.NeedsIO(this);
 		}
 
@@ -452,14 +452,14 @@ namespace Enyim.Caching
 				if (failurePolicy.ShouldFail(this))
 				{
 					IsAlive = false;
-					MarkUnworking();
+					MarkAsReady();
 					return true;
 				}
 
 				// otherwise reconnect immediately
 				// (when it's our turn again, to be precise)
 				mustReconnect = true;
-				MarkUnworking();
+				MarkAsReady();
 
 				// reconnect from IO thread
 				owner.NeedsIO(this);

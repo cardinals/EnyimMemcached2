@@ -10,7 +10,7 @@ namespace Enyim.Caching
 		/// Gets a value that indicates whether the socket is still connected and can be used for communication.
 		/// </summary>
 		bool IsAlive { get; }
-		bool IsWorking { get; }
+		bool IsBusy { get; }
 
 		/// <summary>
 		/// Gets or sets a value that specifies the size of the send buffer.

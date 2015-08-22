@@ -78,7 +78,7 @@ namespace Enyim.Caching
 			{
 				opt.Completed += (a, b) => mre.Set();
 				RecreateSocket();
-				IsWorking = true;
+				IsBusy = true;
 
 				try
 				{
@@ -99,7 +99,7 @@ namespace Enyim.Caching
 				}
 				finally
 				{
-					IsWorking = false;
+					IsBusy = false;
 				}
 			}
 		}
@@ -112,7 +112,7 @@ namespace Enyim.Caching
 			}
 			else
 			{
-				IsWorking = true;
+				IsBusy = true;
 				sendArgs.UserToken = whenDone;
 				PerformSend(sendBuffer.BufferOffset, sendBuffer.Position);
 			}
@@ -186,14 +186,14 @@ namespace Enyim.Caching
 		private void FinishSending(bool success)
 		{
 			var callback = (Action<bool>)sendArgs.UserToken;
-			IsWorking = false;
+			IsBusy = false;
 			callback(success);
 		}
 
 		private void FinishReceiving(bool success)
 		{
 			var callback = (Action<bool>)recvArgs.UserToken;
-			IsWorking = false;
+			IsBusy = false;
 			callback(success);
 		}
 
@@ -205,7 +205,7 @@ namespace Enyim.Caching
 				return;
 			}
 
-			IsWorking = true;
+			IsBusy = true;
 
 			recvArgs.UserToken = whenDone;
 			if (LogTraceEnabled) log.Trace("Socket {0} is receiving", endpoint);
@@ -243,7 +243,7 @@ namespace Enyim.Caching
 			private set { Volatile.Write(ref isAlive, value ? 1 : 0); }
 		}
 
-		public bool IsWorking
+		public bool IsBusy
 		{
 			get { return Volatile.Read(ref isWorking) == 1; }
 			private set { Volatile.Write(ref isWorking, value ? 1 : 0); }
