@@ -33,6 +33,7 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="AdvQueue.cs" />
+    <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="TrackingBufferAllocator.cs" />
     <Compile Include="BufferManagerAllocator.cs" />
     <Compile Include="ConfigurationHelper.cs" />

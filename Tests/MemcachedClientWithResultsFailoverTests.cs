@@ -37,52 +37,52 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void Store_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
+		public async void Store_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			IfThrows<IOException>(client.Store(StoreMode.Set, GetUniqueKey(), "store"));
+			IfThrows<IOException>(await client.StoreAsync(StoreMode.Set, GetUniqueKey(), "store", 0, 0));
 		}
 
 		[Fact]
-		public void Remove_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
+		public async void Remove_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			IfThrows<IOException>(client.Remove(GetUniqueKey()));
+			IfThrows<IOException>(await client.RemoveAsync(GetUniqueKey(), 0));
 		}
 
 		[Fact]
-		public void Concate_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
+		public async void Concate_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			IfThrows<IOException>(client.Concate(ConcatenationMode.Append, GetUniqueKey(), new ArraySegment<byte>(new byte[] { 1 }), 0));
+			IfThrows<IOException>(await client.ConcateAsync(ConcatenationMode.Append, GetUniqueKey(), new ArraySegment<byte>(new byte[] { 1 }), 0));
 		}
 
 		[Fact]
-		public void Mutate_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
+		public async void Mutate_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			IfThrows<IOException>(client.Mutate(MutationMode.Increment, GetUniqueKey(), 100, 100, 0, DateTime.Now.AddDays(1)));
+			IfThrows<IOException>(await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), 100, 100, Expiration.Never, 0));
 		}
 
 		[Fact]
 		public void Storing_Unserializable_Object_Should_Throw_SerializationException()
 		{
-			Assert.Throws<SerializationException>(() => client.Store(StoreMode.Set, GetUniqueKey(), new Unserializable()));
+			Assert.ThrowsAsync<SerializationException>(() => client.StoreAsync(StoreMode.Set, GetUniqueKey(), new Unserializable(), 0, 0));
 		}
 
 		[Fact]
-		public async Task Storing_Unserializable_Object_Asynchronously_Should_Throw_SerializationException()
+		public void Storing_Unserializable_Object_Asynchronously_Should_Throw_SerializationException()
 		{
-			await IfThrowsAsync<SerializationException>(client.StoreAsync(StoreMode.Set, GetUniqueKey(), new Unserializable()));
+			Assert.ThrowsAsync<SerializationException>(() => client.StoreAsync(StoreMode.Set, GetUniqueKey(), new Unserializable(), 0, 0));
 		}
 
 		[Fact]
 		public async void StoreAsync_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			var result = await client.StoreAsync(StoreMode.Set, GetUniqueKey(), "store");
+			var result = await client.StoreAsync(StoreMode.Set, GetUniqueKey(), "store", 0, 0);
 			IfThrows<IOException>(result);
 		}
 
 		[Fact]
 		public async void RemoveAsync_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			var result = await client.RemoveAsync(GetUniqueKey());
+			var result = await client.RemoveAsync(GetUniqueKey(), 0);
 			IfThrows<IOException>(result);
 		}
 
@@ -96,7 +96,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public async void MutateAsync_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			var result = await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), 100, 100, 0, DateTime.Now.AddDays(1));
+			var result = await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), 100, 100, Expiration.Never, 0);
 			IfThrows<IOException>(result);
 		}
 	}

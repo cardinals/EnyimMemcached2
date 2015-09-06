@@ -9,22 +9,22 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
-		public void When_Removing_A_Valid_Key_Result_Is_Successful()
+		public async void When_Removing_A_Valid_Key_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Remove_Valid");
 
-			Assert.True(Store(key: key));
-			Assert.True(client.Remove(key));
-			Assert.Null(client.Get(key));
+			Assert.True(await Store(key: key));
+			Assert.True(await client.RemoveAsync(key));
+			Assert.Null(await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Removing_An_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Removing_An_Invalid_Key_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Remove_Invalid");
 
-			Assert.Null(client.Get(key)); // sanity-check
-			Assert.False(client.Remove(key));
+			Assert.Null(await client.GetAsync<object>(key)); // sanity-check
+			Assert.False(await client.RemoveAsync(key));
 		}
 	}
 }

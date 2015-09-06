@@ -9,7 +9,7 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
-		public void Can_Read_Items_Larger_Than_Receive_Buffer()
+		public async void Can_Read_Items_Larger_Than_Receive_Buffer()
 		{
 			var key = GetUniqueKey("Large_Buffer");
 			var value = new byte[32768 * 3 + 4];
@@ -18,9 +18,9 @@ namespace Enyim.Caching.Tests
 			value[32768] = 100;
 			value[value.Length - 1] = 100;
 
-			Assert.True(Store(key: key, value: value));
+			Assert.True(await Store(key: key, value: value));
 
-			var result = client.Get(key) as byte[];
+			var result = await client.GetAsync<object>(key) as byte[];
 			Assert.NotNull(result);
 
 			Assert.Equal(result.Length, value.Length);
@@ -28,42 +28,42 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+		public async void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Get_Existing");
 			var value = GetRandomString();
 
-			Assert.True(Store(key: key, value: value));
-			Assert.Equal(value, client.Get(key));
+			Assert.True(await Store(key: key, value: value));
+			Assert.Equal(value, await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
+		public async void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Get_Invalid");
 
-			Assert.Null(client.Get<object>(key));
+			Assert.Null(await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Generic_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+		public async void When_Generic_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Generic_Get");
 			var value = GetRandomString();
 
-			Assert.True(Store(key: key, value: value));
-			Assert.Equal(value, client.Get<string>(key));
+			Assert.True(await Store(key: key, value: value));
+			Assert.Equal(value, await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void When_Getting_Multiple_Keys_Result_Is_Successful()
+		public async void When_Getting_Multiple_Keys_Result_Is_Successful()
 		{
 			var data = GetUniqueKeys().ToDictionary(k => "Value for " + k);
 
 			foreach (var kvp in data)
-				Assert.True(Store(key: kvp.Key, value: kvp.Value));
+				Assert.True(await Store(key: kvp.Key, value: kvp.Value));
 
-			var results = client.Get(data.Keys).OrderBy(kvp => kvp.Key).ToArray();
+			var results = (await client.GetAsync(data.Keys)).OrderBy(kvp => kvp.Key).ToArray();
 			var source = data.OrderBy(kvp => kvp.Key).ToArray();
 
 			Assert.Equal(source.Select(kvp => kvp.Key), results.Select(kvp => kvp.Key));
@@ -71,26 +71,26 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public void When_Getting_Byte_Result_Is_Successful()
+		public async void When_Getting_Byte_Result_Is_Successful()
 		{
 			const byte expectedValue = 1;
 			var key = GetUniqueKey("Get_Byte");
 
-			Assert.True(Store(key: key, value: expectedValue));
+			Assert.True(await Store(key: key, value: expectedValue));
 
-			var value = client.Get(key);
+			var value = await client.GetAsync<object>(key);
 			Assert.Equal(expectedValue, value);
 		}
 
 		[Fact]
-		public void When_Getting_SByte_Result_Is_Successful()
+		public async void When_Getting_SByte_Result_Is_Successful()
 		{
 			const sbyte expectedValue = 1;
 			var key = GetUniqueKey("Get_Sbyte");
 
-			Assert.True(Store(key: key, value: expectedValue));
+			Assert.True(await Store(key: key, value: expectedValue));
 
-			var value = client.Get(key);
+			var value = await client.GetAsync<object>(key);
 			Assert.Equal(expectedValue, value);
 		}
 	}

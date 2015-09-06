@@ -35,7 +35,7 @@ namespace Enyim.Caching.Tests
 			if (key == null) key = GetUniqueKey("store");
 			if (value == null) value = GetRandomString();
 
-			return client.Store(mode, key, value);
+			return client.StoreAsync(mode, key, value, Expiration.Never).Result;
 		}
 	}
 

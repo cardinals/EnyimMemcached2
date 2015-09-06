@@ -9,48 +9,48 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()
+		public async void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()
 		{
-			Assert.True(Store(StoreMode.Add, key: GetUniqueKey("Add_Once")));
+			Assert.True(await Store(StoreMode.Add, key: GetUniqueKey("Add_Once")));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Add_Result_Is_Not_Successful()
+		public async void When_Storing_Item_With_Existing_Key_And_StoreMode_Add_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Add_Twice");
 
-			Assert.True(Store(StoreMode.Add, key: key));
-			Assert.False(Store(StoreMode.Add, key: key));
+			Assert.True(await Store(StoreMode.Add, key: key));
+			Assert.False(await Store(StoreMode.Add, key: key));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
+		public async void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
 		{
-			Assert.False(Store(StoreMode.Replace, key: GetUniqueKey("New_Replace")));
+			Assert.False(await Store(StoreMode.Replace, key: GetUniqueKey("New_Replace")));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Set_Result_Is_Successful()
+		public async void When_Storing_Item_With_New_Key_And_StoreMode_Set_Result_Is_Successful()
 		{
-			Assert.True(Store(StoreMode.Set, key: GetUniqueKey("New_Set")));
+			Assert.True(await Store(StoreMode.Set, key: GetUniqueKey("New_Set")));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Replace_Result_Is_Successful()
+		public async void When_Storing_Item_With_Existing_Key_And_StoreMode_Replace_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Existing_Replace");
 
-			Assert.True(Store(StoreMode.Add, key));
-			Assert.True(Store(StoreMode.Replace, key));
+			Assert.True(await Store(StoreMode.Add, key));
+			Assert.True(await Store(StoreMode.Replace, key));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Set_Result_Is_Successful()
+		public async void When_Storing_Item_With_Existing_Key_And_StoreMode_Set_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Existing_Set");
 
-			Assert.True(Store(StoreMode.Add, key));
-			Assert.True(Store(StoreMode.Set, key));
+			Assert.True(await Store(StoreMode.Add, key));
+			Assert.True(await Store(StoreMode.Set, key));
 		}
 	}
 }

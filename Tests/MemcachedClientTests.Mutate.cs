@@ -9,61 +9,61 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
-		public void When_Incrementing_Value_Result_Is_Successful()
+		public async void When_Incrementing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Increment");
 
-			Assert.Equal(200u, client.Increment(key, 200, 10));
-			Assert.Equal(210u, client.Increment(key, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
+			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
 		}
 
 		[Fact]
-		public void When_Getting_An_Incremented_Value_It_Must_Be_A_String()
+		public async void When_Getting_An_Incremented_Value_It_Must_Be_A_String()
 		{
 			var key = GetUniqueKey("Increment_Get");
 
-			Assert.Equal(200u, client.Increment(key, 200, 10));
-			Assert.Equal(210u, client.Increment(key, 200, 10));
-			Assert.Equal("210", client.Get(key));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
+			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
+			Assert.Equal("210", await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void Can_Increment_Value_Initialized_By_Store()
+		public async void Can_Increment_Value_Initialized_By_Store()
 		{
 			var key = GetUniqueKey("Increment_Store");
 
-			Assert.True(client.Set(key, "200"));
-			Assert.Equal(210u, client.Increment(key, 10, 10));
-			Assert.Equal("210", client.Get(key));
+			Assert.True(await client.StoreAsync(StoreMode.Set, key, "200", Expiration.Never));
+			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 10));
+			Assert.Equal("210", await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void When_Decrementing_Value_Result_Is_Successful()
+		public async void When_Decrementing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Decrement");
 
-			Assert.Equal(200u, client.Decrement(key, 200, 10));
-			Assert.Equal(190u, client.Decrement(key, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
+			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
 		}
 
 		[Fact]
-		public void When_Getting_A_Decremented_Value_It_Must_Be_A_String()
+		public async void When_Getting_A_Decremented_Value_It_Must_Be_A_String()
 		{
 			var key = GetUniqueKey("Decrement_Get");
 
-			Assert.Equal(200u, client.Decrement(key, 200, 10));
-			Assert.Equal(190u, client.Decrement(key, 200, 10));
-			Assert.Equal("190", client.Get(key));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
+			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
+			Assert.Equal("190", await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void Can_Decrement_Value_Initialized_By_Store()
+		public async void Can_Decrement_Value_Initialized_By_Store()
 		{
 			var key = GetUniqueKey("Decrement_Store");
 
-			Assert.True(client.Set(key, "200"));
-			Assert.Equal(190u, client.Decrement(key, 10, 10));
-			Assert.Equal("190", client.Get(key));
+			Assert.True(await client.StoreAsync(StoreMode.Set, key, "200", Expiration.Never));
+			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 10));
+			Assert.Equal("190", await client.GetAsync<string>(key));
 		}
 	}
 }

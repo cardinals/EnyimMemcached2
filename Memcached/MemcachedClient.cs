@@ -49,14 +49,9 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public Task<T> GetAndTouchAsync<T>(string key, DateTime expiresAt)
+		public Task<T> GetAndTouchAsync<T>(string key, Expiration expiration)
 		{
-			return DoGet<T>(PerformGetAndTouchCore(key, GetExpiration(expiresAt)));
-		}
-
-		public Task<T> GetAndTouchAsync<T>(string key, TimeSpan validFor)
-		{
-			return DoGet<T>(PerformGetAndTouchCore(key, GetExpiration(validFor)));
+			return DoGet<T>(PerformGetAndTouchCore(key, expiration, Protocol.NO_CAS));
 		}
 
 		private async Task<T> DoGet<T>(Task<Results.IGetOperationResult> getter)
@@ -76,24 +71,14 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public Task<bool> TouchAsync(string key, DateTime expiration)
+		public Task<bool> TouchAsync(string key, Expiration expiration)
 		{
-			return HandleErrors(PerformTouch(key, GetExpiration(expiration), Protocol.NO_CAS));
+			return HandleErrors(PerformTouch(key, expiration, Protocol.NO_CAS));
 		}
 
-		public Task<bool> TouchAsync(string key, TimeSpan validFor)
+		public Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration)
 		{
-			return HandleErrors(PerformTouch(key, GetExpiration(validFor), Protocol.NO_CAS));
-		}
-
-		public Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
-		{
-			return HandleErrors(PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), Protocol.NO_CAS));
-		}
-
-		public Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
-		{
-			return HandleErrors(PerformStoreAsync(mode, key, value, GetExpiration(validFor), Protocol.NO_CAS));
+			return HandleErrors(PerformStoreAsync(mode, key, value, expiration, Protocol.NO_CAS));
 		}
 
 		public Task<bool> RemoveAsync(string key)
@@ -106,27 +91,11 @@ namespace Enyim.Caching.Memcached
 			return HandleErrors(PerformConcate(mode, key, 0, data));
 		}
 
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue, ulong delta)
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong defaultValue, ulong delta)
 		{
 			try
 			{
-				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(expiresAt)).ConfigureAwait(false);
-
-				return result.Value;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return 0;
-			}
-		}
-
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue, ulong delta)
-		{
-			try
-			{
-				var result = await PerformMutate(mode, key, defaultValue, delta, 0, GetExpiration(validFor)).ConfigureAwait(false);
+				var result = await PerformMutate(mode, key, expiration, defaultValue, delta, 0).ConfigureAwait(false);
 
 				return result.Value;
 			}

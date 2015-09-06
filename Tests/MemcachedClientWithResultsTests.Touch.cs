@@ -9,51 +9,56 @@ namespace Enyim.Caching.Tests
 {
 	public partial class MemcachedClientWithResultsTests
 	{
+		public const int DefaultExpiration = MemcachedClientTests.DefaultExpiration;
+		public const int WaitButStillAlive = MemcachedClientTests.WaitButStillAlive;
+		public const int NewExpiration = MemcachedClientTests.NewExpiration;
+		public const int WaitUntilExpires = MemcachedClientTests.WaitUntilExpires;
+
 		[Fact]
 		[Trait("slow", "yes")]
-		public void When_Getting_An_Expired_Item_It_Should_Be_Null()
+		public async void When_Getting_An_Expired_Item_It_Should_Be_Null()
 		{
 			var key = GetUniqueKey("Get_Expired");
 			var value = GetRandomString();
 
-			ShouldPass(client.Store(StoreMode.Set, key, value, expiresAt: DateTime.Now.AddMilliseconds(MemcachedClientTests.DefaultExpiration)));
-			Thread.Sleep(MemcachedClientTests.WaitButStillAlive);
-			ShouldPass(client.Get(key), value);
+			Assert.True(DefaultExpiration > WaitButStillAlive);
 
-			Thread.Sleep(MemcachedClientTests.WaitUntilExpires);
-			ShouldFail(client.Get(key));
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, TimeSpan.FromMilliseconds(DefaultExpiration), Protocol.NO_CAS), operation: "initial store");
+			Thread.Sleep(WaitButStillAlive);
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS), operation: "retrieve " + key);
+
+			Thread.Sleep(WaitUntilExpires);
+			ShouldFail(await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
 		[Trait("slow", "yes")]
-		public void When_Getting_And_Touching_An_Item_It_Should_Not_Expire()
+		public async void When_Getting_And_Touching_An_Item_It_Should_Not_Expire()
 		{
 			var key = GetUniqueKey("Get_And_Touch");
 			var value = GetRandomString();
 
-			ShouldPass(client.Store(StoreMode.Set, key, value, expiresAt: DateTime.Now.AddMilliseconds(MemcachedClientTests.DefaultExpiration)));
-			Thread.Sleep(MemcachedClientTests.WaitButStillAlive);
-			ShouldPass(client.GetAndTouch<string>(key, DateTime.Now.AddSeconds(MemcachedClientTests.NewExpiration)), value);
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration), Protocol.NO_CAS));
+			Thread.Sleep(WaitButStillAlive);
+			AreEqual(value, await client.GetAndTouchAsync<string>(key, DateTime.Now.AddSeconds(MemcachedClientTests.NewExpiration), Protocol.NO_CAS));
 
-			Thread.Sleep(MemcachedClientTests.WaitUntilExpires);
-			ShouldPass(client.Get(key), value);
+			Thread.Sleep(WaitUntilExpires);
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
 		[Trait("slow", "yes")]
-		public void When_Touching_An_Item_It_Should_Not_Expire()
+		public async void When_Touching_An_Item_It_Should_Not_Expire()
 		{
-			var key = GetUniqueKey("Get_And_Touch");
+			var key = GetUniqueKey("Touch");
 			var value = GetRandomString();
 
-			ShouldPass(client.Store(StoreMode.Set, key, value, expiresAt: DateTime.Now.AddMilliseconds(MemcachedClientTests.DefaultExpiration)));
-			Thread.Sleep(MemcachedClientTests.WaitButStillAlive);
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration), Protocol.NO_CAS));
+			Thread.Sleep(WaitButStillAlive);
+			ShouldPass(await client.TouchAsync(key, DateTime.Now.AddSeconds(MemcachedClientTests.NewExpiration), Protocol.NO_CAS), checkCas: false);
 
-			var touchResult = client.Touch(key, DateTime.Now.AddSeconds(MemcachedClientTests.NewExpiration));
-			Assert.Equal(0, touchResult.StatusCode);
-
-			Thread.Sleep(MemcachedClientTests.WaitUntilExpires);
-			ShouldPass(client.Get(key), value);
+			Thread.Sleep(WaitUntilExpires);
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 	}
 }

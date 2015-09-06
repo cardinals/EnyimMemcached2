@@ -9,37 +9,108 @@ namespace Enyim.Caching.Tests
 	public class ExpirationTests
 	{
 		[Fact]
-		public void TestTimeSpan()
+		public void TimeSpan_Zero_Should_Never_Expire()
 		{
-			Assert.Equal(0u, TestClient.PublicGetExpiration(TimeSpan.Zero));
-			Assert.Equal(100u, TestClient.PublicGetExpiration(TimeSpan.FromSeconds(100)));
-			Assert.Equal(0u, TestClient.PublicGetExpiration(TimeSpan.MaxValue));
+			var e = Expiration.Create(TimeSpan.Zero);
 
+			Assert.Equal(0u, e.Value);
+			Assert.Equal(true, e.IsAbsolute);
+			Assert.Equal(true, e.IsForever);
+		}
+
+		[Fact]
+		public void TimeSpan_MaxValue_Should_Never_Expire()
+		{
+			var e = Expiration.Create(TimeSpan.MaxValue);
+
+			Assert.Equal(0u, e.Value);
+			Assert.Equal(true, e.IsAbsolute);
+			Assert.Equal(true, e.IsForever);
+		}
+
+		[Fact]
+		public void TimeSpan_Less_Than_One_Month_Should_Become_Valid_Relative_Expiration()
+		{
+			var e = Expiration.Create(TimeSpan.FromSeconds(100));
+
+			Assert.Equal(100u, e.Value);
+			Assert.Equal(false, e.IsAbsolute);
+			Assert.Equal(false, e.IsForever);
+		}
+
+		[Fact]
+		public void TimeSpan_Greater_Than_One_Month_Should_Become_Valid_Absolute_Expiration()
+		{
 			using (SystemTime.Set(() => new DateTime(2011, 12, 31, 23, 0, 0, DateTimeKind.Utc)))
 			{
-				Assert.Equal(1328050800u, TestClient.PublicGetExpiration(TimeSpan.FromDays(31)));
+				var e = Expiration.Create(TimeSpan.FromDays(31));
+
+				Assert.Equal(1328050800u, e.Value);
+				Assert.Equal(true, e.IsAbsolute);
+				Assert.Equal(false, e.IsForever);
 			}
 		}
 
 		[Fact]
-		public void TestDateTime()
+		public void Unix_Epoch_Should_Fail()
 		{
-			Assert.Equal(0u, TestClient.PublicGetExpiration(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)));
-			Assert.Equal(0u, TestClient.PublicGetExpiration(DateTime.MaxValue));
-			Assert.Equal(1328050800u, TestClient.PublicGetExpiration(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => { var a = (Expiration)new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); });
 		}
 
-		private class TestClient : MemcachedClient
+		[Fact]
+		public void DateTime_MinValue_Should_Never_Expire()
 		{
-			public static uint PublicGetExpiration(DateTime dt)
-			{
-				return GetExpiration(dt);
-			}
+			var e = Expiration.Create(DateTime.MaxValue);
 
-			public static uint PublicGetExpiration(TimeSpan ts)
-			{
-				return GetExpiration(ts);
-			}
+			Assert.Equal(0u, e.Value);
+			Assert.Equal(true, e.IsAbsolute);
+			Assert.Equal(true, e.IsForever);
+		}
+
+		[Fact]
+		public void DateTime_MaxValue_Should_Never_Expire()
+		{
+			var e = Expiration.Create(DateTime.MaxValue);
+
+			Assert.Equal(0u, e.Value);
+			Assert.Equal(true, e.IsAbsolute);
+			Assert.Equal(true, e.IsForever);
+		}
+
+		[Fact]
+		public void DateTime_Value_Should_Become_Valid_Absolute_Expiration()
+		{
+			var e = Expiration.Create(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
+
+			Assert.Equal(1328050800u, e.Value);
+			Assert.Equal(true, e.IsAbsolute);
+			Assert.Equal(false, e.IsForever);
+		}
+
+		[Fact]
+		public void Different_Instances_From_Same_DateTime_Must_Be_Equal()
+		{
+			var a = Expiration.Create(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
+			var b = (Expiration)(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
+
+			Assert.True(a.Equals(a));
+			Assert.True(b.Equals(b));
+
+			Assert.True(a.Equals(b));
+			Assert.True(b.Equals(a));
+		}
+
+		[Fact]
+		public void Different_Instances_From_Same_TimeSpan_Must_Be_Equal()
+		{
+			var a = Expiration.Create(TimeSpan.FromSeconds(100));
+			var b = (Expiration)(TimeSpan.FromSeconds(100));
+
+			Assert.True(a.Equals(a));
+			Assert.True(b.Equals(b));
+
+			Assert.True(a.Equals(b));
+			Assert.True(b.Equals(a));
 		}
 	}
 }

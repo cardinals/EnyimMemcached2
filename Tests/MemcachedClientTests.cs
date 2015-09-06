@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Xunit;
 
@@ -16,12 +17,12 @@ namespace Enyim.Caching.Tests
 			client = new MemcachedClient(data.ClientConfig);
 		}
 
-		protected bool Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
+		protected Task<bool> Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
 		{
 			if (key == null) key = GetUniqueKey("store");
 			if (value == null) value = GetRandomString();
 
-			return client.Store(mode, key, value);
+			return client.StoreAsync(mode, key, value, Expiration.Never);
 		}
 	}
 }

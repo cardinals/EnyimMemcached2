@@ -9,27 +9,27 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
-		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
+		public async void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Cas_Success");
 			var value = GetRandomString();
 
-			var storeResult = ShouldPass(Store(StoreMode.Add, key, value));
-			ShouldPass(client.Set(key, value, storeResult.Cas));
+			var storeResult = ShouldPass(await Store(StoreMode.Add, key, value));
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas));
 		}
 
 		[Fact]
-		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+		public async void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Cas_Fail");
 			var value = GetRandomString();
 
 			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(Store(StoreMode.Set, key, value));
-			var storeResult = ShouldPass(Store(StoreMode.Set, key, value));
+			ShouldPass(await Store(StoreMode.Set, key, value));
+			var storeResult = ShouldPass(await Store(StoreMode.Set, key, value));
 
 			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
-			ShouldFail(client.Set(key, value, cas: storeResult.Cas - 1));
+			ShouldFail(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas - 1));
 		}
 	}
 }

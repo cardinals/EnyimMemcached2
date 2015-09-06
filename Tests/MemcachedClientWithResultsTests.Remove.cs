@@ -9,22 +9,22 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
-		public void When_Removing_A_Valid_Key_Result_Is_Successful()
+		public async void When_Removing_A_Valid_Key_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Remove_Valid");
 
-			ShouldPass(Store(key: key));
-			ShouldPass(client.Remove(key), checkCas: false);
-			ShouldFail(client.Get(key));
+			ShouldPass(await Store(key: key));
+			ShouldPass(await client.RemoveAsync(key, Protocol.NO_CAS), checkCas: false);
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Removing_An_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Removing_An_Invalid_Key_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Remove_Invalid");
 
-			ShouldFail(client.Get(key)); // sanity-check
-			ShouldFail(client.Remove(key));
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS)); // sanity-check
+			ShouldFail(await client.RemoveAsync(key, Protocol.NO_CAS));
 		}
 	}
 }

@@ -10,105 +10,105 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
-		public void When_Appending_To_Existing_Value_Result_Is_Successful()
+		public async void When_Appending_To_Existing_Value_Result_Is_Successful()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Success");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			ShouldPass(client.Get(key), value + ToAppend);
+			ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), Protocol.NO_CAS));
+			AreEqual(value + ToAppend, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Appending_To_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Appending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Fail");
 
-			ShouldFail(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			ShouldFail(client.Get(key));
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), Protocol.NO_CAS));
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Existing_Value_Result_Is_Successful()
+		public async void When_Prepending_To_Existing_Value_Result_Is_Successful()
 		{
 			const string ToPrepend = "The Beginning";
 			var key = GetUniqueKey("Prepend_Success");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			ShouldPass(client.Get(key), ToPrepend + value);
+			ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), Protocol.NO_CAS));
+			AreEqual(ToPrepend + value, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Prepending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
 			const string ToPrepend = "The Beginning";
 			var key = GetUniqueKey("Prepend_Fail");
 
-			ShouldFail(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			ShouldFail(client.Get(key));
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), Protocol.NO_CAS));
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Appending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
+		public async void When_Appending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Cas_Success");
 			var value = GetRandomString();
 
-			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas));
-			ShouldPass(client.Get(key), value + ToAppend);
+			var storeResult = ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), storeResult.Cas));
+			AreEqual(value + ToAppend, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		public async void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Cas_Fail");
 			var value = GetRandomString();
 
 			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(Store(key: key, value: value));
-			var storeResult = ShouldPass(Store(key: key, value: value));
+			ShouldPass(await Store(key: key, value: value));
+			var storeResult = ShouldPass(await Store(key: key, value: value));
 
 			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
 
-			ShouldFail(client.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas - 1));
-			ShouldPass(client.Get(key), value);
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), storeResult.Cas - 1));
+			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
+		public async void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
 		{
 			const string ToPrepend = "The Beginning";
 			var key = GetUniqueKey("Prepend_Cas_Success");
 			var value = GetRandomString();
 
-			var storeResult = ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas));
-			ShouldPass(client.Get(key), ToPrepend + value);
+			var storeResult = ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), storeResult.Cas));
+			AreEqual(ToPrepend + value, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		public async void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
 		{
 			const string ToPrepend = "The Beginning";
 			var key = GetUniqueKey("Prepend_Cas_Fail");
 			var value = GetRandomString();
 
 			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(Store(key: key, value: value));
-			var storeResult = ShouldPass(Store(key: key, value: value));
+			ShouldPass(await Store(key: key, value: value));
+			var storeResult = ShouldPass(await Store(key: key, value: value));
 
 			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
 
-			ShouldFail(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas - 1));
-			ShouldPass(client.Get(key), value);
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), storeResult.Cas - 1));
+			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 	}
 }

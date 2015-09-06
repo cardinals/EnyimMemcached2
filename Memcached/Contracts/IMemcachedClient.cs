@@ -9,20 +9,14 @@ namespace Enyim.Caching.Memcached
 		Task<T> GetAsync<T>(string key);
 		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
 
-		Task<T> GetAndTouchAsync<T>(string key, DateTime expiresAt);
-		Task<T> GetAndTouchAsync<T>(string key, TimeSpan validFor);
+		Task<T> GetAndTouchAsync<T>(string key, Expiration expiration);
+		Task<bool> TouchAsync(string key, Expiration expiration);
 
-		Task<bool> TouchAsync(string key, DateTime expiration);
-		Task<bool> TouchAsync(string key, TimeSpan validFor);
-
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt);
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor);
-
+		Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration);
 		Task<bool> RemoveAsync(string key);
 
 		Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		Task<ulong> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA);
-		Task<ulong> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA);
+		Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong defaultValue, ulong delta);
 
 		Task<bool> FlushAllAsync();
 		Task<ServerStats> StatsAsync(string key);

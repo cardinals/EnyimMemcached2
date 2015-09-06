@@ -10,96 +10,50 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientTests
 	{
 		[Fact]
-		public void When_Appending_To_Existing_Value_Result_Is_Successful()
+		public async void When_Appending_To_Existing_Value_Result_Is_Successful()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Success");
 			var value = GetRandomString();
 
-			Assert.True(Store(key: key, value: value));
-			Assert.True(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			Assert.Equal(value + ToAppend, client.Get(key));
+			Assert.True(await Store(key: key, value: value));
+
+			Assert.True(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend))));
+			Assert.Equal(value + ToAppend, await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Appending_To_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Appending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
 			const string ToAppend = "The End";
 			var key = GetUniqueKey("Append_Fail");
 
-			Assert.False(client.Append(key, Encoding.UTF8.GetBytes(ToAppend)));
-			Assert.Null(client.Get(key));
+			Assert.False(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend))));
+			Assert.Null(await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Existing_Value_Result_Is_Successful()
+		public async void When_Prepending_To_Existing_Value_Result_Is_Successful()
 		{
-			const string ToPrepend = "The Beginning";
+			const string ToPrepend = "The End";
 			var key = GetUniqueKey("Prepend_Success");
 			var value = GetRandomString();
 
-			Assert.True(Store(key: key, value: value));
-			Assert.True(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			Assert.Equal(ToPrepend + value, client.Get(key));
+			Assert.True(await Store(key: key, value: value));
+
+			Assert.True(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend))));
+			Assert.Equal(ToPrepend + value, await client.GetAsync<object>(key));
 		}
 
 		[Fact]
-		public void When_Prepending_To_Invalid_Key_Result_Is_Not_Successful()
+		public async void When_Prepending_To_Invalid_Key_Result_Is_Not_Successful()
 		{
-			const string ToPrepend = "The Beginning";
+			const string ToPrepend = "The End";
 			var key = GetUniqueKey("Prepend_Fail");
 
-			Assert.False(client.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend)));
-			Assert.Null(client.Get(key));
+			Assert.False(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend))));
+			Assert.Null(await client.GetAsync<object>(key));
 		}
-
-		//[Fact]
-		//public void When_Appending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
-		//{
-		//	const string ToAppend = "The End";
-		//	var key = GetUniqueKey("Append_Cas_Success");
-		//	var value = GetRandomString();
-
-		//	var storeResult = Assert.True(Store(key: key, value: value));
-		//	ShouldPass(clientWR.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas));
-		//	ShouldPass(clientWR.Get(key), value + ToAppend);
-		//}
-
-		//[Fact]
-		//public void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
-		//{
-		//	const string ToAppend = "The End";
-		//	var key = GetUniqueKey("Append_Cas_Fail");
-		//	var value = GetRandomString();
-
-		//	var storeResult = ShouldPass(Store(key: key, value: value));
-		//	ShouldFail(clientWR.Append(key, Encoding.UTF8.GetBytes(ToAppend), storeResult.Cas - 1));
-		//	ShouldPass(clientWR.Get(key), value);
-		//}
-
-		//[Fact]
-		//public void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
-		//{
-		//	const string ToPrepend = "The Beginning";
-		//	var key = GetUniqueKey("Prepend_Cas_Success");
-		//	var value = GetRandomString();
-
-		//	var storeResult = ShouldPass(Store(key: key, value: value));
-		//	ShouldPass(clientWR.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas));
-		//	ShouldPass(clientWR.Get(key), ToPrepend + value);
-		//}
-
-		//[Fact]
-		//public void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
-		//{
-		//	const string ToPrepend = "The Beginning";
-		//	var key = GetUniqueKey("Prepend_Cas_Fail");
-		//	var value = GetRandomString();
-
-		//	var storeResult = ShouldPass(Store(key: key, value: value));
-		//	ShouldFail(clientWR.Prepend(key, Encoding.UTF8.GetBytes(ToPrepend), storeResult.Cas - 1));
-		//	ShouldPass(clientWR.Get(key), value);
-		//}
 	}
 }
 

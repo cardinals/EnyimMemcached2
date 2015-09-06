@@ -50,30 +50,7 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="AdvQueueTests.cs" />
-    <Compile Include="DeadlockTests.cs" />
-    <Compile Include="MemcachedClientFailoverTestsForDeadlock.cs" />
-    <Compile Include="PooledMemoryStreamTests.cs" />
-    <Compile Include="ClientTestSetupFixture.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ClusterBuilderTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ConfigurationHelperTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ConfigurationSectionTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ExpirationTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Fakes.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MemcachedClientFailoverTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="MemcachedClientFailoverTests.cs" />
     <Compile Include="MemcachedClientTestBase.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -108,36 +85,48 @@
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MemcachedClientWithResultsFailoverTests.cs" />
+    <Compile Include="MemcachedClientWithResultsFailoverTests.cs">
+      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Cas.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Concat.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="MemcachedClientWithResultsTests.cs" />
     <Compile Include="MemcachedClientWithResultsTests.Get.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Mutate.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Remove.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Store.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientWithResultsTests.Touch.cs">
       <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PooledMemoryStreamTests.cs" />
+    <Compile Include="ClientTestSetupFixture.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ClusterBuilderTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ConfigurationHelperTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ConfigurationSectionTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ExpirationTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Fakes.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedServer.cs">

@@ -9,61 +9,61 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
-		public void When_Incrementing_Value_Result_Is_Successful()
+		public async void When_Incrementing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Increment");
 
-			ShouldPass(client.Increment(key, 200, 10), 200);
-			ShouldPass(client.Increment(key, 200, 10), 210);
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Increment, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Getting_An_Incremented_Value_It_Must_Be_A_String()
+		public async void When_Getting_An_Incremented_Value_It_Must_Be_A_String()
 		{
 			var key = GetUniqueKey("Increment_Get");
 
-			ShouldPass(client.Increment(key, 200, 10), 200);
-			ShouldPass(client.Increment(key, 200, 10), 210);
-			ShouldPass(client.Get(key), "210");
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Increment, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual("210", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void Can_Increment_Value_Initialized_By_Store()
+		public async void Can_Increment_Value_Initialized_By_Store()
 		{
 			var key = GetUniqueKey("Increment_Store");
 
-			ShouldPass(client.Set(key, "200"));
-			ShouldPass(client.Increment(key, 20, 10), 210);
-			ShouldPass(client.Get(key), "210");
+			ShouldPass(result: await Store(key: key, value: "200"));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, 10, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual("210", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Decrementing_Value_Result_Is_Successful()
+		public async void When_Decrementing_Value_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Decrement");
 
-			ShouldPass(client.Decrement(key, 200, 10), 200);
-			ShouldPass(client.Decrement(key, 200, 10), 190);
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Decrement, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void When_Getting_A_Decremented_Value_It_Must_Be_A_String()
+		public async void When_Getting_A_Decremented_Value_It_Must_Be_A_String()
 		{
 			var key = GetUniqueKey("Decrement_Get");
 
-			ShouldPass(client.Decrement(key, 200, 10), 200);
-			ShouldPass(client.Decrement(key, 200, 10), 190);
-			ShouldPass(client.Get(key), "190");
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Decrement, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, 200, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual("190", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void Can_Decrement_Value_Initialized_By_Store()
+		public async void Can_Decrement_Value_Initialized_By_Store()
 		{
 			var key = GetUniqueKey("Decrement_Store");
 
-			ShouldPass(client.Set(key, "200"));
-			ShouldPass(client.Decrement(key, 10, 10), 190);
-			ShouldPass(client.Get(key), "190");
+			ShouldPass(result: await Store(key: key, value: "200"));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, 10, 10, Expiration.Never, Protocol.NO_CAS));
+			AreEqual("190", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 	}
 }

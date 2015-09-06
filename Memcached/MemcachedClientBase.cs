@@ -43,7 +43,7 @@ namespace Enyim.Caching.Memcached
 			return retval;
 		}
 
-		protected virtual async Task<IGetOperationResult> PerformGetCore(string key, ulong cas )
+		protected virtual async Task<IGetOperationResult> PerformGetCore(string key, ulong cas)
 		{
 			try
 			{
@@ -58,11 +58,11 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		protected virtual async Task<IGetOperationResult> PerformGetAndTouchCore(string key, uint expires)
+		protected virtual async Task<IGetOperationResult> PerformGetAndTouchCore(string key, Expiration expiration, ulong cas)
 		{
 			try
 			{
-				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expires, Protocol.NO_CAS);
+				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expiration.Value, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
@@ -73,13 +73,13 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires, ulong cas)
+		protected async Task<IOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, Expiration expiration, ulong cas)
 		{
 			try
 			{
 				using (var ci = transcoder.Serialize(value))
 				{
-					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, expires, cas);
+					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, expiration.Value, cas);
 					await cluster.Execute(op).ConfigureAwait(false);
 
 					return op.Result;
@@ -121,11 +121,11 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, ulong cas, uint expires)
+		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, Expiration expiration, ulong defaultValue, ulong delta, ulong cas)
 		{
 			try
 			{
-				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expires, defaultValue, delta, cas);
+				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expiration.Value, defaultValue, delta, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
@@ -140,14 +140,46 @@ namespace Enyim.Caching.Memcached
 		{
 			var ops = new Dictionary<string, IGetOperation>();
 			var tasks = new List<Task>();
+			var known = new HashSet<string>();
 
 			foreach (var key in keys)
 			{
-				var op = opFactory.Get(keyTransformer.Transform(key), Protocol.NO_CAS);
+				if (!known.Add(key)) continue;
 
 				try
 				{
+					var op = opFactory.Get(keyTransformer.Transform(key), Protocol.NO_CAS);
 					tasks.Add(cluster.Execute(op));
+
+					ops[key] = op;
+				}
+				catch (IOException e)
+				{
+					tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
+				}
+			}
+
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+
+			return ops;
+		}
+
+		protected async Task<Dictionary<string, IGetOperation>> MultiGetCore(IEnumerable<KeyValuePair<string, ulong>> items)
+		{
+			var ops = new Dictionary<string, IGetOperation>();
+			var tasks = new List<Task>();
+			var known = new HashSet<string>();
+
+			foreach (var item in items)
+			{
+				var key = item.Key;
+				if (!known.Add(key)) continue;
+
+				try
+				{
+					var op = opFactory.Get(keyTransformer.Transform(key), item.Value);
+					tasks.Add(cluster.Execute(op));
+
 					ops[key] = op;
 				}
 				catch (IOException e)
@@ -201,11 +233,11 @@ namespace Enyim.Caching.Memcached
 			return retval ?? new StatsOperationResult { Value = new ServerStats() }.FailWith();
 		}
 
-		protected async Task<IOperationResult> PerformTouch(string key, uint expires, ulong cas )
+		protected async Task<IOperationResult> PerformTouch(string key, Expiration expiration, ulong cas)
 		{
 			try
 			{
-				var op = opFactory.Touch(keyTransformer.Transform(key), expires, cas);
+				var op = opFactory.Touch(keyTransformer.Transform(key), expiration.Value, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;
@@ -254,27 +286,27 @@ namespace Enyim.Caching.Memcached
 		#endregion
 		#region [ Expiration helpers           ]
 
-		protected const int MaxSeconds = 60 * 60 * 24 * 30;
-		protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		//protected const int MaxSeconds = 60 * 60 * 24 * 30;
+		//protected static readonly DateTime UnixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-		protected static uint GetExpiration(TimeSpan validFor)
-		{
-			// infinity
-			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
+		//protected static uint GetExpiration(TimeSpan validFor)
+		//{
+		//	// infinity
+		//	if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue) return 0;
 
-			var seconds = (uint)validFor.TotalSeconds;
-			if (seconds < MaxSeconds) return seconds;
+		//	var seconds = (uint)validFor.TotalSeconds;
+		//	if (seconds < MaxSeconds) return seconds;
 
-			return GetExpiration(SystemTime.Now() + validFor);
-		}
+		//	return GetExpiration(SystemTime.Now() + validFor);
+		//}
 
-		protected static uint GetExpiration(DateTime expiresAt)
-		{
-			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
-			if (expiresAt < UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
+		//protected static uint GetExpiration(DateTime expiresAt)
+		//{
+		//	if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue) return 0;
+		//	if (expiresAt < UnixEpochUtc) throw new ArgumentOutOfRangeException("expiresAt must be > " + UnixEpochUtc);
 
-			return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
-		}
+		//	return (uint)(expiresAt.ToUniversalTime() - UnixEpochUtc).TotalSeconds;
+		//}
 
 		#endregion
 	}

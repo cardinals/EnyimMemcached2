@@ -9,51 +9,54 @@ namespace Enyim.Caching.Tests
 {
 	public partial class MemcachedClientTests
 	{
-		public const int DefaultExpiration = 2000;
+		public const int DefaultExpiration = 3000;
 		public const int WaitButStillAlive = 500;
 		public const int NewExpiration = 20000;
-		public const int WaitUntilExpires = 3000;
+		public const int WaitUntilExpires = 5000;
 
 		[Fact]
-		public void When_Getting_An_Expired_Item_It_Should_Be_Null()
+		[Trait("slow", "yes")]
+		public async void When_Getting_An_Expired_Item_It_Should_Be_Null()
 		{
 			var key = GetUniqueKey("Get_Expired");
 			var value = GetRandomString();
 
-			Assert.True(client.Store(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
 			Thread.Sleep(WaitButStillAlive);
-			Assert.Equal(value, client.Get(key));
+			Assert.Equal(value, await client.GetAsync<string>(key));
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Null(client.Get(key));
+			Assert.Null(await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void When_Getting_And_Touching_An_Item_It_Should_Not_Expire()
+		[Trait("slow", "yes")]
+		public async void When_Getting_And_Touching_An_Item_It_Should_Not_Expire()
 		{
 			var key = GetUniqueKey("Get_And_Touch");
 			var value = GetRandomString();
 
-			Assert.True(client.Store(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
 			Thread.Sleep(WaitButStillAlive);
-			Assert.Equal(value, client.GetAndTouch<string>(key, DateTime.Now.AddMilliseconds(NewExpiration)));
+			Assert.Equal(value, await client.GetAndTouchAsync<string>(key, DateTime.Now.AddMilliseconds(NewExpiration)));
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Equal(value, client.Get(key));
+			Assert.Equal(value, await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public void When_Touching_An_Item_It_Should_Not_Expire()
+		[Trait("slow", "yes")]
+		public async void When_Touching_An_Item_It_Should_Not_Expire()
 		{
-			var key = GetUniqueKey("Get_And_Touch");
+			var key = GetUniqueKey("Touch");
 			var value = GetRandomString();
 
-			Assert.True(client.Store(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
 			Thread.Sleep(WaitButStillAlive);
-			Assert.True(client.Touch(key, DateTime.Now.AddMilliseconds(NewExpiration)));
+			Assert.True(await client.TouchAsync(key, DateTime.Now.AddMilliseconds(NewExpiration)));
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Equal(value, client.Get(key));
+			Assert.Equal(value, await client.GetAsync<string>(key));
 		}
 	}
 }

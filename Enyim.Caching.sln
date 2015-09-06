@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30110.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memcached", "Memcached\Memcached.csproj", "{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}"
 EndProject
@@ -31,8 +31,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B76
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log4net", "log4net\log4net.csproj", "{A220B349-B7BB-483A-B4DA-1A91CB875E9D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Extensions.csproj", "{6B53D1C7-44A5-49F1-882C-7BE718CA2857}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,10 +62,6 @@ Global
 		{A220B349-B7BB-483A-B4DA-1A91CB875E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A220B349-B7BB-483A-B4DA-1A91CB875E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A220B349-B7BB-483A-B4DA-1A91CB875E9D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6B53D1C7-44A5-49F1-882C-7BE718CA2857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6B53D1C7-44A5-49F1-882C-7BE718CA2857}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6B53D1C7-44A5-49F1-882C-7BE718CA2857}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6B53D1C7-44A5-49F1-882C-7BE718CA2857}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

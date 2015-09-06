@@ -10,67 +10,67 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientWithResultsTests
 	{
 		[Fact]
-		public void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+		public async void When_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Get_Existing");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Get(key), value);
+			ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.GetAsync<object>(key, Protocol.NO_CAS), value);
 		}
 
 		[Fact]
-		public void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
+		public async void When_Getting_Item_For_Invalid_Key_HasValue_Is_False_And_Result_Is_Not_Successful()
 		{
 			var key = GetUniqueKey("Get_Invalid");
-			var getResult = client.Get<object>(key);
+			var getResult = await client.GetAsync<object>(key, Protocol.NO_CAS);
 
 			Assert.Equal((int)StatusCode.KeyNotFound, getResult.StatusCode);
 			ShouldFail(getResult);
 		}
 
 		[Fact]
-		public void When_Generic_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+		public async void When_Generic_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
 		{
 			var key = GetUniqueKey("Generic_Get");
 			var value = GetRandomString();
 
-			ShouldPass(Store(key: key, value: value));
-			ShouldPass(client.Get<string>(key), value);
+			ShouldPass(await Store(key: key, value: value));
+			ShouldPass(await client.GetAsync<object>(key, Protocol.NO_CAS), value);
 		}
 
 		[Fact]
-		public void When_Getting_Multiple_Keys_Result_Is_Successful()
+		public async void When_Getting_Multiple_Keys_Result_Is_Successful()
 		{
 			var keys = GetUniqueKeys().Distinct().ToArray();
 			foreach (var key in keys)
 			{
-				ShouldPass(Store(key: key, value: "Value for" + key));
+				ShouldPass(await Store(key: key, value: "Value for" + key));
 			}
 
-			var dict = client.Get(keys);
+			var dict = await client.GetAsync(keys.ToDictionary(k => k, k => 0ul));
 			Assert.Equal(keys.OrderBy(_ => _), dict.Keys.OrderBy(_ => _));
 			Assert.True(dict.All(kvp => kvp.Value.Success));
 		}
 
 		[Fact]
-		public void When_Getting_Byte_Result_Is_Successful()
+		public async void When_Getting_Byte_Result_Is_Successful()
 		{
 			const byte expectedValue = 1;
 			var key = GetUniqueKey("Get_Byte");
 
-			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(client.Get(key), expectedValue);
+			ShouldPass(await Store(key: key, value: expectedValue));
+			ShouldPass(await client.GetAsync<object>(key, Protocol.NO_CAS), expectedValue);
 		}
 
 		[Fact]
-		public void When_Getting_SByte_Result_Is_Successful()
+		public async void When_Getting_SByte_Result_Is_Successful()
 		{
 			const sbyte expectedValue = 1;
 			var key = GetUniqueKey("Get_Sbyte");
 
-			ShouldPass(Store(key: key, value: expectedValue));
-			ShouldPass(client.Get(key), expectedValue);
+			ShouldPass(await Store(key: key, value: expectedValue));
+			ShouldPass(await client.GetAsync<object>(key, Protocol.NO_CAS), expectedValue);
 		}
 	}
 }

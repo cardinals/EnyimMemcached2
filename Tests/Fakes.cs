@@ -91,7 +91,7 @@ namespace Enyim.Caching.Tests
 
 	public class _OperationFactory : IOperationFactory
 	{
-		public IConcatOperation Concat(ConcatenationMode mode, Key key, ulong cas, ArraySegment<byte> data)
+		public IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
@@ -106,17 +106,17 @@ namespace Enyim.Caching.Tests
 			throw new NotImplementedException();
 		}
 
-		public IGetOperation Get(Key key)
+		public IGetOperation Get(Key key, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IGetAndTouchOperation GetAndTouch(Key key, uint expires)
+		public IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, Key key, ulong defaultValue, ulong delta, ulong cas, uint expires)
+		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong defaultValue, ulong delta, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
@@ -126,12 +126,12 @@ namespace Enyim.Caching.Tests
 			throw new NotImplementedException();
 		}
 
-		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, ulong cas, uint expires)
+		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas)
 		{
 			throw new NotImplementedException();
 		}
 
-		public ITouchOperation Touch(Key key, uint expires)
+		public ITouchOperation Touch(Key key, uint expires, ulong cas)
 		{
 			throw new NotImplementedException();
 		}

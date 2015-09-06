@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 			: base(cluster, opFactory, keyTransformer, transcoder)
 		{ }
 
-		public async Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas = Protocol.NO_CAS)
+		public async Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas)
 		{
 			var result = await PerformGetCore(key, cas).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
@@ -21,66 +21,39 @@ namespace Enyim.Caching.Memcached
 			return converted;
 		}
 
-		public async Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<string> keys)
+		public async Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<KeyValuePair<string, ulong>> keys)
 		{
 			var ops = await MultiGetCore(keys).ConfigureAwait(false);
+
+			return ConvertMultigetResults(ops);
+		}
+
+		private IDictionary<string, IGetOperationResult<object>> ConvertMultigetResults(IEnumerable<KeyValuePair<string, IGetOperation>> ops)
+		{
 			var retval = new Dictionary<string, IGetOperationResult<object>>();
 
 			foreach (var kvp in ops)
-			{
 				retval[kvp.Key] = ConvertToResult<object>(kvp.Value.Result);
-			}
 
 			return retval;
 		}
 
-		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS)
+		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, Expiration expiration, ulong cas)
 		{
-			var result = await PerformGetAndTouchCore(key, GetExpiration(expiresAt)).ConfigureAwait(false);
+			var result = await PerformGetAndTouchCore(key, expiration, cas).ConfigureAwait(false);
 			var converted = ConvertToResult<T>(result);
 
 			return converted;
 		}
 
-		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS)
+		public Task<IOperationResult> TouchAsync(string key, Expiration expiration, ulong cas)
 		{
-			var result = await PerformGetAndTouchCore(key, GetExpiration(validFor)).ConfigureAwait(false);
-			var converted = ConvertToResult<T>(result);
-
-			return converted;
+			return PerformTouch(key, expiration, cas);
 		}
 
-		public IOperationResult Touch(string key, DateTime expiration)
+		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, Expiration expiration, ulong cas)
 		{
-			try
-			{
-				return TouchAsync(key, expiration).Result;
-			}
-			catch (AggregateException ae)
-			{
-				if (ae.InnerExceptions.Count == 1) throw ae.InnerExceptions[0];
-				else throw ae.Flatten();
-			}
-		}
-
-		public Task<IOperationResult> TouchAsync(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS)
-		{
-			return PerformTouch(key, GetExpiration(expiresAt), cas);
-		}
-
-		public Task<IOperationResult> TouchAsync(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS)
-		{
-			return PerformTouch(key, GetExpiration(validFor), cas);
-		}
-
-		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
-		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(expiresAt), cas);
-		}
-
-		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
-		{
-			return PerformStoreAsync(mode, key, value, GetExpiration(validFor), cas);
+			return PerformStoreAsync(mode, key, value, expiration, cas);
 		}
 
 		public Task<IOperationResult> RemoveAsync(string key, ulong cas)
@@ -93,14 +66,9 @@ namespace Enyim.Caching.Memcached
 			return PerformConcate(mode, key, cas, data);
 		}
 
-		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue, ulong delta, ulong cas)
+		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, Expiration expiration, ulong cas)
 		{
-			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(expiresAt));
-		}
-
-		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue, ulong delta, ulong cas)
-		{
-			return PerformMutate(mode, key, defaultValue, delta, cas, GetExpiration(validFor));
+			return PerformMutate(mode, key, expiration, defaultValue, delta, cas);
 		}
 
 		public Task<IOperationResult> FlushAllAsync()

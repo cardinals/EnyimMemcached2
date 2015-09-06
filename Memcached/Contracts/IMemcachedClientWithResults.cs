@@ -7,23 +7,17 @@ namespace Enyim.Caching.Memcached
 {
 	public interface IMemcachedClientWithResults
 	{
-		Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas = Protocol.NO_CAS);
-		Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<string> keys);
+		Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas);
+		Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<KeyValuePair<string, ulong>> keys);
 
-		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
-		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
+		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, Expiration expiration, ulong cas);
+		Task<IOperationResult> TouchAsync(string key, Expiration expiration, ulong cas);
 
-		Task<IOperationResult> TouchAsync(string key, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
-		Task<IOperationResult> TouchAsync(string key, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
+		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, Expiration expiration, ulong cas);
+		Task<IOperationResult> RemoveAsync(string key, ulong cas);
 
-		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas = Protocol.NO_CAS);
-		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas = Protocol.NO_CAS);
-
-		Task<IOperationResult> RemoveAsync(string key, ulong cas = Protocol.NO_CAS);
-
-		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas = Protocol.NO_CAS);
-		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, DateTime expiresAt, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong cas = Protocol.NO_CAS);
-		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, TimeSpan validFor, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong cas = Protocol.NO_CAS);
+		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas);
+		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, Expiration expiration, ulong cas);
 
 		Task<IOperationResult> FlushAllAsync();
 		Task<IStatsOperationResult> StatsAsync(string key);
