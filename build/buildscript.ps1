@@ -1,4 +1,4 @@
-﻿Framework "4.5.1x86"
+﻿Framework "4.6x64"
 FormatTaskName (("-" * 20) + "[ {0} ]" + ("-" * 20))
 
 $build_root = Split-Path $psake.build_script_file
@@ -127,6 +127,7 @@ function invoke-msbuild($target, $props, $project) {
 				Configuration = $configuration;
 				Platform = $platform;
 				ILMergeEnabled = "True";
+				SolutionDir = "$solution_dir\";
 			}).GetEnumerator() | % { $_.Name + "=" + $_.Value }
 		) -join ";"
 
