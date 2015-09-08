@@ -1,101 +1,83 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<!-- override project version -->
+
+	<!--<PropertyGroup>
+		<ProjectVersion>1234</ProjectVersion>
+		<ProjectInformalVersion></ProjectInformalVersion>
+	</PropertyGroup>-->
+
 	<UsingTask TaskName="ParseVersionNumber" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
 		<ParameterGroup>
-			<AssemblyInfoPath ParameterType="System.String" Required="true"/>
-			<Version ParameterType="System.String" Output="true" />
+			<VersionFile ParameterType="System.String" Required="true"/>
+			<ProjectVersion ParameterType="System.String" Output="true" />
+			<ProjectInformalVersion ParameterType="System.String" Output="true" />
 		</ParameterGroup>
 		<Task>
 			<Reference Include="System" />
 			<Reference Include="System.IO" />
 			<Code Type="Fragment" Language="cs">
 				<![CDATA[
-					var content = File.ReadAllText(AssemblyInfoPath);
-					var match = System.Text.RegularExpressions.Regex.Match(content, @"\[assembly\: AssemblyVersion\(""(?'V'\d+\.\d+\.\d+)""\)");
-					if (!match.Success) throw new InvalidOperationException("Cannot parse version info from " + AssemblyInfoPath);
-					Version = match.Groups["V"].ToString();
+					var content = File.ReadAllLines(VersionFile)[0];
+					var match = System.Text.RegularExpressions.Regex.Match(content, @"^(?'V'(\d+)\.(\d+)(\.\d+)?)");
+					if (!match.Success) throw new InvalidOperationException("Cannot parse version info from " + VersionFile);
+					ProjectVersion = match.Groups["V"].ToString();
+					ProjectInformalVersion = content;
 				]]>
 			</Code>
 		</Task>
 	</UsingTask>
-
-	<!-- override project version -->
-	<!--<PropertyGroup>
-		<ProjectVersion>4.0.0</ProjectVersion>
-	</PropertyGroup>-->
-
 	<!-- internals -->
 	<PropertyGroup>
-		<BuildDependsOn>_GetGitVersionInfo;_CreateAssemblyInfoFromGit;_AddVersion;$(BuildDependsOn)</BuildDependsOn>
+		<BuildDependsOn>_ParseVersion;_GetCache;_CreateAssemblyInfo;_AddVersion;$(BuildDependsOn)</BuildDependsOn>
 		<CleanDependsOn>_DeleteVersionCache;$(CleanDependsOn)</CleanDependsOn>
+
 		<GeneratedAssemblyInfo>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__versioninfo.cs'))</GeneratedAssemblyInfo>
-		<GitVersionCache>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__gitlastknown'))</GitVersionCache>
-
-		<BuildNumber>0</BuildNumber>
-		<BuildNumber Condition=" '$(APPVEYOR_BUILD_NUMBER)' != '' ">$(APPVEYOR_BUILD_NUMBER)</BuildNumber>
+		<VersionCache>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__lastversion'))</VersionCache>
 	</PropertyGroup>
-
-	<!-- try to run git to get a commit hash -->
-	<PropertyGroup Condition=" '$(CommitId)' == '' ">
-		<GitExe Condition=" Exists('$(ProgramFiles32)\git\bin\git.exe')     ">"$(ProgramFiles32)\git\bin\git.exe"</GitExe>
-		<GitExe Condition=" Exists('$(ProgramFiles)\git\bin\git.exe')       ">"$(ProgramFiles)\git\bin\git.exe"</GitExe>
-		<GitExe Condition=" Exists('$(ProgramFiles) (x86)\git\bin\git.exe') ">"$(ProgramFiles) (x86)\git\bin\git.exe"</GitExe>
-
-		<!-- git is not installed :( -->
-		<CommitId Condition=" '$(GitExe)' == '' ">local</CommitId>
-	</PropertyGroup>
-
-	<!--
-		this will generate obj\__gitlastknown with a comit hash (unless we already have it from somewhere)
-
-		output:
-		  $_LastGitVersion: previous hash
-		  $CommitId: current hash
-	-->
-	<Target Name="_GetGitVersionInfo" Condition=" '$(CommitId)' == '' ">
-		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
-		<ReadLinesFromFile File="$(GitVersionCache)" ContinueOnError="true">
-			<Output TaskParameter="Lines" PropertyName="_LastGitVersion"/>
-		</ReadLinesFromFile>
-		<Exec Command="$(GitExe) log --pretty=format:%%h -1 &gt; $(GitVersionCache)" IgnoreExitCode="false" />
-		<ReadLinesFromFile File="$(GitVersionCache)" ContinueOnError="true">
-			<Output TaskParameter="Lines" PropertyName="CommitId"/>
-		</ReadLinesFromFile>
-	</Target>
 
 	<Target Name="_ParseVersion" Condition=" '$(ProjectVersion)' == '' ">
-		<ParseVersionNumber AssemblyInfoPath="$(SolutionDir)\AssemblyInfo.cs">
-			<Output TaskParameter="Version" PropertyName="ProjectVersion"/>
+		<ParseVersionNumber VersionFile="$(SolutionDir)\VERSION">
+			<Output TaskParameter="ProjectVersion" PropertyName="ProjectVersion"/>
+			<Output TaskParameter="ProjectInformalVersion" PropertyName="ProjectInformalVersion"/>
 		</ParseVersionNumber>
 	</Target>
 
+	<Target Name="_GetCache">
+		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
+		<ReadLinesFromFile File="$(VersionCache)" ContinueOnError="true">
+			<Output TaskParameter="Lines" PropertyName="_Cache_ProjectInformalVersion"/>
+		</ReadLinesFromFile>
+	</Target>
+
 	<!--
-		assembly info is only regenerated if the git repo changes
+		assembly info is only regenerated if the version changes
 		this speeds up local builds considerably
 	-->
-	<Target Name="_CreateAssemblyInfoFromGit"
-			Condition=" '$(CommitId)' != '$(_LastGitVersion)' Or '$(Configuration)' == 'Release' "
-			DependsOnTargets="_ParseVersion">
+	<Target Name="_CreateAssemblyInfo"
+			Condition=" '$(_Cache_ProjectInformalVersion)' != '$(ProjectInformalVersion)' Or '$(Configuration)' == 'Release' ">
+
 		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
 		<Message Text="Version: $(ProjectVersion)" Importance="normal" />
-		<Message Text="Commit: $(CommitId)" Importance="normal" />
+		<Message Text="Informal Version: $(ProjectInformalVersion)" Importance="normal" />
 
-		<Delete Files="$(GeneratedAssemblyInfo)" />
+		<WriteLinesToFile File="$(VersionCache)" Lines="$(ProjectInformalVersion)" Overwrite="true"/>
 		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="true"
 						  Lines="
-[assembly: System.Reflection.AssemblyFileVersion(&quot;$(ProjectVersion).$(BuildNumber)&quot;)]
-[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ProjectVersion).$(BuildNumber)-$(CommitId)&quot;)]
+[assembly: System.Reflection.AssemblyVersion(&quot;$(ProjectVersion)&quot;)]
+[assembly: System.Reflection.AssemblyFileVersion(&quot;$(ProjectVersion)&quot;)]
+[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ProjectInformalVersion)&quot;)]
 " />
 	</Target>
 
 	<Target Name="_AddVersion">
-		<Message Text="Git not found" Importance="high" Condition=" '$CommitId)' == 'local' "/>
 		<CreateItem Include="$(GeneratedAssemblyInfo)">
 			<Output TaskParameter="Include" ItemName="Compile"/>
 		</CreateItem>
 	</Target>
 
 	<Target Name="_DeleteVersionCache">
-		<Delete Files="$(GeneratedAssemblyInfo);$(GitVersionCache)" ContinueOnError="true" />
+		<Delete Files="$(GeneratedAssemblyInfo);$(VersionCache)" ContinueOnError="true" />
 	</Target>
 </Project>
 

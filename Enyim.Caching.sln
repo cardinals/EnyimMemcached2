@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B76
 		build\ProjectDefaults.targets = build\ProjectDefaults.targets
 		build\SignAssembly.targets = build\SignAssembly.targets
 		build\Tasks.targets = build\Tasks.targets
+		VERSION = VERSION
 		build\VersionInfo.targets = build\VersionInfo.targets
 	EndProjectSection
 EndProject

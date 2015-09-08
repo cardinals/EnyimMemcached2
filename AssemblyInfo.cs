@@ -13,7 +13,7 @@ using System.Reflection;
 #endif
 
 // we use semantic versioning; version number is incremented by hand
-[assembly: AssemblyVersion("4.0.0")]
+//[assembly: AssemblyVersion("4.0.0")]
 
 // AssemblyFileVersion & AssemblyInformationalVersion
 // is provided by the VersionInfo.targets

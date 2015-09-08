@@ -9,14 +9,9 @@
 	</PropertyGroup>
 
 	<Target Name="CreatePackage" DependsOnTargets="_DeleteNugetPackage" Condition=" '$(NuspecPath)' != '' ">
-		<GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-			<Output TaskParameter="Assemblies" ItemName="AssemblyVersion" />
-		</GetAssemblyIdentity>
-
 		<PropertyGroup>
-			<FullVersion>%(AssemblyVersion.Version)</FullVersion>
-			<LastDot>$(FullVersion.LastIndexOf('.'))</LastDot>
-			<SemanticVersion>$(FullVersion.Remove('$(LastDot)'))</SemanticVersion>
+			<_Separator>$(ProjectInformalVersion.LastIndexOf('+'))</_Separator>
+			<PackageVersion>$(ProjectInformalVersion.Remove('$(_Separator)'))</PackageVersion>
 		</PropertyGroup>
 
 		<ItemGroup>
@@ -27,7 +22,7 @@
 				<Value>$(MSBuildProjectDirectory.TrimEnd('\'))</Value>
 			</CmdArgs>
 			<CmdArgs Include="Version">
-				<Value>$(SemanticVersion)</Value>
+				<Value>$(PackageVersion)</Value>
 			</CmdArgs>
 			<CmdArgs Include="Verbosity">
 				<Value>detailed</Value>

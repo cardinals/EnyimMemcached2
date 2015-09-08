@@ -25,7 +25,7 @@ Properties {
 	#used by build/package
 	$configuration = "Release"
 	$platform = "Any CPU"
-	$verbosity = "m"
+	$verbosity = "q"
 
 	#used by push
 	$push_target = "myget"
@@ -117,30 +117,74 @@ Task _Restore -description "restores nuget packages" {
 #
 #
 
+function guess-sha() {
+	$sha = git log --pretty=format:%h -1 2> $null
+
+	if ($LASTEXITCODE -ne 0) { $sha = $env:APPVEYOR_REPO_COMMIT }
+
+	return $sha
+}
+
+function guess-branch() {
+	$branch = git rev-parse --abbrev-ref HEAD 2> $null
+
+	if ($LASTEXITCODE -ne 0) { $branch = $env:APPVEYOR_REPO_BRANCH }
+
+	return $branch
+}
+
+function non-empty($v) { $v | ? { $_ } }
+
+function get-informal-version($v) {
+
+	$sha = guess-sha
+	$branch = guess-branch
+	$counter = $env:APPVEYOR_BUILD_NUMBER
+
+	# version+branch.sha.counter
+	return ((non-empty @($v, ((non-empty @($branch, $sha, $counter)) -join "."))) -join "+")
+}
+
+function prepare-version-numbers() {
+	$version = gc "$solution_dir\VERSION"
+	assert ($version -match "\d+.\d+(.\d+)?") ("Invalid version number: $version")
+
+	$normal = $Matches[0]
+	$informal = get-informal-version $version
+
+	return @{ ProjectVersion=$normal; ProjectInformalVersion=$informal }
+}
+
 function invoke-msbuild($target, $props, $project) {
 
 	Assert (![System.String]::IsNullOrEmpty($configuration)) ("Configuration must be specified")
 	Assert (![System.String]::IsNullOrEmpty($platform)) ("Platform must be specified")
 
 	$p = (
-			($props + @{
+			($props + (prepare-version-numbers) + @{
 				Configuration = $configuration;
 				Platform = $platform;
 				ILMergeEnabled = "True";
-				SolutionDir = "$solution_dir\";
-			}).GetEnumerator() | % { $_.Name + "=" + $_.Value }
+				SolutionDir = "$solution_dir\\";
+			}).GetEnumerator() | % { $_.Name + "=""$( $_.Value )""" }
 		) -join ";"
 
 	$v = $verbosity
-	if ([String]::IsNullOrWhiteSpace($v)) { $v = "n" }
+	if ([String]::IsNullOrWhiteSpace($v)) { $v = "q" }
 
-	$extras = @( "/v:$v", "/nologo" )
+	$msbuildargs = @(
+		"""$project""",
+		"/t:$target",
+		"/p:$p",
+		"/v:$v",
+		"/nologo"
+	)
 
 	if (![String]::IsNullOrWhiteSpace($env:AppVeyorCI)) {
-		$extras += @( "/logger:C:\Program^ Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" )
+		$msbuildargs += @( "/logger:C:\Program^ Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" )
 	}
 
-	Exec { msbuild $project $extras /t:$target /p:"$p"  }
+	msbuild $msbuildargs
 }
 
 function find-packages
