@@ -16,7 +16,7 @@
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="bin\$configuration$\*.configuration.*" target="lib\net45" />
-		<file src=".nuget\*.xdt" target="content" />
+		<file src="..\bin\$configuration$\*.configuration.*" target="lib\net45" />
+		<file src="*.xdt" target="content" />
 	</files>
 </package>

@@ -18,20 +18,23 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B7653-D6D4-4469-A79E-F142D103E5FC}"
 	ProjectSection(SolutionItems) = preProject
 		AssemblyInfo.cs = AssemblyInfo.cs
-		build.ps1 = build.ps1
-		build\buildscript.ps1 = build\buildscript.ps1
+		build\build.fsx = build\build.fsx
 		footer.txt = footer.txt
-		build\ILMerge.targets = build\ILMerge.targets
 		LICENSE = LICENSE
-		build\Nuget.targets = build\Nuget.targets
-		build\ProjectDefaults.targets = build\ProjectDefaults.targets
-		build\SignAssembly.targets = build\SignAssembly.targets
-		build\Tasks.targets = build\Tasks.targets
+		build\utils.fsx = build\utils.fsx
 		VERSION = VERSION
-		build\VersionInfo.targets = build\VersionInfo.targets
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log4net", "log4net\log4net.csproj", "{A220B349-B7BB-483A-B4DA-1A91CB875E9D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "msbuild", "msbuild", "{3A1C1621-CC53-4D7A-AADD-CC7D45605A01}"
+	ProjectSection(SolutionItems) = preProject
+		build\ILMerge.targets = build\ILMerge.targets
+		build\ProjectDefaults.targets = build\ProjectDefaults.targets
+		build\SignAssembly.targets = build\SignAssembly.targets
+		build\Tasks.targets = build\Tasks.targets
+		build\VersionInfo.targets = build\VersionInfo.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,5 +73,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{D26418C0-BA05-4067-8F68-2493DA3E0E11} = {FD390421-EA66-4D81-8805-521D35CCA8D1}
 		{A220B349-B7BB-483A-B4DA-1A91CB875E9D} = {FD390421-EA66-4D81-8805-521D35CCA8D1}
+		{3A1C1621-CC53-4D7A-AADD-CC7D45605A01} = {940B7653-D6D4-4469-A79E-F142D103E5FC}
 	EndGlobalSection
 EndGlobal

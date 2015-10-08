@@ -27,7 +27,7 @@
 	</Target>
 
 	<Target Name="_MergeAssemblies" Condition=" '@(SourceList)' != '' ">
-		<Message Text="Merging output with: @(SourceList -> '%(Filename)')" Importance="High" />
+		<Message Text="++ Merging @(SourceList -> '%(Filename)') into  $(TargetPath)" Importance="High" />
 
 		<!-- get path to the .net reference assemblies -->
 		<GetReferenceAssemblyPaths TargetFrameworkMoniker="$(TargetFrameworkMoniker)" RootPath="$(TargetFrameworkRootPath)">

@@ -1,1 +1,0 @@
-See "get-help .\build.ps1" from the Windows PowerShell prompt.

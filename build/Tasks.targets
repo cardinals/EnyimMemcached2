@@ -2,7 +2,6 @@
 	<Import Project="VersionInfo.targets" />
 	<Import Project="SignAssembly.targets" />
 	<Import Project="ILMerge.targets" />
-	<Import Project="Nuget.targets" />
 </Project>
 
 <!--
