@@ -1,20 +1,29 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IOperationFactory
+	public static partial class MemcachedClientExtensions
 	{
-		IGetOperation Get(Key key, ulong cas);
-		IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas);
+		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value)
+		{
+			return self.StoreAsync(StoreMode.Set, key, value, Expiration.Never);
+		}
 
-		IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas);
-		IDeleteOperation Delete(Key key, ulong cas);
-		IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas);
-		ITouchOperation Touch(Key key, uint expires, ulong cas);
-		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
+		public static Task<bool> SetAsync(this IMemcachedClient self, string key, object value, Expiration expiration)
+		{
+			return self.StoreAsync(StoreMode.Set, key, value, expiration);
+		}
 
-		IStatsOperation Stats(string type);
-		IFlushOperation Flush();
+		public static bool Set(this IMemcachedClient self, string key, object value)
+		{
+			return self.Store(StoreMode.Set, key, value, Expiration.Never);
+		}
+
+		public static bool Set(this IMemcachedClient self, string key, object value, Expiration expiration)
+		{
+			return self.Store(StoreMode.Set, key, value, expiration);
+		}
 	}
 }
 

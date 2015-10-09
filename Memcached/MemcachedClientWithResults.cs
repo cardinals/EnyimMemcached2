@@ -66,9 +66,9 @@ namespace Enyim.Caching.Memcached
 			return PerformConcate(mode, key, cas, data);
 		}
 
-		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, Expiration expiration, ulong cas)
+		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue, ulong cas)
 		{
-			return PerformMutate(mode, key, expiration, defaultValue, delta, cas);
+			return PerformMutate(mode, key, expiration, delta, defaultValue, cas);
 		}
 
 		public Task<IOperationResult> FlushAllAsync()

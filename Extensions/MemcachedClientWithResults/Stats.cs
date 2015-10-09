@@ -1,20 +1,14 @@
 ﻿using System;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IOperationFactory
+	public static partial class MemcachedClientWithResultsExtensions
 	{
-		IGetOperation Get(Key key, ulong cas);
-		IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas);
-
-		IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas);
-		IDeleteOperation Delete(Key key, ulong cas);
-		IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas);
-		ITouchOperation Touch(Key key, uint expires, ulong cas);
-		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
-
-		IStatsOperation Stats(string type);
-		IFlushOperation Flush();
+		public static IStatsOperationResult Stats(this IMemcachedClientWithResults self, string key)
+		{
+			return self.StatsAsync(key).RunAndUnwrap();
+		}
 	}
 }
 

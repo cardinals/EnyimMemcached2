@@ -13,8 +13,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
-			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
+			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
 		}
 
 		[Fact]
@@ -22,8 +22,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment_Get");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
-			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
+			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
 			Assert.Equal("210", await client.GetAsync<string>(key));
 		}
 
@@ -42,8 +42,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
-			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
+			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
 		}
 
 		[Fact]
@@ -51,8 +51,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement_Get");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
-			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 200, 10));
+			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
+			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
 			Assert.Equal("190", await client.GetAsync<string>(key));
 		}
 

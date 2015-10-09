@@ -26,10 +26,41 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="MemcachedClientWithResults\Add.cs" />
+    <Compile Include="MemcachedClientWithResults\Append.cs" />
+    <Compile Include="MemcachedClientWithResults\Concate.cs" />
+    <Compile Include="MemcachedClientWithResults\Decrement.cs" />
+    <Compile Include="MemcachedClientWithResults\FlushAll.cs" />
+    <Compile Include="MemcachedClientWithResults\Get.cs" />
+    <Compile Include="MemcachedClientWithResults\GetAndTouch.cs" />
+    <Compile Include="MemcachedClientWithResults\Increment.cs" />
+    <Compile Include="MemcachedClientWithResults\Mutate.cs" />
+    <Compile Include="MemcachedClientWithResults\Prepend.cs" />
+    <Compile Include="MemcachedClientWithResults\Remove.cs" />
+    <Compile Include="MemcachedClientWithResults\Replace.cs" />
+    <Compile Include="MemcachedClientWithResults\Set.cs" />
+    <Compile Include="MemcachedClientWithResults\Stats.cs" />
+    <Compile Include="MemcachedClientWithResults\Store.cs" />
+    <Compile Include="MemcachedClientWithResults\Touch.cs" />
+    <Compile Include="MemcachedClient\Add.cs" />
+    <Compile Include="MemcachedClient\Append.cs" />
+    <Compile Include="MemcachedClient\Concate.cs" />
+    <Compile Include="MemcachedClient\Decrement.cs" />
+    <Compile Include="MemcachedClient\FlushAll.cs" />
+    <Compile Include="MemcachedClient\Get.cs" />
+    <Compile Include="MemcachedClient\GetAndTouch.cs" />
+    <Compile Include="MemcachedClient\Increment.cs" />
+    <Compile Include="MemcachedClient\Mutate.cs" />
+    <Compile Include="MemcachedClient\Prepend.cs" />
+    <Compile Include="MemcachedClient\Remove.cs" />
+    <Compile Include="MemcachedClient\Replace.cs" />
+    <Compile Include="MemcachedClient\Set.cs" />
+    <Compile Include="MemcachedClient\Stats.cs" />
+    <Compile Include="MemcachedClient\Store.cs" />
+    <Compile Include="MemcachedClient\Touch.cs" />
+    <Compile Include="TaskEx.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MemcachedClientExtensions.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>

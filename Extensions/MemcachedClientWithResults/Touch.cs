@@ -1,25 +1,30 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMemcachedClient
+	public static partial class MemcachedClientWithResultsExtensions
 	{
-		Task<T> GetAsync<T>(string key);
-		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
+		public static Task<IOperationResult> TouchAsync(this IMemcachedClientWithResults self, string key, Expiration expiration)
+		{
+			return self.TouchAsync(key, expiration, Protocol.NO_CAS);
+		}
 
-		Task<T> GetAndTouchAsync<T>(string key, Expiration expiration);
-		Task<bool> TouchAsync(string key, Expiration expiration);
+		public static Task<IOperationResult> TouchAsync(this IMemcachedClientWithResults self, string key, ulong cas = Protocol.NO_CAS)
+		{
+			return self.TouchAsync(key, Expiration.Never, cas);
+		}
 
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration);
-		Task<bool> RemoveAsync(string key);
+		public static IOperationResult Touch(this IMemcachedClientWithResults self, string key, ulong cas = Protocol.NO_CAS)
+		{
+			return self.Touch(key, Expiration.Never, cas);
+		}
 
-		Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue);
-
-		Task<bool> FlushAllAsync();
-		Task<ServerStats> StatsAsync(string key);
+		public static IOperationResult Touch(this IMemcachedClientWithResults self, string key, Expiration expiration, ulong cas = Protocol.NO_CAS)
+		{
+			return self.TouchAsync(key, expiration, cas).RunAndUnwrap();
+		}
 	}
 }
 

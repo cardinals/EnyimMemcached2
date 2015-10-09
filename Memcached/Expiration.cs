@@ -17,6 +17,7 @@ namespace Enyim.Caching.Memcached
 
 		public bool IsAbsolute { get; private set; }
 		public bool IsForever { get; private set; }
+		public bool IsNever { get { return Value == 0; } }
 		public uint Value { get; private set; }
 
 		public static Expiration Create(TimeSpan validFor)

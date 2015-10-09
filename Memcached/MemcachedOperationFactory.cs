@@ -45,7 +45,7 @@ namespace Enyim.Caching.Memcached
 			};
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong defaultValue, ulong delta, ulong cas)
+		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas)
 		{
 			return new MutateOperation(allocator, mode, key)
 			{

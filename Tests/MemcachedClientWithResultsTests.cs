@@ -8,11 +8,11 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsTests : MemcachedClientTestBase, IClassFixture<ClientTestSetupFixture>
+	public partial class MemcachedClientWithResultsTests : MemcachedClientTestBase, IClassFixture<PrivateServerFixture>
 	{
 		private IMemcachedClientWithResults client;
 
-		public MemcachedClientWithResultsTests(ClientTestSetupFixture data)
+		public MemcachedClientWithResultsTests(PrivateServerFixture data)
 			: base("MemcachedClientWithResultsTests")
 		{
 			client = new MemcachedClientWithResults(data.ClientConfig);

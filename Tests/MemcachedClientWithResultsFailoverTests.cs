@@ -57,7 +57,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public async void Mutate_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			IfThrows<IOException>(await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), 100, 100, Expiration.Never, 0));
+			IfThrows<IOException>(await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), Expiration.Never, 100, 100, 0));
 		}
 
 		[Fact]
@@ -96,7 +96,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public async void MutateAsync_Should_Fail_With_IOException_When_Target_Node_Is_Offline()
 		{
-			var result = await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), 100, 100, Expiration.Never, 0);
+			var result = await client.MutateAsync(MutationMode.Increment, GetUniqueKey(), Expiration.Never, 100, 100, 0);
 			IfThrows<IOException>(result);
 		}
 	}

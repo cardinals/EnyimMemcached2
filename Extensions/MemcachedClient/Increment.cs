@@ -1,25 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IMemcachedClient
+	public static partial class MemcachedClientExtensions
 	{
-		Task<T> GetAsync<T>(string key);
-		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
+		public static Task<ulong> IncrementAsync(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		{
+			return self.MutateAsync(MutationMode.Increment, key, Expiration.Never, delta, defaultValue);
+		}
 
-		Task<T> GetAndTouchAsync<T>(string key, Expiration expiration);
-		Task<bool> TouchAsync(string key, Expiration expiration);
+		public static ulong Increment(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		{
+			return self.Mutate(MutationMode.Increment, key, Expiration.Never, delta, defaultValue);
+		}
 
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration);
-		Task<bool> RemoveAsync(string key);
-
-		Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue);
-
-		Task<bool> FlushAllAsync();
-		Task<ServerStats> StatsAsync(string key);
+		public static ulong Increment(this IMemcachedClient self, string key, Expiration expiration, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		{
+			return self.Mutate(MutationMode.Increment, key, expiration, delta, defaultValue);
+		}
 	}
 }
 

@@ -91,11 +91,11 @@ namespace Enyim.Caching.Memcached
 			return HandleErrors(PerformConcate(mode, key, 0, data));
 		}
 
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong defaultValue, ulong delta)
+		public async Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue)
 		{
 			try
 			{
-				var result = await PerformMutate(mode, key, expiration, defaultValue, delta, 0).ConfigureAwait(false);
+				var result = await PerformMutate(mode, key, expiration, delta, defaultValue, 0).ConfigureAwait(false);
 
 				return result.Value;
 			}
@@ -119,7 +119,7 @@ namespace Enyim.Caching.Memcached
 			{
 				if (log.IsErrorEnabled) log.Error(e);
 
-				return ServerStats.Empty;
+				return new ServerStats();
 			}
 		}
 

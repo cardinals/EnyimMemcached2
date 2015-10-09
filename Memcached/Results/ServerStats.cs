@@ -10,14 +10,12 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public sealed class ServerStats
 	{
-		public static readonly ServerStats Empty = new ServerStats();
-
 		/// <summary>
 		/// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
 		/// </summary>
 		public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		// Summable StatItems start at OpSum
 		private const int OpSum = 0x100;
 
@@ -46,27 +44,21 @@ namespace Enyim.Caching.Memcached
 
 		#endregion
 
-		private readonly Dictionary<IPEndPoint, Dictionary<string, string>> results;
+		private readonly Dictionary<IPEndPoint, IReadOnlyDictionary<string, string>> results;
+		private IPEndPoint[] keys;
 
 		internal ServerStats()
 		{
-			this.results = new Dictionary<IPEndPoint, Dictionary<string, string>>();
-		}
-
-		internal ServerStats(Dictionary<IPEndPoint, Dictionary<string, string>> results)
-		{
-			this.results = results;
-		}
-
-		internal ServerStats(IEnumerable<Tuple<INode, Dictionary<string, string>>> results)
-		{
-			this.results = results.ToDictionary(t => t.Item1.EndPoint, t => t.Item2);
+			results = new Dictionary<IPEndPoint, IReadOnlyDictionary<string, string>>();
 		}
 
 		internal void Append(IPEndPoint endpoint, Dictionary<string, string> stats)
 		{
+			keys = null;
 			results[endpoint] = stats;
 		}
+
+		public IReadOnlyList<IPEndPoint> Endpoints { get { return keys ?? (keys = results.Keys.ToArray()); } }
 
 		/// <summary>
 		/// Gets a stat value for the specified server.
@@ -83,7 +75,7 @@ namespace Enyim.Caching.Memcached
 			{
 				// check if we can sum the value for all servers
 				if (((int)item & OpSum) != OpSum)
-					throw new ArgumentException("The " + item + " values cannot be summarized");
+					throw new ArgumentException($"The values of '{item}' cannot be summarized", nameof(item));
 
 				// sum & return
 				foreach (var endpoint in results.Keys)
@@ -97,28 +89,14 @@ namespace Enyim.Caching.Memcached
 				// asked for a specific server
 				var tmp = GetRaw(server, item);
 				if (String.IsNullOrEmpty(tmp))
-					throw new ArgumentException("Item was not found: " + item);
+					throw new KeyNotFoundException($"Item was not found: {item}");
 
 				// return the value
 				if (!Int64.TryParse(tmp, out retval))
-					throw new InvalidOperationException("Item '" + item + "' is not a number. Original value: " + tmp);
+					throw new InvalidOperationException($"Item '{item}' is not a number. Original value: {tmp}");
 			}
 
 			return retval;
-		}
-
-		/// <summary>
-		/// Returns the server of memcached running on the specified server.
-		/// </summary>
-		/// <param name="server">The adress of the server</param>
-		/// <returns>The version of memcached</returns>
-		public Version GetVersion(IPEndPoint server)
-		{
-			var version = GetRaw(server, StatKeys.Version);
-			if (String.IsNullOrEmpty(version))
-				throw new InvalidOperationException("No version found for the server " + server);
-
-			return new Version(version);
 		}
 
 		/// <summary>
@@ -130,24 +108,21 @@ namespace Enyim.Caching.Memcached
 		{
 			var uptime = GetRaw(server, StatKeys.Uptime);
 			if (String.IsNullOrEmpty(uptime))
-				throw new InvalidOperationException("No uptime found for the server " + server);
+				throw new KeyNotFoundException($"No uptime found for the server {server}");
 
 			long value;
 			if (!Int64.TryParse(uptime, out value))
-				throw new InvalidOperationException("Invalid uptime string was returned: " + uptime);
+				throw new InvalidOperationException($"Invalid uptime string was returned: {uptime}");
 
 			return TimeSpan.FromSeconds(value);
 		}
 
-		public IDictionary<IPEndPoint, string> GetRaw(string key)
+		public IReadOnlyDictionary<IPEndPoint, string> GetRaw(string key)
 		{
 			string tmp;
 
-			return this.results
-						.ToDictionary(kvp => kvp.Key,
-										kvp => kvp.Value.TryGetValue(key, out tmp)
-												? tmp
-												: null);
+			return results.ToDictionary(kvp => kvp.Key,
+										kvp => kvp.Value.TryGetValue(key, out tmp) ? tmp : null);
 		}
 
 		/// <summary>
@@ -161,7 +136,7 @@ namespace Enyim.Caching.Memcached
 			var index = (int)item;
 
 			if (index < 0 || index >= KeyNames.Length)
-				throw new ArgumentOutOfRangeException("item");
+				throw new ArgumentOutOfRangeException(nameof(item));
 
 			return GetRaw(server, KeyNames[index]);
 		}
@@ -174,21 +149,21 @@ namespace Enyim.Caching.Memcached
 		/// <returns>The value of the stat item</returns>
 		public string GetRaw(IPEndPoint server, string key)
 		{
-			Dictionary<string, string> serverValues;
+			IReadOnlyDictionary<string, string> serverValues;
 			string retval;
 
-			if (this.results.TryGetValue(server, out serverValues))
+			if (results.TryGetValue(server, out serverValues))
 			{
 				if (serverValues.TryGetValue(key, out retval))
 					return retval;
 
 				if (log.IsDebugEnabled)
-					log.Debug("The stat item {0} does not exist for {1}", key, server);
+					log.Debug($"The stat item {key} does not exist for {server}");
 			}
 			else
 			{
 				if (log.IsDebugEnabled)
-					log.Debug("No stats are stored for {0}", server);
+					log.Debug($"No stats are stored for {server}");
 			}
 
 			return null;

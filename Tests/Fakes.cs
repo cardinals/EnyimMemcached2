@@ -116,7 +116,7 @@ namespace Enyim.Caching.Tests
 			throw new NotImplementedException();
 		}
 
-		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong defaultValue, ulong delta, ulong cas)
+		public IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas)
 		{
 			throw new NotImplementedException();
 		}

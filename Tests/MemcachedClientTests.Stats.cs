@@ -1,20 +1,32 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using Enyim.Caching.Memcached;
+using Xunit;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Tests
 {
-	public interface IOperationFactory
+	public partial class MemcachedClientTests
 	{
-		IGetOperation Get(Key key, ulong cas);
-		IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas);
+		[Fact]
+		public async void When_Getting_The_Stats_It_Has_The_Default_Items()
+		{
+			long l;
+			var keys = new[] { "pid", "time", "uptime", "get_hits", "get_misses" };
 
-		IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas);
-		IDeleteOperation Delete(Key key, ulong cas);
-		IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas);
-		ITouchOperation Touch(Key key, uint expires, ulong cas);
-		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
+			var stats = await client.StatsAsync(null);
+			Assert.NotNull(stats);
 
-		IStatsOperation Stats(string type);
-		IFlushOperation Flush();
+			foreach (var k in keys)
+			{
+				foreach (var server in stats.Endpoints)
+				{
+					var value = stats.GetRaw(server, k);
+					Assert.True(Int64.TryParse(value, out l), $"value of '{k}' is not a number, but '{value}'");
+				}
+			}
+		}
 	}
 }
 

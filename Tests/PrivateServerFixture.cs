@@ -6,7 +6,7 @@ using Enyim.Caching.Memcached.Configuration;
 
 namespace Enyim.Caching.Tests
 {
-	public class ClientTestSetupFixture : IDisposable
+	public class PrivateServerFixture : IDisposable
 	{
 		static int port = 11211;
 		private const string ClusterName = "MemcachedClientTests";
@@ -14,7 +14,7 @@ namespace Enyim.Caching.Tests
 
 		private string cfg;
 
-		public ClientTestSetupFixture()
+		public PrivateServerFixture()
 		{
 			var p = Interlocked.Increment(ref port);
 			server = MemcachedServer.Run(p);

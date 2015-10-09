@@ -121,11 +121,11 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, Expiration expiration, ulong defaultValue, ulong delta, ulong cas)
+		protected async Task<IMutateOperationResult> PerformMutate(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue, ulong cas)
 		{
 			try
 			{
-				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expiration.Value, defaultValue, delta, cas);
+				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expiration.Value, delta, defaultValue, cas);
 				await cluster.Execute(op).ConfigureAwait(false);
 
 				return op.Result;

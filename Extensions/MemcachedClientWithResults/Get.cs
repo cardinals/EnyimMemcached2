@@ -1,20 +1,29 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
-	public interface IOperationFactory
+	public static partial class MemcachedClientWithResultsExtensions
 	{
-		IGetOperation Get(Key key, ulong cas);
-		IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas);
+		public static Task<IGetOperationResult<object>> GetAsync(this IMemcachedClientWithResults self, string key, ulong cas = Protocol.NO_CAS)
+		{
+			return self.GetAsync<object>(key, cas);
+		}
 
-		IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas);
-		IDeleteOperation Delete(Key key, ulong cas);
-		IMutateOperation Mutate(MutationMode mode, Key key, uint expires, ulong delta, ulong defaultValue, ulong cas);
-		ITouchOperation Touch(Key key, uint expires, ulong cas);
-		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
+		public static IGetOperationResult<T> Get<T>(this IMemcachedClientWithResults self, string key, ulong cas = Protocol.NO_CAS)
+		{
+			return self.GetAsync<T>(key, cas).RunAndUnwrap();
+		}
 
-		IStatsOperation Stats(string type);
-		IFlushOperation Flush();
+		public static IDictionary<string, IGetOperationResult<object>> Get(this IMemcachedClientWithResults self, IEnumerable<string> keys)
+		{
+			var keysWithoutCas = keys.Select(k => new KeyValuePair<string, ulong>(k, Protocol.NO_CAS));
+
+			return self.GetAsync(keysWithoutCas).RunAndUnwrap();
+		}
 	}
 }
 
