@@ -1,25 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public interface IMemcachedClient
 	{
-		Task<T> GetAsync<T>(string key);
-		Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys);
+		Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas);
+		Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<KeyValuePair<string, ulong>> keys);
 
-		Task<T> GetAndTouchAsync<T>(string key, Expiration expiration);
-		Task<bool> TouchAsync(string key, Expiration expiration);
+		Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, Expiration expiration, ulong cas);
+		Task<IOperationResult> TouchAsync(string key, Expiration expiration, ulong cas);
 
-		Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration);
-		Task<bool> RemoveAsync(string key);
+		Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, Expiration expiration, ulong cas);
+		Task<IOperationResult> RemoveAsync(string key, ulong cas);
 
-		Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data);
-		Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue);
+		Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas);
+		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue, ulong cas);
 
-		Task<bool> FlushAllAsync();
-		Task<ServerStats> StatsAsync(string key);
+		Task<IOperationResult> FlushAllAsync();
+		Task<IStatsOperationResult> StatsAsync(string key);
 	}
 }
 

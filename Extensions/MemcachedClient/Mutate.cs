@@ -1,23 +1,24 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<ulong> MutateAsync(this IMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
+		public static Task<IMutateOperationResult> MutateAsync(this IMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue);
+			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue, cas);
 		}
 
-		public static ulong Mutate(this IMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
+		public static IMutateOperationResult Mutate(this IMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue).RunAndUnwrap();
+			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue, cas).RunAndUnwrap();
 		}
 
-		public static ulong Mutate(this IMemcachedClient self, MutationMode mode, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
+		public static IMutateOperationResult Mutate(this IMemcachedClient self, MutationMode mode, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.MutateAsync(mode, key, expiration, delta, defaultValue).RunAndUnwrap();
+			return self.MutateAsync(mode, key, expiration, delta, defaultValue, cas).RunAndUnwrap();
 		}
 	}
 }

@@ -55,81 +55,56 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="AdvQueueTests.cs" />
-    <Compile Include="MemcachedClientFailoverTests.cs" />
+    <Compile Include="SimpleMemcachedClientFailoverTests.cs" />
     <Compile Include="MemcachedClientTestBase.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Cas.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Concat.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MemcachedClientTests.cs">
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Get.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Mutate.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Remove.cs">
-      <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="MemcachedClientTests.Stats.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
     </Compile>
     <Compile Include="MemcachedClientTests.Store.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemcachedClientTests.Touch.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MemcachedClientWithResultsFailoverTests.cs" />
+    <Compile Include="SimpleMemcachedClientTests.Concat.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MemcachedClientWithResultsExtensions\Add.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Replace.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Set.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Store.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Touch.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Prepend.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Append.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\MemcachedClientWithResultsExtensionsTests.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Concate.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Increment.cs" />
-    <Compile Include="MemcachedClientWithResultsExtensions\Decrement.cs" />
-    <Compile Include="MemcachedClientWithResultsFailoverTests.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsExtensions\Mutate.cs" />
-    <Compile Include="MemcachedClientWithResultsTests.Cas.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.Concat.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.cs" />
-    <Compile Include="MemcachedClientWithResultsTests.Get.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.Mutate.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.Remove.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.Store.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MemcachedClientWithResultsTests.Touch.cs">
-      <DependentUpon>MemcachedClientWithResultsTests.cs</DependentUpon>
-    </Compile>
+    <Compile Include="MemcachedClientExtensions\Add.cs" />
+    <Compile Include="MemcachedClientExtensions\GetAndTouch.cs" />
+    <Compile Include="MemcachedClientExtensions\Remove.cs" />
+    <Compile Include="MemcachedClientExtensions\Replace.cs" />
+    <Compile Include="MemcachedClientExtensions\Get.cs" />
+    <Compile Include="MemcachedClientExtensions\Set.cs" />
+    <Compile Include="MemcachedClientExtensions\Store.cs" />
+    <Compile Include="MemcachedClientExtensions\FlushAll.cs" />
+    <Compile Include="MemcachedClientExtensions\Stats.cs" />
+    <Compile Include="MemcachedClientExtensions\Touch.cs" />
+    <Compile Include="MemcachedClientExtensions\Prepend.cs" />
+    <Compile Include="MemcachedClientExtensions\Append.cs" />
+    <Compile Include="MemcachedClientExtensions\MemcachedClientExtensionsTests.cs" />
+    <Compile Include="MemcachedClientExtensions\Concate.cs" />
+    <Compile Include="MemcachedClientExtensions\Increment.cs" />
+    <Compile Include="MemcachedClientExtensions\Decrement.cs" />
+    <Compile Include="MemcachedClientExtensions\Mutate.cs" />
+    <Compile Include="MemcachedClientTests.cs" />
     <Compile Include="PooledMemoryStreamTests.cs" />
     <Compile Include="SharedServerFixture.cs" />
     <Compile Include="PrivateServerFixture.cs">
@@ -160,6 +135,24 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleMemcachedClientTests.Get.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.Mutate.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.Remove.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.Stats.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.Store.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SimpleMemcachedClientTests.Touch.cs">
+      <DependentUpon>SimpleMemcachedClientTests.cs</DependentUpon>
+    </Compile>
     <Compile Include="StepRecorder.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<bool> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value)
+		public static Task<IOperationResult> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, Expiration expiration)
 		{
-			return self.StoreAsync(mode, key, value, Expiration.Never);
+			return self.StoreAsync(mode, key, value, expiration, Protocol.NO_CAS);
 		}
 
-		public static bool Store(this IMemcachedClient self, StoreMode mode, string key, object value, Expiration expiration)
+		public static Task<IOperationResult> StoreAsync(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = Protocol.NO_CAS)
 		{
-			return self.StoreAsync(mode, key, value, expiration).RunAndUnwrap();
+			return self.StoreAsync(mode, key, value, Expiration.Never, cas);
+		}
+
+		public static IOperationResult Store(this IMemcachedClient self, StoreMode mode, string key, object value, ulong cas = Protocol.NO_CAS)
+		{
+			return self.StoreAsync(mode, key, value, Expiration.Never, cas).RunAndUnwrap();
+		}
+
+		public static IOperationResult Store(this IMemcachedClient self, StoreMode mode, string key, object value, Expiration expiration, ulong cas = Protocol.NO_CAS)
+		{
+			return self.StoreAsync(mode, key, value, expiration, cas).RunAndUnwrap();
 		}
 	}
 }

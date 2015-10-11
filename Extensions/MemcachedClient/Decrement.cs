@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<ulong> DecrementAsync(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<IMutateOperationResult> DecrementAsync(this IMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.MutateAsync(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue);
+			return self.MutateAsync(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue, cas);
 		}
 
-		public static ulong Decrement(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<IMutateOperationResult> DecrementAsync(this IMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Mutate(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue);
+			return self.MutateAsync(MutationMode.Decrement, key, expiration, delta, defaultValue, cas);
 		}
 
-		public static ulong Decrement(this IMemcachedClient self, string key, Expiration expiration, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static IMutateOperationResult Decrement(this IMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Mutate(MutationMode.Decrement, key, expiration, delta, defaultValue);
+			return self.Mutate(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue, cas);
+		}
+
+		public static IMutateOperationResult Decrement(this IMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
+		{
+			return self.Mutate(MutationMode.Decrement, key, expiration, delta, defaultValue, cas);
 		}
 	}
 }

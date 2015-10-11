@@ -9,10 +9,10 @@ namespace Enyim.Caching.Tests
 {
 	public partial class MemcachedClientTests
 	{
-		public const int DefaultExpiration = 3000;
-		public const int WaitButStillAlive = 500;
-		public const int NewExpiration = 20000;
-		public const int WaitUntilExpires = 5000;
+		public const int DefaultExpiration = SimpleMemcachedClientTests.DefaultExpiration;
+		public const int WaitButStillAlive = SimpleMemcachedClientTests.WaitButStillAlive;
+		public const int NewExpiration = SimpleMemcachedClientTests.NewExpiration;
+		public const int WaitUntilExpires = SimpleMemcachedClientTests.WaitUntilExpires;
 
 		[Fact]
 		[Trait("slow", "yes")]
@@ -21,12 +21,14 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_Expired");
 			var value = GetRandomString();
 
-			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			Assert.True(DefaultExpiration > WaitButStillAlive);
+
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, TimeSpan.FromMilliseconds(DefaultExpiration), Protocol.NO_CAS), operation: "initial store");
 			Thread.Sleep(WaitButStillAlive);
-			Assert.Equal(value, await client.GetAsync<string>(key));
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS), operation: "retrieve " + key);
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Null(await client.GetAsync<string>(key));
+			ShouldFail(await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -36,12 +38,12 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Get_And_Touch");
 			var value = GetRandomString();
 
-			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration), Protocol.NO_CAS));
 			Thread.Sleep(WaitButStillAlive);
-			Assert.Equal(value, await client.GetAndTouchAsync<string>(key, DateTime.Now.AddMilliseconds(NewExpiration)));
+			AreEqual(value, await client.GetAndTouchAsync<string>(key, DateTime.Now.AddSeconds(SimpleMemcachedClientTests.NewExpiration), Protocol.NO_CAS));
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Equal(value, await client.GetAsync<string>(key));
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -51,12 +53,12 @@ namespace Enyim.Caching.Tests
 			var key = GetUniqueKey("Touch");
 			var value = GetRandomString();
 
-			Assert.True(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration)));
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, DateTime.Now.AddMilliseconds(DefaultExpiration), Protocol.NO_CAS));
 			Thread.Sleep(WaitButStillAlive);
-			Assert.True(await client.TouchAsync(key, DateTime.Now.AddMilliseconds(NewExpiration)));
+			ShouldPass(await client.TouchAsync(key, DateTime.Now.AddSeconds(SimpleMemcachedClientTests.NewExpiration), Protocol.NO_CAS), checkCas: false);
 
 			Thread.Sleep(WaitUntilExpires);
-			Assert.Equal(value, await client.GetAsync<string>(key));
+			AreEqual(value, await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 	}
 }

@@ -13,9 +13,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Remove_Valid");
 
-			Assert.True(await Store(key: key));
-			Assert.True(await client.RemoveAsync(key));
-			Assert.Null(await client.GetAsync<object>(key));
+			ShouldPass(await Store(key: key));
+			ShouldPass(await client.RemoveAsync(key, Protocol.NO_CAS), checkCas: false);
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -23,8 +23,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Remove_Invalid");
 
-			Assert.Null(await client.GetAsync<object>(key)); // sanity-check
-			Assert.False(await client.RemoveAsync(key));
+			ShouldFail(await client.GetAsync<object>(key, Protocol.NO_CAS)); // sanity-check
+			ShouldFail(await client.RemoveAsync(key, Protocol.NO_CAS));
 		}
 	}
 }

@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<bool> TouchAsync(this IMemcachedClient self, string key)
+		public static Task<IOperationResult> TouchAsync(this IMemcachedClient self, string key, Expiration expiration)
 		{
-			return self.TouchAsync(key, Expiration.Never);
+			return self.TouchAsync(key, expiration, Protocol.NO_CAS);
 		}
 
-		public static bool Touch(this IMemcachedClient self, string key)
+		public static Task<IOperationResult> TouchAsync(this IMemcachedClient self, string key, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Touch(key, Expiration.Never);
+			return self.TouchAsync(key, Expiration.Never, cas);
 		}
 
-		public static bool Touch(this IMemcachedClient self, string key, Expiration expiration)
+		public static IOperationResult Touch(this IMemcachedClient self, string key, ulong cas = Protocol.NO_CAS)
 		{
-			return self.TouchAsync(key, expiration).RunAndUnwrap();
+			return self.Touch(key, Expiration.Never, cas);
+		}
+
+		public static IOperationResult Touch(this IMemcachedClient self, string key, Expiration expiration, ulong cas = Protocol.NO_CAS)
+		{
+			return self.TouchAsync(key, expiration, cas).RunAndUnwrap();
 		}
 	}
 }

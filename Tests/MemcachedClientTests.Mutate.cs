@@ -13,8 +13,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
-			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -22,9 +22,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment_Get");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
-			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200));
-			Assert.Equal("210", await client.GetAsync<string>(key));
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual("210", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -32,9 +32,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Increment_Store");
 
-			Assert.True(await client.StoreAsync(StoreMode.Set, key, "200", Expiration.Never));
-			Assert.Equal(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 10));
-			Assert.Equal("210", await client.GetAsync<string>(key));
+			ShouldPass(result: await Store(key: key, value: "200"));
+			AreEqual(210ul, await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 10, Protocol.NO_CAS));
+			AreEqual("210", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -42,8 +42,8 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
-			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -51,9 +51,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement_Get");
 
-			Assert.Equal(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
-			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200));
-			Assert.Equal("190", await client.GetAsync<string>(key));
+			AreEqual(200ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual("190", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 
 		[Fact]
@@ -61,9 +61,9 @@ namespace Enyim.Caching.Tests
 		{
 			var key = GetUniqueKey("Decrement_Store");
 
-			Assert.True(await client.StoreAsync(StoreMode.Set, key, "200", Expiration.Never));
-			Assert.Equal(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 10));
-			Assert.Equal("190", await client.GetAsync<string>(key));
+			ShouldPass(result: await Store(key: key, value: "200"));
+			AreEqual(190ul, await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 10, Protocol.NO_CAS));
+			AreEqual("190", await client.GetAsync<string>(key, Protocol.NO_CAS));
 		}
 	}
 }

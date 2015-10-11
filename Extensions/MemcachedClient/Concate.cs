@@ -1,12 +1,29 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static bool Concate(this IMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data)
+		public static Task<IOperationResult> ConcateAsync(this IMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data)
 		{
-			return self.ConcateAsync(mode, key, data).RunAndUnwrap();
+			return self.ConcateAsync(mode, key, data, Protocol.NO_CAS);
+		}
+
+		public static Task<IOperationResult> ConcateAsync(this IMemcachedClient self, ConcatenationMode mode, string key, byte[] data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data), cas);
+		}
+
+		public static IOperationResult Concate(this IMemcachedClient self, ConcatenationMode mode, string key, byte[] data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data), cas).RunAndUnwrap();
+		}
+
+		public static IOperationResult Concate(this IMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(mode, key, data, cas).RunAndUnwrap();
 		}
 	}
 }

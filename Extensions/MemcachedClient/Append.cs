@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<bool> AppendAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
+		public static Task<IOperationResult> AppendAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.ConcateAsync(ConcatenationMode.Append, key, data);
+			return self.ConcateAsync(ConcatenationMode.Append, key, data, Protocol.NO_CAS);
 		}
 
-		public static bool Append(this IMemcachedClient self, string key, ArraySegment<byte> data)
+		public static Task<IOperationResult> AppendAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Concate(ConcatenationMode.Append, key, data);
+			return self.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(data), cas);
+		}
+
+		public static IOperationResult Append(this IMemcachedClient self, string key, byte[] data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(data), cas).RunAndUnwrap();
+		}
+
+		public static IOperationResult Append(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(ConcatenationMode.Append, key, data, cas).RunAndUnwrap();
 		}
 	}
 }

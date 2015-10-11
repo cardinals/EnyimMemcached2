@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<ulong> IncrementAsync(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<IMutateOperationResult> IncrementAsync(this IMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.MutateAsync(MutationMode.Increment, key, Expiration.Never, delta, defaultValue);
+			return self.MutateAsync(MutationMode.Increment, key, Expiration.Never, delta, defaultValue, cas);
 		}
 
-		public static ulong Increment(this IMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<IMutateOperationResult> IncrementAsync(this IMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Mutate(MutationMode.Increment, key, Expiration.Never, delta, defaultValue);
+			return self.MutateAsync(MutationMode.Increment, key, expiration, delta, defaultValue, cas);
 		}
 
-		public static ulong Increment(this IMemcachedClient self, string key, Expiration expiration, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static IMutateOperationResult Increment(this IMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Mutate(MutationMode.Increment, key, expiration, delta, defaultValue);
+			return self.Mutate(MutationMode.Increment, key, Expiration.Never, delta, defaultValue, cas);
+		}
+
+		public static IMutateOperationResult Increment(this IMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
+		{
+			return self.Mutate(MutationMode.Increment, key, expiration, delta, defaultValue, cas);
 		}
 	}
 }

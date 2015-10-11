@@ -7,8 +7,8 @@
     <ProjectGuid>{6B53D1C7-44A5-49F1-882C-7BE718CA2857}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Extensions</RootNamespace>
-    <AssemblyName>Extensions</AssemblyName>
+    <RootNamespace>Enyim.Caching.Memcached</RootNamespace>
+    <AssemblyName>Enyim.Caching.Memcached.Extensions</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -26,22 +26,6 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="MemcachedClientWithResults\Add.cs" />
-    <Compile Include="MemcachedClientWithResults\Append.cs" />
-    <Compile Include="MemcachedClientWithResults\Concate.cs" />
-    <Compile Include="MemcachedClientWithResults\Decrement.cs" />
-    <Compile Include="MemcachedClientWithResults\FlushAll.cs" />
-    <Compile Include="MemcachedClientWithResults\Get.cs" />
-    <Compile Include="MemcachedClientWithResults\GetAndTouch.cs" />
-    <Compile Include="MemcachedClientWithResults\Increment.cs" />
-    <Compile Include="MemcachedClientWithResults\Mutate.cs" />
-    <Compile Include="MemcachedClientWithResults\Prepend.cs" />
-    <Compile Include="MemcachedClientWithResults\Remove.cs" />
-    <Compile Include="MemcachedClientWithResults\Replace.cs" />
-    <Compile Include="MemcachedClientWithResults\Set.cs" />
-    <Compile Include="MemcachedClientWithResults\Stats.cs" />
-    <Compile Include="MemcachedClientWithResults\Store.cs" />
-    <Compile Include="MemcachedClientWithResults\Touch.cs" />
     <Compile Include="MemcachedClient\Add.cs" />
     <Compile Include="MemcachedClient\Append.cs" />
     <Compile Include="MemcachedClient\Concate.cs" />
@@ -58,6 +42,22 @@
     <Compile Include="MemcachedClient\Stats.cs" />
     <Compile Include="MemcachedClient\Store.cs" />
     <Compile Include="MemcachedClient\Touch.cs" />
+    <Compile Include="SimpleMemcachedClient\Add.cs" />
+    <Compile Include="SimpleMemcachedClient\Append.cs" />
+    <Compile Include="SimpleMemcachedClient\Concate.cs" />
+    <Compile Include="SimpleMemcachedClient\Decrement.cs" />
+    <Compile Include="SimpleMemcachedClient\FlushAll.cs" />
+    <Compile Include="SimpleMemcachedClient\Get.cs" />
+    <Compile Include="SimpleMemcachedClient\GetAndTouch.cs" />
+    <Compile Include="SimpleMemcachedClient\Increment.cs" />
+    <Compile Include="SimpleMemcachedClient\Mutate.cs" />
+    <Compile Include="SimpleMemcachedClient\Prepend.cs" />
+    <Compile Include="SimpleMemcachedClient\Remove.cs" />
+    <Compile Include="SimpleMemcachedClient\Replace.cs" />
+    <Compile Include="SimpleMemcachedClient\Set.cs" />
+    <Compile Include="SimpleMemcachedClient\Stats.cs" />
+    <Compile Include="SimpleMemcachedClient\Store.cs" />
+    <Compile Include="SimpleMemcachedClient\Touch.cs" />
     <Compile Include="TaskEx.cs" />
   </ItemGroup>
   <ItemGroup>

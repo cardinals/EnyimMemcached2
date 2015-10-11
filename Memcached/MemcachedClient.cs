@@ -1,147 +1,84 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public partial class MemcachedClient : MemcachedClientBase, IMemcachedClient
 	{
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-
 		public MemcachedClient() : base() { }
 		public MemcachedClient(IContainer container) : base(container) { }
 		public MemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
 			: base(cluster, opFactory, keyTransformer, transcoder)
 		{ }
 
-		public Task<T> GetAsync<T>(string key)
+		public async Task<IGetOperationResult<T>> GetAsync<T>(string key, ulong cas)
 		{
-			return DoGet<T>(PerformGetCore(key, 0));
+			var result = await PerformGetCore(key, cas).ConfigureAwait(false);
+			var converted = ConvertToResult<T>(result);
+
+			return converted;
 		}
 
-		public async Task<IDictionary<string, object>> GetAsync(IEnumerable<string> keys)
+		public async Task<IDictionary<string, IGetOperationResult<object>>> GetAsync(IEnumerable<KeyValuePair<string, ulong>> keys)
 		{
-			try
-			{
-				var ops = await MultiGetCore(keys).ConfigureAwait(false);
-				var retval = new Dictionary<string, object>();
+			var ops = await MultiGetCore(keys).ConfigureAwait(false);
 
-				foreach (var kvp in ops)
-				{
-					try
-					{
-						retval[kvp.Key] = ConvertToValue(kvp.Value.Result);
-					}
-					catch (Exception e)
-					{
-						if (log.IsErrorEnabled) log.Error(e);
-						retval[kvp.Key] = null;
-					}
-				}
-
-				return retval;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return new Dictionary<string, object>();
-			}
+			return ConvertMultigetResults(ops);
 		}
 
-		public Task<T> GetAndTouchAsync<T>(string key, Expiration expiration)
+		private IDictionary<string, IGetOperationResult<object>> ConvertMultigetResults(IEnumerable<KeyValuePair<string, IGetOperation>> ops)
 		{
-			return DoGet<T>(PerformGetAndTouchCore(key, expiration, Protocol.NO_CAS));
+			var retval = new Dictionary<string, IGetOperationResult<object>>();
+
+			foreach (var kvp in ops)
+				retval[kvp.Key] = ConvertToResult<object>(kvp.Value.Result);
+
+			return retval;
 		}
 
-		private async Task<T> DoGet<T>(Task<Results.IGetOperationResult> getter)
+		public async Task<IGetOperationResult<T>> GetAndTouchAsync<T>(string key, Expiration expiration, ulong cas)
 		{
-			try
-			{
-				var result = await getter.ConfigureAwait(false);
-				var converted = ConvertToValue(result);
+			var result = await PerformGetAndTouchCore(key, expiration, cas).ConfigureAwait(false);
+			var converted = ConvertToResult<T>(result);
 
-				return (T)converted;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return default(T);
-			}
+			return converted;
 		}
 
-		public Task<bool> TouchAsync(string key, Expiration expiration)
+		public Task<IOperationResult> TouchAsync(string key, Expiration expiration, ulong cas)
 		{
-			return HandleErrors(PerformTouch(key, expiration, Protocol.NO_CAS));
+			return PerformTouch(key, expiration, cas);
 		}
 
-		public Task<bool> StoreAsync(StoreMode mode, string key, object value, Expiration expiration)
+		public Task<IOperationResult> StoreAsync(StoreMode mode, string key, object value, Expiration expiration, ulong cas)
 		{
-			return HandleErrors(PerformStoreAsync(mode, key, value, expiration, Protocol.NO_CAS));
+			return PerformStoreAsync(mode, key, value, expiration, cas);
 		}
 
-		public Task<bool> RemoveAsync(string key)
+		public Task<IOperationResult> RemoveAsync(string key, ulong cas)
 		{
-			return HandleErrors(PerformRemove(key, 0));
+			return PerformRemove(key, cas);
 		}
 
-		public Task<bool> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data)
+		public Task<IOperationResult> ConcateAsync(ConcatenationMode mode, string key, ArraySegment<byte> data, ulong cas)
 		{
-			return HandleErrors(PerformConcate(mode, key, 0, data));
+			return PerformConcate(mode, key, cas, data);
 		}
 
-		public async Task<ulong> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue)
+		public Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue, ulong cas)
 		{
-			try
-			{
-				var result = await PerformMutate(mode, key, expiration, delta, defaultValue, 0).ConfigureAwait(false);
-
-				return result.Value;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return 0;
-			}
+			return PerformMutate(mode, key, expiration, delta, defaultValue, cas);
 		}
 
-		public async Task<ServerStats> StatsAsync(string key)
+		public Task<IOperationResult> FlushAllAsync()
 		{
-			try
-			{
-				var result = await PerformStats(key).ConfigureAwait(false);
-
-				return result.Value;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return new ServerStats();
-			}
+			return PerformFlushAll();
 		}
 
-		public Task<bool> FlushAllAsync()
+		public Task<IStatsOperationResult> StatsAsync(string key)
 		{
-			return HandleErrors(PerformFlushAll());
-		}
-
-		private static async Task<bool> HandleErrors(Task<Results.IOperationResult> task)
-		{
-			try
-			{
-				var result = await task.ConfigureAwait(false);
-
-				return result.Success;
-			}
-			catch (Exception e)
-			{
-				if (log.IsErrorEnabled) log.Error(e);
-
-				return false;
-			}
+			return PerformStats(key);
 		}
 	}
 }

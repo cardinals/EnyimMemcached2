@@ -10,30 +10,32 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientWithResultsFailoverTests : MemcachedClientTestBase, IDisposable
+	public partial class MemcachedClientFailoverTests : MemcachedClientTestBase, IDisposable
 	{
-		private IContainer config;
-		private IMemcachedClientWithResults client;
+		private const string TestName = "MemcachedClientFailoverTests";
 
-		public MemcachedClientWithResultsFailoverTests()
-			: base("MemcachedClientWithResultsFailoverTests")
+		private IContainer config;
+		private IMemcachedClient client;
+
+		public MemcachedClientFailoverTests()
+			: base(TestName)
 		{
 			// note: we're intentionally adding a dead server
-			new ClusterBuilder("MemcachedClientWithResultsFailoverTests")
+			new ClusterBuilder(TestName)
 					.Endpoints("localhost:11300")
 					.SocketOpts(connectionTimeout: TimeSpan.FromMilliseconds(100))
 					.Use
 						.ReconnectPolicy(() => new PeriodicReconnectPolicy { Interval = TimeSpan.FromHours(1) })
 					.Register();
 
-			config = new ClientConfigurationBuilder().Cluster("MemcachedClientWithResultsFailoverTests").Create();
-			client = new MemcachedClientWithResults(config);
+			config = new ClientConfigurationBuilder().Cluster(TestName).Create();
+			client = new MemcachedClient(config);
 		}
 
 		public void Dispose()
 		{
 			config.Dispose();
-			ClusterManager.Shutdown("MemcachedClientWithResultsFailoverTests");
+			ClusterManager.Shutdown(TestName);
 		}
 
 		[Fact]

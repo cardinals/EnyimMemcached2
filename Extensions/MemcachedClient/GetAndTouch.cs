@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<T> GetAndTouchAsync<T>(this IMemcachedClient self, string key)
+		public static Task<IGetOperationResult<T>> GetAndTouchAsync<T>(this IMemcachedClient self, string key, ulong cas = Protocol.NO_CAS)
 		{
-			return self.GetAndTouchAsync<T>(key, Expiration.Never);
+			return self.GetAndTouchAsync<T>(key, Expiration.Never, cas);
 		}
 
-		public static T GetAndTouch<T>(this IMemcachedClient self, string key)
+		public static Task<IGetOperationResult<T>> GetAndTouchAsync<T>(this IMemcachedClient self, string key, Expiration expiration)
 		{
-			return self.GetAndTouch<T>(key, Expiration.Never);
+			return self.GetAndTouchAsync<T>(key, expiration, Protocol.NO_CAS);
 		}
 
-		public static T GetAndTouch<T>(this IMemcachedClient self, string key, Expiration expiration)
+		public static IGetOperationResult<T> GetAndTouch<T>(this IMemcachedClient self, string key, ulong cas = Protocol.NO_CAS)
 		{
-			return self.GetAndTouchAsync<T>(key, expiration).RunAndUnwrap();
+			return self.GetAndTouch<T>(key, Expiration.Never, cas);
+		}
+
+		public static IGetOperationResult<T> GetAndTouch<T>(this IMemcachedClient self, string key, Expiration expiration, ulong cas = Protocol.NO_CAS)
+		{
+			return self.GetAndTouchAsync<T>(key, expiration, cas).RunAndUnwrap();
 		}
 	}
 }

@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<bool> AddAsync(this IMemcachedClient self, string key, object value)
+		public static Task<IOperationResult> AddAsync(this IMemcachedClient self, string key, object value, ulong cas = Protocol.NO_CAS)
 		{
-			return self.StoreAsync(StoreMode.Add, key, value, Expiration.Never);
+			return self.StoreAsync(StoreMode.Add, key, value, Expiration.Never, cas);
 		}
 
-		public static Task<bool> AddAsync(this IMemcachedClient self, string key, object value, Expiration expiration)
+		public static Task<IOperationResult> AddAsync(this IMemcachedClient self, string key, object value, Expiration expiration, ulong cas = Protocol.NO_CAS)
 		{
-			return self.StoreAsync(StoreMode.Add, key, value, expiration);
+			return self.StoreAsync(StoreMode.Add, key, value, expiration, cas);
 		}
 
-		public static bool Add(this IMemcachedClient self, string key, object value)
+		public static IOperationResult Add(this IMemcachedClient self, string key, object value, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Store(StoreMode.Add, key, value, Expiration.Never);
+			return self.Store(StoreMode.Add, key, value, Expiration.Never, cas);
 		}
 
-		public static bool Add(this IMemcachedClient self, string key, object value, Expiration expiration)
+		public static IOperationResult Add(this IMemcachedClient self, string key, object value, Expiration expiration, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Store(StoreMode.Add, key, value, expiration);
+			return self.Store(StoreMode.Add, key, value, expiration, cas);
 		}
 	}
 }

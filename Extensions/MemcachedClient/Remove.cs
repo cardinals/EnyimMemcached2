@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static bool Remove(this IMemcachedClient self, string key)
+		public static Task<IOperationResult> RemoveAsync(this IMemcachedClient self, string key)
 		{
-			return self.RemoveAsync(key).RunAndUnwrap();
+			return self.RemoveAsync(key, Protocol.NO_CAS);
+		}
+
+		public static IOperationResult Remove(this IMemcachedClient self, string key, ulong cas = Protocol.NO_CAS)
+		{
+			return self.RemoveAsync(key, cas).RunAndUnwrap();
 		}
 	}
 }

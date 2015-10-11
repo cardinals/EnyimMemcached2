@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static Task<bool> PrependAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
+		public static Task<IOperationResult> PrependAsync(this IMemcachedClient self, string key, ArraySegment<byte> data)
 		{
-			return self.ConcateAsync(ConcatenationMode.Prepend, key, data);
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, data, Protocol.NO_CAS);
 		}
 
-		public static bool Prepend(this IMemcachedClient self, string key, ArraySegment<byte> data)
+		public static Task<IOperationResult> PrependAsync(this IMemcachedClient self, string key, byte[] data, ulong cas = Protocol.NO_CAS)
 		{
-			return self.Concate(ConcatenationMode.Prepend, key, data);
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(data), cas);
+		}
+
+		public static IOperationResult Prepend(this IMemcachedClient self, string key, byte[] data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(data), cas).RunAndUnwrap();
+		}
+
+		public static IOperationResult Prepend(this IMemcachedClient self, string key, ArraySegment<byte> data, ulong cas = Protocol.NO_CAS)
+		{
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, data, cas).RunAndUnwrap();
 		}
 	}
 }

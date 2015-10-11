@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class MemcachedClientExtensions
 	{
-		public static bool FlushAll(this IMemcachedClient self)
+		public static IOperationResult FlushAll(this IMemcachedClient self)
 		{
 			return self.FlushAllAsync().RunAndUnwrap();
 		}
