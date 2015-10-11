@@ -6,4 +6,4 @@ build_script:
 - cmd: .\build.cmd pack
 test: off
 artifacts:
-- path: '**\bin\release\*.nupkg'
+- path: output\*.nupkg
