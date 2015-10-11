@@ -1,23 +1,39 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Enyim.Caching.Memcached;
+using Xunit;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Tests
 {
-	public static partial class SimpleMemcachedClientExtensions
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
-		public static Task<bool> ConcateAsync(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
+		[Fact]
+		public void SetAsync_NoExpiration()
 		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data));
+			Verify(c => c.SetAsync(Key, Value),
+					c => c.StoreAsync(StoreMode.Set, Key, Value, Expiration.Never));
 		}
 
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
+		[Fact]
+		public void SetAsync_HasExpiration()
 		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data)).RunAndUnwrap();
+			Verify(c => c.SetAsync(Key, Value, HasExpiration),
+					c => c.StoreAsync(StoreMode.Set, Key, Value, HasExpiration));
 		}
 
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data)
+		[Fact]
+		public void Set_NoExpiration()
 		{
-			return self.ConcateAsync(mode, key, data).RunAndUnwrap();
+			Verify(c => c.Set(Key, Value),
+					c => c.StoreAsync(StoreMode.Set, Key, Value, Expiration.Never));
+		}
+
+		[Fact]
+		public void Set_HasExpiration()
+		{
+			Verify(c => c.Set(Key, Value, HasExpiration),
+					c => c.StoreAsync(StoreMode.Set, Key, Value, HasExpiration));
 		}
 	}
 }

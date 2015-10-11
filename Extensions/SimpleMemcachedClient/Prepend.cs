@@ -5,9 +5,19 @@ namespace Enyim.Caching.Memcached
 {
 	public static partial class SimpleMemcachedClientExtensions
 	{
+		public static Task<bool> PrependAsync(this ISimpleMemcachedClient self, string key, byte[] data)
+		{
+			return self.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(data));
+		}
+
 		public static Task<bool> PrependAsync(this ISimpleMemcachedClient self, string key, ArraySegment<byte> data)
 		{
 			return self.ConcateAsync(ConcatenationMode.Prepend, key, data);
+		}
+
+		public static bool Prepend(this ISimpleMemcachedClient self, string key, byte[] data)
+		{
+			return self.Concate(ConcatenationMode.Prepend, key, new ArraySegment<byte>(data));
 		}
 
 		public static bool Prepend(this ISimpleMemcachedClient self, string key, ArraySegment<byte> data)

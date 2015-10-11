@@ -6,48 +6,48 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientExtensionsTests
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
 		[Fact]
 		public void IncrementAsync_WithDefaults()
 		{
 			Verify(c => c.IncrementAsync(Key),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, 1, 1, 0));
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE));
 		}
 
 		[Fact]
 		public void IncrementAsync_NoExpire()
 		{
-			Verify(c => c.IncrementAsync(Key, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.IncrementAsync(Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void IncrementAsync_Expire()
 		{
-			Verify(c => c.IncrementAsync(Key, HasExpiration, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.IncrementAsync(Key, HasExpiration, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void Increment_WithDefaults()
 		{
 			Verify(c => c.Increment(Key),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, 1, 1, 0));
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE));
 		}
 
 		[Fact]
 		public void Increment_NoExpire()
 		{
-			Verify(c => c.Increment(Key, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.Increment(Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void Increment_Expire()
 		{
-			Verify(c => c.Increment(Key, HasExpiration, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.Increment(Key, HasExpiration, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, MutateDelta, MutateDefault));
 		}
 	}
 }

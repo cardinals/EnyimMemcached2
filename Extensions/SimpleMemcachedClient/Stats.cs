@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
 	public static partial class SimpleMemcachedClientExtensions
 	{
-		public static ServerStats Stats(this ISimpleMemcachedClient self, string key)
+		public static Task<ServerStats> StatsAsync(this ISimpleMemcachedClient self)
+		{
+			return self.StatsAsync(null);
+		}
+
+		public static ServerStats Stats(this ISimpleMemcachedClient self, string key = null)
 		{
 			return self.StatsAsync(key).RunAndUnwrap();
 		}

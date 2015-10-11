@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Enyim.Caching.Memcached;
+using Xunit;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Tests
 {
-	public static partial class SimpleMemcachedClientExtensions
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
-		public static Task<bool> ConcateAsync(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
+		[Fact]
+		public void FlushAll()
 		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data));
-		}
-
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
-		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data)).RunAndUnwrap();
-		}
-
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data)
-		{
-			return self.ConcateAsync(mode, key, data).RunAndUnwrap();
+			Verify(c => c.FlushAll(),
+					c => c.FlushAllAsync());
 		}
 	}
 }

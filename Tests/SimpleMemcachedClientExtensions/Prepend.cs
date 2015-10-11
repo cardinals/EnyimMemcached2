@@ -1,23 +1,39 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Enyim.Caching.Memcached;
+using Xunit;
 
-namespace Enyim.Caching.Memcached
+namespace Enyim.Caching.Tests
 {
-	public static partial class SimpleMemcachedClientExtensions
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
-		public static Task<bool> ConcateAsync(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
+		[Fact]
+		public void PrependAsync_Plain()
 		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data));
+			Verify(c => c.PrependAsync(Key, PlainData),
+					c => c.ConcateAsync(ConcatenationMode.Prepend, Key, new ArraySegment<byte>(PlainData)));
 		}
 
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, byte[] data)
+		[Fact]
+		public void PrependAsync()
 		{
-			return self.ConcateAsync(mode, key, new ArraySegment<byte>(data)).RunAndUnwrap();
+			Verify(c => c.PrependAsync(Key, Data),
+					c => c.ConcateAsync(ConcatenationMode.Prepend, Key, Data));
 		}
 
-		public static bool Concate(this ISimpleMemcachedClient self, ConcatenationMode mode, string key, ArraySegment<byte> data)
+		[Fact]
+		public void Prepend_Plain()
 		{
-			return self.ConcateAsync(mode, key, data).RunAndUnwrap();
+			Verify(c => c.Prepend(Key, PlainData),
+					c => c.ConcateAsync(ConcatenationMode.Prepend, Key, new ArraySegment<byte>(PlainData)));
+		}
+
+		[Fact]
+		public void Prepend()
+		{
+			Verify(c => c.Prepend(Key, Data),
+					c => c.ConcateAsync(ConcatenationMode.Prepend, Key, Data));
 		}
 	}
 }

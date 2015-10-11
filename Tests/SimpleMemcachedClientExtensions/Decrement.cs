@@ -6,48 +6,48 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientExtensionsTests
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
 		[Fact]
 		public void DecrementAsync_WithDefaults()
 		{
 			Verify(c => c.DecrementAsync(Key),
-					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, 1, 1, 0));
+					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_VALUE, Protocol.MUTATE_DEFAULT_VALUE));
 		}
 
 		[Fact]
 		public void DecrementAsync_NoExpire()
 		{
-			Verify(c => c.DecrementAsync(Key, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.DecrementAsync(Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void DecrementAsync_Expire()
 		{
-			Verify(c => c.DecrementAsync(Key, HasExpiration, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Decrement, Key, HasExpiration, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.DecrementAsync(Key, HasExpiration, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Decrement, Key, HasExpiration, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void Decrement_WithDefaults()
 		{
 			Verify(c => c.Decrement(Key),
-					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, 1, 1, 0));
+					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE));
 		}
 
 		[Fact]
 		public void Decrement_NoExpire()
 		{
-			Verify(c => c.Decrement(Key, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.Decrement(Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Decrement, Key, Expiration.Never, MutateDelta, MutateDefault));
 		}
 
 		[Fact]
 		public void Decrement_Expire()
 		{
-			Verify(c => c.Decrement(Key, HasExpiration, MutateDelta, MutateDefault, HasCas),
-					c => c.MutateAsync(MutationMode.Decrement, Key, HasExpiration, MutateDelta, MutateDefault, HasCas));
+			Verify(c => c.Decrement(Key, HasExpiration, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Decrement, Key, HasExpiration, MutateDelta, MutateDefault));
 		}
 	}
 }

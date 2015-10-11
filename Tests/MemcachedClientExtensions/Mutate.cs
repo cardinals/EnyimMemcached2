@@ -9,24 +9,73 @@ namespace Enyim.Caching.Tests
 	public partial class MemcachedClientExtensionsTests
 	{
 		[Fact]
-		public void MutateAsync()
+		public void MutateAsync_WithDefaults()
 		{
-			Verify(c => c.MutateAsync(MutationMode.Increment, Key, Delta, Default, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Delta, Default, HasCas));
+			Verify(c => c.MutateAsync(MutationMode.Increment, Key),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void Mutate_NoExpire()
+		public void MutateAsync_NoExpire_NoCas()
 		{
-			Verify(c => c.Mutate(MutationMode.Increment, Key, Delta, Default, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Delta, Default, HasCas));
+			Verify(c => c.MutateAsync(MutationMode.Increment, Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, Protocol.NO_CAS));
 		}
 
 		[Fact]
-		public void Mutate_Expire()
+		public void MutateAsync_NoExpire_HasCas()
 		{
-			Verify(c => c.Mutate(MutationMode.Increment, Key, HasExpiration, Delta, Default, HasCas),
-					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, Delta, Default, HasCas));
+			Verify(c => c.MutateAsync(MutationMode.Increment, Key, MutateDelta, MutateDefault, HasCas),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+		}
+
+		[Fact]
+		public void MutateAsync_HasExpiration_WithDefaults()
+		{
+			Verify(c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public void MutateAsync_HasExpiration_HasCas()
+		{
+			Verify(c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, cas: HasCas),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, HasCas));
+		}
+
+		[Fact]
+		public void Mutate_WithDefaults()
+		{
+			Verify(c => c.Mutate(MutationMode.Increment, Key),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public void Mutate_NoExpire_NoCas()
+		{
+			Verify(c => c.Mutate(MutationMode.Increment, Key, MutateDelta, MutateDefault),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public void Mutate_NoExpire_HasCas()
+		{
+			Verify(c => c.Mutate(MutationMode.Increment, Key, MutateDelta, MutateDefault, HasCas),
+					c => c.MutateAsync(MutationMode.Increment, Key, Expiration.Never, MutateDelta, MutateDefault, HasCas));
+		}
+
+		[Fact]
+		public void Mutate_HasExpiration_WithDefaults()
+		{
+			Verify(c => c.Mutate(MutationMode.Increment, Key, HasExpiration),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public void Mutate_HasExpiration_HasCas()
+		{
+			Verify(c => c.Mutate(MutationMode.Increment, Key, HasExpiration, cas: HasCas),
+					c => c.MutateAsync(MutationMode.Increment, Key, HasExpiration, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE, HasCas));
 		}
 	}
 }

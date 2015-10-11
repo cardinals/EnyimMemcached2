@@ -5,6 +5,11 @@ namespace Enyim.Caching.Memcached
 {
 	public static partial class SimpleMemcachedClientExtensions
 	{
+		public static Task<ulong> MutateAsync(this ISimpleMemcachedClient self, MutationMode mode, string key, Expiration expiration)
+		{
+			return self.MutateAsync(mode, key, expiration, Protocol.MUTATE_DEFAULT_DELTA, Protocol.MUTATE_DEFAULT_VALUE);
+		}
+
 		public static Task<ulong> MutateAsync(this ISimpleMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
 		{
 			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue);

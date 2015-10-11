@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientExtensionsTests
+	public partial class SimpleMemcachedClientExtensionsTests
 	{
 		private const string Key = "MockKey";
 		private const ulong MutateDelta = 16;
@@ -23,17 +23,17 @@ namespace Enyim.Caching.Tests
 		private static readonly byte[] PlainData = new byte[] { 1, 2, 3, 4 };
 		private static readonly object Value = new Object();
 
-		private void Verify(Action<IMemcachedClient> what, Expression<Action<IMemcachedClient>> how)
+		private void Verify(Action<ISimpleMemcachedClient> what, Expression<Action<ISimpleMemcachedClient>> how)
 		{
-			var c = new Mock<IMemcachedClient>();
+			var c = new Mock<ISimpleMemcachedClient>();
 
 			what(c.Object);
 			c.Verify(how);
 		}
 
-		private void Verify<TResult>(Action<IMemcachedClient> what, Expression<Func<IMemcachedClient, TResult>> how)
+		private void Verify<TResult>(Action<ISimpleMemcachedClient> what, Expression<Func<ISimpleMemcachedClient, TResult>> how)
 		{
-			var c = new Mock<IMemcachedClient>();
+			var c = new Mock<ISimpleMemcachedClient>();
 
 			what(c.Object);
 			c.Verify(how);

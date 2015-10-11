@@ -5,17 +5,22 @@ namespace Enyim.Caching.Memcached
 {
 	public static partial class SimpleMemcachedClientExtensions
 	{
-		public static Task<ulong> DecrementAsync(this ISimpleMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<ulong> DecrementAsync(this ISimpleMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
 		{
 			return self.MutateAsync(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue);
 		}
 
-		public static ulong Decrement(this ISimpleMemcachedClient self, string key, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static Task<ulong> DecrementAsync(this ISimpleMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
+		{
+			return self.MutateAsync(MutationMode.Decrement, key, expiration, delta, defaultValue);
+		}
+
+		public static ulong Decrement(this ISimpleMemcachedClient self, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
 		{
 			return self.Mutate(MutationMode.Decrement, key, Expiration.Never, delta, defaultValue);
 		}
 
-		public static ulong Decrement(this ISimpleMemcachedClient self, string key, Expiration expiration, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong delta = Protocol.MUTATE_DEFAULT_DELTA)
+		public static ulong Decrement(this ISimpleMemcachedClient self, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE)
 		{
 			return self.Mutate(MutationMode.Decrement, key, expiration, delta, defaultValue);
 		}

@@ -11,6 +11,11 @@ namespace Enyim.Caching.Memcached
 			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue, cas);
 		}
 
+		public static Task<IMutateOperationResult> MutateAsync(this IMemcachedClient self, MutationMode mode, string key, Expiration expiration, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
+		{
+			return self.MutateAsync(mode, key, expiration, delta, defaultValue, cas);
+		}
+
 		public static IMutateOperationResult Mutate(this IMemcachedClient self, MutationMode mode, string key, ulong delta = Protocol.MUTATE_DEFAULT_DELTA, ulong defaultValue = Protocol.MUTATE_DEFAULT_VALUE, ulong cas = Protocol.NO_CAS)
 		{
 			return self.MutateAsync(mode, key, Expiration.Never, delta, defaultValue, cas).RunAndUnwrap();

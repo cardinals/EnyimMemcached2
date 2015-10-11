@@ -10,6 +10,11 @@ namespace Enyim.Caching.Memcached
 			return self.StoreAsync(mode, key, value, Expiration.Never);
 		}
 
+		public static bool Store(this ISimpleMemcachedClient self, StoreMode mode, string key, object value)
+		{
+			return self.StoreAsync(mode, key, value, Expiration.Never).RunAndUnwrap();
+		}
+
 		public static bool Store(this ISimpleMemcachedClient self, StoreMode mode, string key, object value, Expiration expiration)
 		{
 			return self.StoreAsync(mode, key, value, expiration).RunAndUnwrap();

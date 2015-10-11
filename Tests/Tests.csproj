@@ -54,6 +54,23 @@
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
+    <Compile Include="SimpleMemcachedClientExtensions\Add.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Append.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Concate.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Decrement.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\FlushAll.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Get.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\GetAndTouch.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Increment.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\MemcachedClientExtensionsTests.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Mutate.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Prepend.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Remove.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Replace.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Set.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Stats.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Store.cs" />
+    <Compile Include="SimpleMemcachedClientExtensions\Touch.cs" />
     <Compile Include="SimpleMemcachedClientFailoverTests.cs" />
     <Compile Include="MemcachedClientTestBase.cs">
       <SubType>Code</SubType>
