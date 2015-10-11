@@ -18,6 +18,21 @@
 	<PropertyGroup>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 	</PropertyGroup>
+
+	<PropertyGroup>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v4.6'  ">NET46;NETFX46;NETFX452;NETFX451;NETFX45;NETFX40;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v4.5.2'">NET452;NETFX452;NETFX451;NETFX45;NETFX40;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v4.5.1'">NET451;NETFX451;NETFX45;NETFX40;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v4.5'  ">NET45;NETFX45;NETFX40;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v4.0'  ">NET40;NETFX40;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v3.5'  ">NET35;NETFX35;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v3.0'  ">NET30;NETFX30;NETFX20</FrameworkConstants>
+		<FrameworkConstants Condition=" '$(TargetFrameworkVersion)' == 'v2.0'  ">NET20;NETFX20</FrameworkConstants>
+	</PropertyGroup>
+
+	<PropertyGroup >
+		<DefineConstants>$(DefineConstants);$(FrameworkConstants)</DefineConstants>
+	</PropertyGroup>
 </Project>
 
 <!--

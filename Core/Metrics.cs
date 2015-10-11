@@ -160,7 +160,7 @@ namespace Enyim.Caching
 	#endregion
 	#region [ StringBuilderVisitor         ]
 
-	class StringBuilderVisitor : MetricsVisitor
+	internal class StringBuilderVisitor : MetricsVisitor
 	{
 		private StringBuilder sb;
 
@@ -251,86 +251,6 @@ namespace Enyim.Caching
 	}
 
 	#endregion
-	#region [ CsvReporter                  ]
-	/*
-	public class CsvReporter
-	{
-		private List<Tuple<DateTime, Tuple<string, string, double>[]>> data;
-		private V visitor;
-
-		class V : MetricsVisitor
-		{
-
-			private List<Tuple<string, string, double>> q = new List<Tuple<string, string, double>>();
-
-			protected override void Visit(IMeter meter)
-			{
-				q.Add(Tuple.Create(meter.Name, meter.Instance, meter.Rate));
-			}
-
-			protected override void Visit(ICounter counter)
-			{
-				q.Add(Tuple.Create(counter.Name, counter.Instance, (double)counter.Count));
-			}
-
-			protected override void Visit(IGauge gauge)
-			{
-				q.Add(Tuple.Create(gauge.Name, gauge.Instance, (double)gauge.Value));
-			}
-
-			public Tuple<string, string, double>[] GetCurrent()
-			{
-				var retval = q.ToArray();
-				q.Clear();
-
-				return retval;
-			}
-		}
-
-
-		public CsvReporter()
-		{
-			visitor = new V();
-			data = new List<Tuple<DateTime, Tuple<string, string, double>[]>>();
-		}
-
-		public void Report()
-		{
-			var grouped = data
-							.SelectMany(t => t.Item2, (a, b) => Tuple.Create(a.Item1, b.Item1, b.Item2, b.Item3))
-							.ToLookup(t => t.Item2);
-
-			foreach (var g in grouped)
-			{
-				Console.WriteLine(g.Key);
-				File.WriteAllLines(g.Key.Replace("/", "_"), g.Select(t => String.Format("{0:HH:mm:ss.fffff},{1},{2:0.00}", t.Item1, t.Item3, t.Item4)));
-			}
-		}
-
-		public void StartCollecting(int time, Interval interval, CancellationToken cancellationToken)
-		{
-			var delay = (int)IntervalConverter.Convert(time, interval, Interval.Milliseconds);
-
-			Task.Factory.StartNew(async () =>
-			{
-				try
-				{
-					while (!cancellationToken.IsCancellationRequested)
-					{
-						visitor.Visit(Metrics.GetAll());
-						data.Add(Tuple.Create(DateTime.Now, visitor.GetCurrent()));
-						Console.WriteLine("saved");
-
-						await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-					}
-				}
-				catch { }
-			}, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
-		}
-	}
-
-	*/
-	#endregion
 	#region [ IntervalConverter            ]
 
 	internal static class IntervalConverter
@@ -373,7 +293,7 @@ namespace Enyim.Caching
 
 	namespace Internal
 	{
-		class DefaultMetricFactory : IMetricFactory
+		internal class DefaultMetricFactory : IMetricFactory
 		{
 			public ICounter Counter(string name)
 			{
@@ -406,7 +326,7 @@ namespace Enyim.Caching
 			}
 		}
 
-		abstract class DefaultMetric : IMetric
+		internal abstract class DefaultMetric : IMetric
 		{
 			private readonly IMetric parent;
 			private readonly string name;
@@ -427,7 +347,7 @@ namespace Enyim.Caching
 			IMetric IMetric.Parent { get { return parent; } }
 		}
 
-		class DefaultGauge : DefaultMetric, IGauge
+		internal class DefaultGauge : DefaultMetric, IGauge
 		{
 			public DefaultGauge(string name) : base(name) { }
 			public DefaultGauge(IMetric parent, string instance) : base(parent, instance) { }
@@ -449,7 +369,7 @@ namespace Enyim.Caching
 			public long Max { get; private set; }
 		}
 
-		class SharedCounter : DefaultMetric, ICounter
+		internal class SharedCounter : DefaultMetric, ICounter
 		{
 			private long global;
 			private Entry[] slices;
@@ -551,7 +471,7 @@ namespace Enyim.Caching
 			}
 		}
 
-		class DefaultMeter : SharedCounter, IMeter
+		internal class DefaultMeter : SharedCounter, IMeter
 		{
 			private static readonly long NanoTick = 1000 * 1000 * 1000 / Stopwatch.Frequency;
 			private readonly Stopwatch stopwatch;

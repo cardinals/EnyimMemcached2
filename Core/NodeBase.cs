@@ -34,7 +34,7 @@ namespace Enyim.Caching
 		private object failLock;
 
 		private readonly ConcurrentQueue<Data> writeQueue;
-		private readonly AdvQueue<Data> readQueue;
+		private readonly Queue<Data> readQueue;
 
 		private Data currentWriteOp;
 		private IRequest currentWriteCopier;
@@ -61,7 +61,7 @@ namespace Enyim.Caching
 
 			failLock = new Object();
 			writeQueue = new ConcurrentQueue<Data>();
-			readQueue = new AdvQueue<Data>();
+			readQueue = new Queue<Data>();
 
 			mustReconnect = true;
 			IsAlive = true;
@@ -471,7 +471,7 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Cleans up an AdvQueue, marking all items as failed
 		/// </summary>
-		private void FailQueue(AdvQueue<Data> queue, Exception e)
+		private void FailQueue(Queue<Data> queue, Exception e)
 		{
 			foreach (var data in queue)
 			{

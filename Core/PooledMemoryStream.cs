@@ -19,7 +19,7 @@ namespace Enyim.Caching
 		private List<byte[]> chunks; // list of chunks representing the stream data
 		private List<int> lengths; // stores the actual maximum length of the stream at each chunk allocation (helper for seeking in the stream)
 
-		private int length;	// lenght of the stream
+		private int length; // lenght of the stream
 		private byte[] currentChunk; // the current chunk being read/written
 		private int currentIndex; // the index of the current chunk (in 'chunks')
 		private int chunkPos; // pointer to the current position inside the current chunk

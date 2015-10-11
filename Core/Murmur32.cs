@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Enyim.Caching
@@ -43,6 +44,7 @@ namespace Enyim.Caching
 			return h1;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint CalcTail(byte[] source, int alignedLength, int remainder)
 		{
 			var k1 = 0u;
@@ -61,7 +63,7 @@ namespace Enyim.Caching
 		}
 
 		[StructLayout(LayoutKind.Explicit)]
-		struct ArrayConverter
+		private struct ArrayConverter
 		{
 			[FieldOffset(0)]
 			public Byte[] AsByte;

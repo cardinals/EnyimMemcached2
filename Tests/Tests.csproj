@@ -54,7 +54,6 @@
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
-    <Compile Include="AdvQueueTests.cs" />
     <Compile Include="SimpleMemcachedClientFailoverTests.cs" />
     <Compile Include="MemcachedClientTestBase.cs">
       <SubType>Code</SubType>
@@ -169,7 +168,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
-      <ILMerge>true</ILMerge>
       <Name>Core</Name>
       <MergedSource>True</MergedSource>
     </ProjectReference>
