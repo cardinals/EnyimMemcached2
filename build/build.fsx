@@ -35,6 +35,7 @@ Target "Build" (fun _ ->
                             "SolutionDir", solutionDir
                             "ProjectVersion", projectVersion
                             "ProjectInformalVersion", projectInformalVersion]}
+    Utils.tryPublishBuildInfo projectInformalVersion
     build buildParams solutionPath |> DoNothing)
 
 /// build nuget packages

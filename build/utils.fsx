@@ -3,10 +3,13 @@
 open Fake
 
 let private guessBranch =
-    let ok,msg, _ = Fake.Git.CommandHelper.runGitCommand "." "rev-parse --abbrev-ref HEAD"
-    match ok with
-    | true -> msg |> Seq.head
-    | false -> environVar "APPVEYOR_REPO_BRANCH"
+    match (environVarOrNone "APPVEYOR_REPO_BRANCH") with
+    | None ->
+        let ok,msg, _ = Fake.Git.CommandHelper.runGitCommand "." "rev-parse --abbrev-ref HEAD"
+        match ok with
+        | true -> msg |> Seq.head
+        | false -> "local"
+    | Some v -> v
 
 let private guessCommitHash =
     let ok,msg, _= Fake.Git.CommandHelper.runGitCommand "." "log --pretty=format:%h -1"
@@ -30,6 +33,16 @@ let parseSolutionVersion p =
     let informalVersion = getInformalVersion userVersion
 
     (version, informalVersion)
+
+let private sendToAppVeyor args =
+    ExecProcess (fun info ->
+        info.FileName <- "appveyor"
+        info.Arguments <- args) (System.TimeSpan.MaxValue)
+     |> ignore
+
+let tryPublishBuildInfo version =
+    if (getEnvironmentVarAsBool "APPVEYOR") then
+        sendToAppVeyor <| sprintf "UpdateBuild -Version \"%s\"" version
 
 (*
 
