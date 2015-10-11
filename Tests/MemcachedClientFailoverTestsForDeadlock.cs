@@ -163,10 +163,7 @@ namespace Enyim.Caching.Tests
 
 /* ************************************************************
  *
- *    @author Couchbase <info@couchbase.com>
- *    @author Attila Kiskó <a@enyim.com>
- *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2014 Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kiskó, enyim.com
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
