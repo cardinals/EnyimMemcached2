@@ -7,3 +7,5 @@ build_script:
 test: off
 artifacts:
 - path: output\*.nupkg
+nuget:
+  disable_publish_on_pr: true
