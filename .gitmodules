@@ -1,0 +1,3 @@
+[submodule "Weavers"]
+	path = Weavers
+	url = https://github.com/enyim/EventSourceWeaver.git

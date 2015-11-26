@@ -12,6 +12,8 @@ namespace Enyim.Caching
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
 	public class AsyncSocket : ISocket
 	{
+		#region [ Defaults                     ]
+
 		public static class Defaults
 		{
 			public const int MaxBufferSize = 1 * 1024 * 1024;
@@ -25,13 +27,15 @@ namespace Enyim.Caching
 			public const int ReceiveTimeoutMsec = 10000;
 		}
 
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
-		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
+		#endregion
 
+		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private readonly object ConnectLock = new object();
+		private readonly CoreEventSource trace = EventSources.CoreEventSource;
 
 		private IPEndPoint endpoint;
+		private string name; // used for tracing
+
 		private TimeSpan connectionTimeout;
 		private TimeSpan sendTimeout;
 		private TimeSpan receiveTimeout;
@@ -71,11 +75,14 @@ namespace Enyim.Caching
 			InitBuffers();
 
 			this.endpoint = endpoint;
+			this.name = endpoint.ToString();
 			this.IsAlive = false;
 
 			using (var mre = new ManualResetEventSlim(false))
 			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
 			{
+				trace.ConnectStart(name);
+
 				opt.Completed += (a, b) => mre.Set();
 				RecreateSocket();
 				IsBusy = true;
@@ -85,16 +92,17 @@ namespace Enyim.Caching
 					if (socket.ConnectAsync(opt)
 						&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
 					{
-						if (LogTraceEnabled) log.Trace("mre.Wait() timeout while connecting");
-
+						trace.ConnectFail(name, SocketError.TimedOut);
 						Socket.CancelConnectAsync(opt);
-						throw new TimeoutException(String.Format("Connection timeout {0} has been exceeded while trying to connect to {1}", ConnectionTimeout, endpoint));
+						throw new TimeoutException($"Connection timeout {ConnectionTimeout} has been exceeded while trying to connect to {endpoint}");
 					}
 
 					if (opt.SocketError != SocketError.Success)
-						throw new IOException("Could not connect to " + endpoint);
+					{
+						trace.ConnectFail(name, opt.SocketError);
+						throw new IOException($"Could not connect to {endpoint}");
+					}
 
-					if (LogDebugEnabled) log.Debug(endpoint + " is connected");
 					IsAlive = true;
 				}
 				finally
@@ -104,23 +112,62 @@ namespace Enyim.Caching
 			}
 		}
 
-		public void ScheduleSend(Action<bool> whenDone)
+		#region [ Init                         ]
+
+		private void InitBuffers()
 		{
-			if (!IsAlive)
+			if (sendArgs == null)
 			{
-				whenDone(false);
+				sendArgs = SocketAsyncEventArgsFactory.Instance.Take(SendBufferSize);
+				sendArgs.Completed += SendAsyncCompleted;
+				sendBuffer = new WriteBuffer(sendArgs.Buffer, sendArgs.Offset, sendArgs.Count);
+
+				recvArgs = SocketAsyncEventArgsFactory.Instance.Take(ReceiveBufferSize);
+				recvArgs.Completed += ReceiveAsyncCompleted;
+				recvBuffer = new ReadBuffer(recvArgs.Buffer, recvArgs.Offset, recvArgs.Count);
 			}
 			else
 			{
-				IsBusy = true;
-				sendArgs.UserToken = whenDone;
-				PerformSend(sendBuffer.BufferOffset, sendBuffer.Position);
+				sendBuffer.Reset();
+				recvBuffer.SetAvailableLength(0);
 			}
+		}
+
+		private void RecreateSocket()
+		{
+			DestroySocket();
+
+			socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
+			{
+				NoDelay = true,
+				ReceiveBufferSize = ReceiveBufferSize,
+				SendBufferSize = SendBufferSize,
+				ReceiveTimeout = ToTimeout(ReceiveTimeout),
+				SendTimeout = ToTimeout(SendTimeout)
+			};
+		}
+
+		#endregion
+
+		public void ScheduleSend(Action<bool> whenDone)
+		{
+			if (trace.IsEnabled()) trace.SendStart(name, IsAlive, sendBuffer.Position);
+
+			if (!IsAlive)
+			{
+				whenDone(false);
+				return;
+			}
+
+			IsBusy = true;
+			sendArgs.UserToken = whenDone;
+
+			PerformSend(sendBuffer.BufferOffset, sendBuffer.Position);
 		}
 
 		private void PerformSend(int sendOffset, int sendCount)
 		{
-			for (; ; )
+			for (;;)
 			{
 				// try sending all our data
 				sendArgs.SetBuffer(sendOffset, sendCount);
@@ -129,6 +176,8 @@ namespace Enyim.Caching
 
 				// send was done synchronously
 				var sent = sendArgs.BytesTransferred;
+				if (trace.IsEnabled()) trace.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
+
 				// check for fail
 				if (sendArgs.SocketError != SocketError.Success || sent < 1)
 				{
@@ -156,6 +205,7 @@ namespace Enyim.Caching
 		private void SendAsyncCompleted(object sender, SocketAsyncEventArgs e)
 		{
 			var sent = sendArgs.BytesTransferred;
+			if (trace.IsEnabled()) trace.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
 
 			// failed during send
 			if (sendArgs.SocketError != SocketError.Success || sent < 1)
@@ -167,8 +217,7 @@ namespace Enyim.Caching
 			var sendOffset = sendArgs.Offset + sent;
 			var sendCount = sendArgs.Count - sent;
 
-			// OS sent less data than we asked for,
-			// send the remaining data
+			// OS sent less data than we asked for, so send the remaining data
 			if (sendCount > 0)
 			{
 				PerformSend(sendOffset, sendCount);
@@ -185,20 +234,17 @@ namespace Enyim.Caching
 
 		private void FinishSending(bool success)
 		{
-			var callback = (Action<bool>)sendArgs.UserToken;
-			IsBusy = false;
-			callback(success);
-		}
+			if (trace.IsEnabled()) trace.SendStop(name, IsAlive, success);
 
-		private void FinishReceiving(bool success)
-		{
-			var callback = (Action<bool>)recvArgs.UserToken;
+			var callback = (Action<bool>)sendArgs.UserToken;
 			IsBusy = false;
 			callback(success);
 		}
 
 		public void ScheduleReceive(Action<bool> whenDone)
 		{
+			if (trace.IsEnabled()) trace.ReceiveStart(name, IsAlive);
+
 			if (!IsAlive)
 			{
 				whenDone(false);
@@ -206,33 +252,38 @@ namespace Enyim.Caching
 			}
 
 			IsBusy = true;
-
 			recvArgs.UserToken = whenDone;
-			if (LogTraceEnabled) log.Trace("Socket {0} is receiving", endpoint);
 
 			if (!socket.ReceiveAsync(recvArgs))
 			{
-				if (LogTraceEnabled) log.Trace("Socket {0} received synchronously", endpoint);
-				RecvAsyncCompleted(null, recvArgs);
+				// receive was done synchronously
+				ReceiveAsyncCompleted(null, recvArgs);
 			}
 		}
 
-		private void RecvAsyncCompleted(object sender, SocketAsyncEventArgs e)
+		private void ReceiveAsyncCompleted(object sender, SocketAsyncEventArgs recvArgs)
 		{
-			var success = e.SocketError == SocketError.Success && e.BytesTransferred > 0;
+			var received = recvArgs.BytesTransferred;
+			if (trace.IsEnabled()) trace.ReceiveChunk(name, IsAlive, received, recvArgs.SocketError);
 
-			if (LogTraceEnabled) log.Trace("Socket {0} success: {1}, bytes {2}", endpoint, success, e.BytesTransferred);
-
-			recvBuffer.SetAvailableLength(success ? e.BytesTransferred : 0);
+			var success = recvArgs.SocketError == SocketError.Success && received > 0;
+			recvBuffer.SetAvailableLength(success ? received : 0);
 
 			FinishReceiving(success);
 		}
 
+		private void FinishReceiving(bool success)
+		{
+			if (trace.IsEnabled()) trace.ReceiveStop(name, IsAlive, success);
+
+			var callback = (Action<bool>)recvArgs.UserToken;
+			IsBusy = false;
+			callback(success);
+		}
+
 		private static int ToTimeout(TimeSpan time)
 		{
-			return time == TimeSpan.MaxValue
-						? Timeout.Infinite
-						: (int)time.TotalMilliseconds;
+			return time == TimeSpan.MaxValue ? Timeout.Infinite : (int)time.TotalMilliseconds;
 		}
 
 		#region [ Property noise               ]
@@ -322,7 +373,6 @@ namespace Enyim.Caching
 		}
 
 		#endregion
-
 		#region [ Cleanup                      ]
 
 		~AsyncSocket()
@@ -339,7 +389,7 @@ namespace Enyim.Caching
 				if (socket != null)
 				{
 					sendArgs.Completed -= SendAsyncCompleted;
-					recvArgs.Completed -= RecvAsyncCompleted;
+					recvArgs.Completed -= ReceiveAsyncCompleted;
 
 					SocketAsyncEventArgsFactory.Instance.Return(recvArgs);
 					SocketAsyncEventArgsFactory.Instance.Return(sendArgs);
@@ -351,8 +401,6 @@ namespace Enyim.Caching
 
 		private void DestroySocket()
 		{
-			if (LogTraceEnabled) log.Trace("DestroySocket");
-
 			if (socket != null)
 			{
 				try
@@ -365,51 +413,11 @@ namespace Enyim.Caching
 				}
 				catch (Exception e)
 				{
-					if (LogDebugEnabled) log.Debug("Exception while destroying socket.", e);
+					if (log.IsDebugEnabled) log.Debug("Exception while destroying socket.", e);
 				}
 
 				socket = null;
 			}
-		}
-
-		#endregion
-
-		#region [ Init                         ]
-
-		private void InitBuffers()
-		{
-			if (sendArgs == null)
-			{
-				sendArgs = SocketAsyncEventArgsFactory.Instance.Take(SendBufferSize);
-				sendArgs.Completed += SendAsyncCompleted;
-				sendBuffer = new WriteBuffer(sendArgs.Buffer, sendArgs.Offset, sendArgs.Count);
-
-				recvArgs = SocketAsyncEventArgsFactory.Instance.Take(ReceiveBufferSize);
-				recvArgs.Completed += RecvAsyncCompleted;
-				recvBuffer = new ReadBuffer(recvArgs.Buffer, recvArgs.Offset, recvArgs.Count);
-			}
-			else
-			{
-				sendBuffer.Reset();
-				recvBuffer.SetAvailableLength(0);
-			}
-		}
-
-		private void RecreateSocket()
-		{
-			if (LogTraceEnabled) log.Trace("RecreateSocket; destroying previous");
-			DestroySocket();
-
-			socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
-			{
-				NoDelay = true,
-				ReceiveBufferSize = ReceiveBufferSize,
-				SendBufferSize = SendBufferSize,
-				ReceiveTimeout = ToTimeout(ReceiveTimeout),
-				SendTimeout = ToTimeout(SendTimeout)
-			};
-
-			if (LogTraceEnabled) log.Trace("Socket was recreated");
 		}
 
 		#endregion

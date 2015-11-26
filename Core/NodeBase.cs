@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics.Tracing;
 
 namespace Enyim.Caching
 {
@@ -21,10 +22,12 @@ namespace Enyim.Caching
 		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
 		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
 		private static readonly bool LogInfoEnabled = log.IsInfoEnabled;
+		private readonly CoreEventSource trace = EventSources.CoreEventSource;
 
 		private readonly ICluster owner;
 		private readonly IPEndPoint endpoint;
 		private readonly IFailurePolicy failurePolicy;
+		private readonly string name; // used for tracing
 
 		private readonly ISocket socket;
 
@@ -58,6 +61,7 @@ namespace Enyim.Caching
 			this.endpoint = endpoint;
 			this.socket = socket;
 			this.failurePolicy = failurePolicy;
+			this.name = endpoint.ToString();
 
 			failLock = new Object();
 			writeQueue = new ConcurrentQueue<Data>();
@@ -129,6 +133,8 @@ namespace Enyim.Caching
 				writeQueue.Enqueue(new Data { Op = op, Task = tcs });
 				counterEnqueuePerSec.Increment();
 				counterWriteQueue.Increment();
+
+				if (trace.IsEnabled()) trace.EnqueueWriteOp(name);
 			}
 			else
 			{
@@ -200,6 +206,7 @@ namespace Enyim.Caching
 							if (data.IsEmpty) break;
 
 							counterDequeuePerSec.Increment();
+							if (trace.IsEnabled()) trace.DequeueWriteOp(name);
 							WriteOp(data);
 						}
 					}
@@ -250,6 +257,7 @@ namespace Enyim.Caching
 			// op is sent fully; response can be expected
 			readQueue.Enqueue(currentWriteOp);
 			counterReadQueue.Increment();
+			if (trace.IsEnabled()) trace.EnqueueReadOp(name);
 
 			// clean up
 			currentWriteCopier.Dispose();
@@ -287,6 +295,7 @@ namespace Enyim.Caching
 
 			if (writeQueue.TryDequeue(out data))
 			{
+				if (trace.IsEnabled()) trace.DequeueWriteOp(name);
 				counterWriteQueue.Decrement();
 				return data;
 			}
@@ -309,6 +318,7 @@ namespace Enyim.Caching
 			{
 				readQueue.Enqueue(data);
 				counterReadQueue.Increment();
+				if (trace.IsEnabled()) trace.EnqueueReadOp(name);
 				request.Dispose();
 
 				if (LogTraceEnabled) log.Trace("Full send of " + data.Op);
@@ -340,7 +350,7 @@ namespace Enyim.Caching
 					}
 					else
 					{
-						// this is a soft fail (cannot throw from other thread)
+						// this is a soft fail (cannot throw from other thread),
 						// so we requeue for IO and exception will be thrown by Receive()
 						FailMe(new IOException("Failed receiving from " + endpoint));
 					}
@@ -392,6 +402,7 @@ namespace Enyim.Caching
 						readQueue.Dequeue();
 						counterReadQueue.Decrement();
 						counterOpReadPerSec.Increment();
+						if (trace.IsEnabled()) trace.DequeueReadOp(name);
 
 						if (data.Task != null)
 							data.Task.TrySetResult(data.Op);
