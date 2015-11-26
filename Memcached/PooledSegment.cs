@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached
 	[SuppressMessage("Potential Code Quality Issues", "NonReadonlyReferencedInGetHashCodeIssue:Non-readonly field referenced in 'GetHashCode()'", Justification = "Only Dispose() changes the array")]
 	public struct PooledSegment : IDisposable
 	{
-		public static readonly PooledSegment Empty = new PooledSegment() { array = new byte[0] };
+		public static readonly PooledSegment Empty = new PooledSegment { array = new byte[0] };
 
 		private IBufferAllocator allocator;
 		private byte[] array;

@@ -22,6 +22,8 @@ namespace Enyim.Caching
 		private readonly int chunkSize;
 
 		// list of factories; the empty one is always at the top
+		// a factory can only provide buffers up to its maximum size
+		// so if a factory runs out of space, we have to create a new one
 		private ConcurrentStack<BufferFactory> factories;
 		// tracks which SAEA's inner buffer belongs to which factory
 		private ConcurrentDictionary<SocketAsyncEventArgs, Tuple<BufferFactory, ArraySegment<byte>>> knownEventArgs;

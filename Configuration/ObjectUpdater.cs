@@ -14,8 +14,8 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		public static void Update(object instance, IDictionary<string, string> source)
 		{
-			if (instance == null) throw new ArgumentNullException("instance");
-			if (source == null) throw new ArgumentNullException("source");
+			if (instance == null) throw new ArgumentNullException(nameof(instance));
+			if (source == null) throw new ArgumentNullException(nameof(source));
 			if (source.Count == 0) return;
 
 			GetUpdater(instance.GetType()).Update(instance, source);

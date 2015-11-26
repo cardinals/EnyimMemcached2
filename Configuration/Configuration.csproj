@@ -88,16 +88,6 @@
     <Compile Include="Funq\ServiceEntry.Generic.cs" />
     <Compile Include="Funq\ServiceKey.cs" />
     <Compile Include="Funq\Syntax.cs" />
-    <Compile Include="Funq\System\Delegates.2.0.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Delegates.2.0.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Funq\System\Delegates.3.x.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Delegates.3.x.tt</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -160,14 +150,6 @@
     </None>
     <None Include="Funq\Helpers.tt">
       <LastGenOutput>Helpers.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\System\Delegates.2.0.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Delegates.2.0.cs</LastGenOutput>
-    </None>
-    <None Include="Funq\System\Delegates.3.x.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Delegates.3.x.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

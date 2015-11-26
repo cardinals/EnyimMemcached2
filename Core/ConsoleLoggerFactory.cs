@@ -151,7 +151,7 @@ namespace Enyim.Caching
 				Write(Severities.Fatal, String.Format(provider, format, args));
 			}
 
-			static class Severities
+			private static class Severities
 			{
 				public const string Trace = "TRACE";
 				public const string Debug = "DEBUG";
@@ -161,14 +161,14 @@ namespace Enyim.Caching
 				public const string Fatal = "FATAL";
 
 				public static Dictionary<string, ConsoleColor> Colors = new Dictionary<string, ConsoleColor>
-			{
-				{ Trace, ConsoleColor.DarkGray },
-				{ Debug, ConsoleColor.Gray },
-				{ Info, ConsoleColor.White },
-				{ Warn, ConsoleColor.Magenta },
-				{ Error, ConsoleColor.Yellow },
-				{ Fatal , ConsoleColor.Red },
-			};
+				{
+					{ Trace, ConsoleColor.DarkGray },
+					{ Debug, ConsoleColor.Gray },
+					{ Info, ConsoleColor.White },
+					{ Warn, ConsoleColor.Magenta },
+					{ Error, ConsoleColor.Yellow },
+					{ Fatal , ConsoleColor.Red }
+				};
 			}
 
 			void Write(string severity, string message)

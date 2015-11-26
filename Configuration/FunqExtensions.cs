@@ -7,7 +7,7 @@ namespace Funq
 {
 	using X = System.Linq.Expressions.Expression;
 
-	internal static partial class FunqExtensions
+	internal static class FunqExtensions
 	{
 		private static readonly MethodInfo ContainerResolve = typeof(Container).GetMethod("Resolve", Type.EmptyTypes);
 

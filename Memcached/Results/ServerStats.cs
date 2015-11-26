@@ -39,7 +39,7 @@ namespace Enyim.Caching.Memcached
 			"bytes",
 			"bytes_read",
 			"bytes_written",
-			"limit_maxbytes",
+			"limit_maxbytes"
 		};
 
 		#endregion

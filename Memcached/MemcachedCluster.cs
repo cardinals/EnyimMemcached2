@@ -7,7 +7,7 @@ namespace Enyim.Caching.Memcached
 {
 	public class MemcachedCluster : ClusterBase
 	{
-		private IBufferAllocator allocator;
+		private readonly IBufferAllocator allocator;
 		private readonly IFailurePolicy failurePolicy;
 		private readonly Func<ISocket> socketFactory;
 

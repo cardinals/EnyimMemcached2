@@ -21,7 +21,7 @@ namespace Enyim.Caching
 
 		private class Ω : ILog
 		{
-			private NLog.Logger logger;
+			private readonly NLog.Logger logger;
 
 			public Ω(NLog.Logger logger)
 			{

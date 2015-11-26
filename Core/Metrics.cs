@@ -39,13 +39,14 @@ namespace Enyim.Caching
 						? name
 						: name + "\t" + instance;
 
-			if (!Cache.TryGetValue(key, out retval))
-				lock (CacheLock)
-					if (!Cache.TryGetValue(key, out retval))
-					{
-						retval = create();
-						Cache.Add(key, retval);
-					}
+			lock (CacheLock)
+			{
+				if (!Cache.TryGetValue(key, out retval))
+				{
+					retval = create();
+					Cache.Add(key, retval);
+				}
+			}
 
 			return retval;
 		}
@@ -102,11 +103,27 @@ namespace Enyim.Caching
 	public interface ICounter : IMetric
 	{
 		void Reset();
-		void Increment();
-		void Decrement();
 		void IncrementBy(int value);
-		void DecrementBy(int value);
 		long Count { get; }
+	}
+
+	public static class MetricExtensions
+	{
+		public static void Increment(this ICounter counter)
+		{
+			counter.IncrementBy(1);
+		}
+
+		public static void Decrement(this ICounter counter)
+		{
+			counter.IncrementBy(-1);
+		}
+
+		public static void DecrementBy(this ICounter counter, int value)
+		{
+			counter.IncrementBy(-value);
+		}
+
 	}
 
 	public interface IMeter : ICounter
@@ -162,7 +179,7 @@ namespace Enyim.Caching
 
 	internal class StringBuilderVisitor : MetricsVisitor
 	{
-		private StringBuilder sb;
+		private readonly StringBuilder sb;
 
 		public StringBuilderVisitor(StringBuilder sb)
 		{
@@ -445,7 +462,8 @@ namespace Enyim.Caching
 						slices[i].Value = slices[i].Value + by;
 						return;
 					}
-					else if (id == 0)
+
+					if (id == 0)
 					{
 						slices[i] = new Entry { ThreadId = threadId, Value = by };
 						return;

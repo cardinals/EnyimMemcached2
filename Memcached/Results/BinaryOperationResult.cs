@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached.Results
 				StatusCode = response.StatusCode,
 				Success = success,
 				Message = success ? null : response.GetStatusMessage() ?? failMessage,
-				Cas = response.CAS,
+				Cas = response.CAS
 			};
 
 			return retval;

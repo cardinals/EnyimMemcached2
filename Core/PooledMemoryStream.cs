@@ -103,14 +103,9 @@ namespace Enyim.Caching
 				if (available == 0)
 				{
 					if (currentIndex == chunks.Count - 1)
-					{
 						break;
-					}
-					else
-					{
-						currentChunk = chunks[++currentIndex];
-					}
 
+					currentChunk = chunks[++currentIndex];
 					available = currentChunk.Length;
 					chunkPos = 0;
 				}
