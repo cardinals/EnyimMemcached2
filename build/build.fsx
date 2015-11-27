@@ -23,6 +23,8 @@ let packageVersion = projectInformalVersion.Split('+').[0]
 /// do a nuget package restore
 Target "RestorePackages" (fun _ -> solutionPath |> RestoreMSSolutionPackages(id))
 
+Target "Submodules" (fun _ -> Fake.Git.CommandHelper.runGitCommand "." "submodule update --init --recursive" |> ignore)
+
 /// build the solution
 Target "Build" (fun _ ->
     let buildParams defaults =
@@ -93,6 +95,7 @@ Target "Nuget" (fun _ -> doPush "nuget")
     ==> "Test"
     ==> "Pack"
 
+"RestorePackages" <== Dependency "Submodules"
 "Push" <== Dependency "Pack"
 "Nuget" <== Dependency "Pack"
 "Myget" <== Dependency "Pack"

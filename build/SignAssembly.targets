@@ -36,7 +36,7 @@
 						<AssemblyOriginatorKeyFile Condition=" Exists('$(SolutionDir)\enyim.snk') ">$([System.IO.Path]::GetFullPath("$(SolutionDir)\enyim.snk"))</AssemblyOriginatorKeyFile>
 					</PropertyGroup>
 					<PropertyGroup Condition=" '$(AssemblyOriginatorKeyFile)' == '' And Exists('$(SolutionDir)\enyim_public.snk')">
-						<AssemblyOriginatorKeyFile>$([System.IO.Path]::GetFullPath("$(SolutionDir)\enyim_public	.snk"))</AssemblyOriginatorKeyFile>
+						<AssemblyOriginatorKeyFile>$([System.IO.Path]::GetFullPath("$(SolutionDir)\enyim_public.snk"))</AssemblyOriginatorKeyFile>
 						<DelaySign>True</DelaySign>
 					</PropertyGroup>
 				</Otherwise>
