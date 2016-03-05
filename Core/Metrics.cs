@@ -455,17 +455,15 @@ namespace Enyim.Caching
 
 				for (var i = 0; i < slices.Length; i++)
 				{
-					var id = slices[i].ThreadId;
-
-					if (id == threadId)
+					if (slices[i].ThreadId == threadId)
 					{
 						slices[i].Value = slices[i].Value + by;
 						return;
 					}
 
-					if (id == 0)
+					if (Interlocked.CompareExchange(ref slices[i].ThreadId, threadId, 0) == 0)
 					{
-						slices[i] = new Entry { ThreadId = threadId, Value = by };
+						slices[i].Value = by;
 						return;
 					}
 				}
@@ -494,6 +492,7 @@ namespace Enyim.Caching
 			private static readonly long NanoTick = 1000 * 1000 * 1000 / Stopwatch.Frequency;
 			private readonly Stopwatch stopwatch;
 			private readonly Interval interval;
+			private double lastSnapshot;
 
 			public DefaultMeter(string name, Interval interval)
 				: base(name)
@@ -522,10 +521,12 @@ namespace Enyim.Caching
 				get
 				{
 					var by = IntervalConverter.Convert(stopwatch.ElapsedTicks * NanoTick, Interval.Nanoseconds, interval);
-					var retval = by == 0 ? 0 : Count / by;
+					if (by == 0) return lastSnapshot;
+
+					lastSnapshot = (double)Count / by;
 					Reset();
 
-					return retval;
+					return lastSnapshot;
 				}
 			}
 		}
