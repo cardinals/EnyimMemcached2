@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Enyim.Caching.SerilogAdapter</id>
+		<title>EnyimMemcached2 Serilog Adapter</title>
+		<version>$version$</version>
+		<authors>Attila Kiskó</authors>
+		<owners>Attila Kiskó</owners>
+		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+		<projectUrl>https://github.com/enyim/EnyimMemcached2</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Serilog based logging adapter for the Enyim Memcached [2] library.</description>
+		<tags>memcached enyim cache caching NLog</tags>
+		<dependencies>
+			<dependency id="Serilog" version="1.5.0"/>
+			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\$configuration$\Enyim.Caching.Serilog.*" target="lib\net45" />
+	</files>
+</package>
