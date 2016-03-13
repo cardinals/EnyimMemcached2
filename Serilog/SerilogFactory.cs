@@ -44,12 +44,12 @@ namespace Enyim.Caching
 
 			public bool IsDebugEnabled
 			{
-				get { return logger.IsEnabled(LogEventLevel.Verbose); }
+				get { return logger.IsEnabled(LogEventLevel.Debug); }
 			}
 
 			public bool IsInfoEnabled
 			{
-				get { return logger.IsEnabled(LogEventLevel.Verbose); }
+				get { return logger.IsEnabled(LogEventLevel.Information); }
 			}
 
 			public bool IsWarnEnabled
@@ -59,7 +59,7 @@ namespace Enyim.Caching
 
 			public bool IsErrorEnabled
 			{
-				get { return logger.IsEnabled(LogEventLevel.Verbose); }
+				get { return logger.IsEnabled(LogEventLevel.Error); }
 			}
 
 			public bool IsFatalEnabled
