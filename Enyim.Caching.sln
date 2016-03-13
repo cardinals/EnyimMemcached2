@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memcached", "Memcached\Memcached.csproj", "{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLog", "NLog\NLog.csproj", "{D26418C0-BA05-4067-8F68-2493DA3E0E11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLogAdapter", "NLog\NLogAdapter.csproj", "{D26418C0-BA05-4067-8F68-2493DA3E0E11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{B7258196-67ED-4135-B06F-F6F68C4176F4}"
 EndProject
@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B76
 		VERSION = VERSION
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log4net", "log4net\log4net.csproj", "{A220B349-B7BB-483A-B4DA-1A91CB875E9D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log4netAdapter", "log4net\log4netAdapter.csproj", "{A220B349-B7BB-483A-B4DA-1A91CB875E9D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "msbuild", "msbuild", "{3A1C1621-CC53-4D7A-AADD-CC7D45605A01}"
 	ProjectSection(SolutionItems) = preProject
@@ -38,7 +38,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serilog", "Serilog\Serilog.csproj", "{048DA362-F36E-4D8D-8104-FEA2BE6C5AB3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerilogAdapter", "Serilog\SerilogAdapter.csproj", "{048DA362-F36E-4D8D-8104-FEA2BE6C5AB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
