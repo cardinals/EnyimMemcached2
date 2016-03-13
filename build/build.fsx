@@ -66,10 +66,12 @@ Target "Pack" (fun _ ->
 /// run the unit tests
 Target "Test" (fun _ ->
     xUnit2 (fun p ->
-        let excludeTraits = (getBuildParamOrDefault "excludeTraits" "").Split [|';'|]
-                            |> Seq.map ((fun a -> a.Split [|':'|])
-                                        >> (fun a -> ( a.[0], a.[1] )))
-                            |> Seq.toList
+        let excludeTraits = match hasBuildParam "excludeTraits" with
+                            | true -> (getBuildParam "excludeTraits").Split [|';'|]
+                                        |> Seq.map ((fun a -> a.Split [|':'|])
+                                                    >> (fun a -> ( a.[0], a.[1] )))
+                                        |> Seq.toList
+                            | false -> List.Empty
         {p with Parallel = All
                 ExcludeTraits = excludeTraits
                 Silent = false })
