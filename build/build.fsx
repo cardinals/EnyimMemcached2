@@ -1,6 +1,16 @@
 #r "../packages/FAKE/tools/FakeLib.dll"
 #load "./utils.fsx"
 
+(*
+
+The following parameters are supported:
+
+- excludeTraits: excludes XUnit tests with the given trait(s). Works the same as in XUnit, but has a different syntax.
+
+build.cmd excludeTraits=trait1:value1;trait2:value2
+
+*)
+
 open Fake
 open Fake.Testing.XUnit2
 
@@ -56,8 +66,12 @@ Target "Pack" (fun _ ->
 /// run the unit tests
 Target "Test" (fun _ ->
     xUnit2 (fun p ->
+        let excludeTraits = (getBuildParamOrDefault "excludeTraits" "").Split [|';'|]
+                            |> Seq.map ((fun a -> a.Split [|':'|])
+                                        >> (fun a -> ( a.[0], a.[1] )))
+                            |> Seq.toList
         {p with Parallel = All
-                /// ExcludeTraits = [ "slow", "yes" ]
+                ExcludeTraits = excludeTraits
                 Silent = false })
         (!! (solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
     |> DoNothing)
