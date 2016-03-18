@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0"?>
 <package>
 	<metadata>
-		<id>Enyim.Caching.Memcached.Configuration</id>
-		<title>EnyimMemcached2 Configuration Library</title>
+		<id>Enyim.Caching.Memcached2.Configuration</id>
+		<title>App.config based configuration extensions for EnyimMemcached2</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>
 		<owners>Attila Kiskó</owners>
 		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
 		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
-		<description>Configuration classes (app.config/code) dor the Enyim Memcached library.</description>
+		<description>Configuration classes (app.config/code) for the Enyim Memcached2 library.</description>
 		<tags>memcached enyim cache caching configuration</tags>
 		<dependencies>
-			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+			<dependency id="Enyim.Caching.Memcached2" version="4.0.0"/>
 		</dependencies>
 	</metadata>
 	<files>

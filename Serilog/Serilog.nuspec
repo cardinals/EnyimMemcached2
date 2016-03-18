@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package>
 	<metadata>
-		<id>Enyim.Caching.SerilogAdapter</id>
+		<id>Enyim.Caching.Memcached2.SerilogAdapter</id>
 		<title>EnyimMemcached2 Serilog Adapter</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>
@@ -13,7 +13,7 @@
 		<tags>memcached enyim cache caching NLog</tags>
 		<dependencies>
 			<dependency id="Serilog" version="1.5.0"/>
-			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+			<dependency id="Enyim.Caching.Memcached2" version="4.0.0"/>
 		</dependencies>
 	</metadata>
 	<files>

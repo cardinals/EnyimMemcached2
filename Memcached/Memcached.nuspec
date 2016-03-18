@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <package>
 	<metadata>
-		<id>Enyim.Caching.Memcached</id>
+		<id>Enyim.Caching.Memcached2</id>
 		<title>EnyimMemcached2</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>

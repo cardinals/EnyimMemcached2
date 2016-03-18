@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <package>
 	<metadata>
-		<id>Enyim.Caching.Memcached.Extensions</id>
+		<id>Enyim.Caching.Memcached2.Extensions</id>
 		<title>EnyimMemcached2 Extensions</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>
@@ -9,10 +9,10 @@
 		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
 		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
-		<description>Comvenience methods for the the EnyimMemcached2 library.</description>
+		<description>Convenience methods for the the EnyimMemcached2 library.</description>
 		<tags>memcached enyim cache caching extension extensions</tags>
 		<dependencies>
-			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+			<dependency id="Enyim.Caching.Memcached2" version="4.0.0"/>
 		</dependencies>
 	</metadata>
 	<files>
