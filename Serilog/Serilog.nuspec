@@ -13,7 +13,7 @@
 		<tags>memcached enyim cache caching NLog</tags>
 		<dependencies>
 			<dependency id="Serilog" version="1.5.0"/>
-			<dependency id="Enyim.Caching.Memcached2" version="4.0.0"/>
+			<dependency id="Enyim.Caching.Memcached2" />
 		</dependencies>
 	</metadata>
 	<files>

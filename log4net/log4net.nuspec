@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package>
 	<metadata>
-		<id>Enyim.Caching.Log4NetAdapter</id>
+		<id>Enyim.Caching.Memcached2.Log4NetAdapter</id>
 		<title>EnyimMemcached2 log4net Adapter</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>
@@ -13,7 +13,7 @@
 		<tags>memcached enyim cache caching log4net</tags>
 		<dependencies>
 			<dependency id="log4net" version="1.0.0"/>
-			<dependency id="Enyim.Caching.Memcached" version="4.0.0"/>
+			<dependency id="Enyim.Caching.Memcached2" />
 		</dependencies>
 	</metadata>
 	<files>
