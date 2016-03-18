@@ -38,17 +38,18 @@ Target "Submodules" (fun _ -> Fake.Git.CommandHelper.runGitCommand "." "submodul
 /// build the solution
 Target "Build" (fun _ ->
     let buildParams defaults =
-        {defaults with Verbosity = Some(Minimal)
-                       Targets = ["Build"]
-                       Properties =
-                           ["Configuration", configuration
-                            "Platform", "Any CPU"
-                            "ILMergeEnabled", "True"
-                            "SolutionDir", solutionDir
-                            "ProjectVersion", projectVersion
-                            "ProjectInformalVersion", projectInformalVersion]}
+        { defaults with Verbosity = Some(Minimal)
+                        Targets = [ "Build" ]
+                        Properties =
+                            [ "Configuration", configuration
+                              "Platform", "Any CPU"
+                              "ILMergeEnabled", "True"
+                              "SolutionDir", solutionDir
+                              "ProjectVersion", projectVersion
+                              "ProjectInformalVersion", projectInformalVersion ] }
     Utils.tryPublishBuildInfo projectInformalVersion
     build buildParams solutionPath |> DoNothing)
+
 
 /// build nuget packages
 Target "Pack" (fun _ ->
@@ -66,17 +67,18 @@ Target "Pack" (fun _ ->
 /// run the unit tests
 Target "Test" (fun _ ->
     xUnit2 (fun p ->
-        let excludeTraits = match hasBuildParam "excludeTraits" with
-                            | true -> (getBuildParam "excludeTraits").Split [|';'|]
-                                        |> Seq.map ((fun a -> a.Split [|':'|])
-                                                    >> (fun a -> ( a.[0], a.[1] )))
-                                        |> Seq.toList
-                            | false -> List.Empty
-        {p with Parallel = All
-                ExcludeTraits = excludeTraits
-                Silent = false })
-        (!! (solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
+        let excludeTraits =
+            match hasBuildParam "excludeTraits" with
+            | true ->
+                (getBuildParam "excludeTraits").Split [| ';' |]
+                |> Seq.map ((fun a -> a.Split [| ':' |]) >> (fun a -> (a.[0], a.[1])))
+                |> Seq.toList
+            | false -> List.Empty
+        { p with Parallel = All
+                 ExcludeTraits = excludeTraits
+                 Silent = false }) (!!(solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
     |> DoNothing)
+
 
 let guessApiKey pushTo =
     if hasBuildParam "apikey"
@@ -87,19 +89,19 @@ let guessApiKey pushTo =
 
 let doPush pushTo =
     let apiKey = guessApiKey pushTo
-
-    !! (outputDir + "\\*." + packageVersion + ".nupkg")
+    !!(outputDir + "\\*." + packageVersion + ".nupkg")
     |> Seq.map GetMetaDataFromPackageFile
-    |> Seq.iter (fun f -> NuGetPublish (fun p ->
-                            {p with Publish = true
-                                    PublishUrl = feeds.[pushTo]
-                                    AccessKey = apiKey
-                                    Version = packageVersion
-                                    OutputPath = outputDir
-                                    WorkingDir = solutionDir
-                                    Project = f.Id}))
-
+    |> Seq.iter (fun f ->
+           NuGetPublish(fun p ->
+               { p with Publish = true
+                        PublishUrl = feeds.[pushTo]
+                        AccessKey = apiKey
+                        Version = packageVersion
+                        OutputPath = outputDir
+                        WorkingDir = solutionDir
+                        Project = f.Id }))
     DeleteDir outputDir
+
 
 // push packages to myget/nuget
 Target "Push" (fun _ -> doPush pushTo)
@@ -120,7 +122,7 @@ RunParameterTargetOrDefault "target" "Pack"
 
 (*
 
-    Copyright (c) Attila Kiskó, enyim.com
+    Copyright (c) Attila KiskÃ³, enyim.com
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
