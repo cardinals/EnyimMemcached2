@@ -11,12 +11,12 @@
     <AssemblyName>Enyim.Caching.NLog</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\build\ProjectDefaults.targets" />
   <ItemGroup>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -28,22 +28,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AssemblyInfo.cs">
+    <Compile Include="..\..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\GlobalSuppressions.cs">
+    <Compile Include="..\..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="NLogFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj">
+    <ProjectReference Include="..\..\Core\Core.csproj">
       <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
       <Name>Core</Name>
       <MergedSource>True</MergedSource>
     </ProjectReference>
-    <ProjectReference Include="..\Memcached\Memcached.csproj">
+    <ProjectReference Include="..\..\Memcached\Memcached.csproj">
       <Project>{934f5e21-0a76-4edd-a6df-e66379fa2e4c}</Project>
       <Name>Memcached</Name>
     </ProjectReference>
