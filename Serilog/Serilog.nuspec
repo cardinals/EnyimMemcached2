@@ -18,5 +18,6 @@
 	</metadata>
 	<files>
 		<file src="bin\$configuration$\Enyim.Caching.Serilog.*" target="lib\net45" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

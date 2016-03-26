@@ -14,5 +14,6 @@
 	</metadata>
 	<files>
 		<file src="bin\$configuration$\*" target="lib\net45" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

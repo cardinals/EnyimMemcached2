@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>Enyim.Caching.Memcached2.Configuration</id>
-		<title>App.config based configuration extensions for EnyimMemcached2</title>
+		<title>EnyimMemcached2 Configuration Library</title>
 		<version>$version$</version>
 		<authors>Attila Kiskó</authors>
 		<owners>Attila Kiskó</owners>
@@ -18,5 +18,6 @@
 	<files>
 		<file src="..\bin\$configuration$\*.configuration.*" target="lib\net45" />
 		<file src="*.xdt" target="content" />
+		<file src="..\**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

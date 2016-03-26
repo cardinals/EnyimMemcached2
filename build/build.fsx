@@ -17,6 +17,7 @@ open Fake.Testing.XUnit2
 // configuration
 
 let configuration = getBuildParamOrDefault "configuration" "Release"
+let doSymbols = getEnvironmentVarAsBoolOrDefault "symbols" true
 let outputPath = getBuildParamOrDefault "output" "output"
 let pushTo = getBuildParamOrDefault "pushTo" "myget"
 let feeds = dict [ ("myget", "https://www.myget.org/F/enyimmemcached2/api/v2/package");
@@ -62,6 +63,9 @@ Target "Pack" (fun _ ->
                        WorkingDir = (DirectoryName nuspec)
                        OutputPath = outputDir
                        Version = packageVersion
+                       SymbolPackage = match doSymbols with
+                                        | true -> NugetSymbolPackage.Nuspec
+                                        | false -> NugetSymbolPackage.None
                        Properties = ["Configuration", configuration]}) nuspec))
 
 /// run the unit tests
@@ -101,6 +105,7 @@ let doPush pushTo =
                         WorkingDir = solutionDir
                         Project = f.Id }))
     DeleteDir outputDir
+
 
 
 // push packages to myget/nuget
