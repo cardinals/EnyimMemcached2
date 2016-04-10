@@ -9,6 +9,8 @@ The following parameters are supported:
 
 build.cmd excludeTraits=trait1:value1;trait2:value2
 
+- pushTo=(nuget|myget)
+
 *)
 
 open Fake
@@ -51,6 +53,20 @@ Target "Build" (fun _ ->
     Utils.tryPublishBuildInfo projectInformalVersion
     build buildParams solutionPath |> DoNothing)
 
+/// run the unit tests
+Target "Test" (fun _ ->
+    xUnit2 (fun p ->
+        let excludeTraits =
+            match hasBuildParam "excludeTraits" with
+            | true ->
+                (getBuildParam "excludeTraits").Split [| ';' |]
+                |> Seq.map ((fun a -> a.Split [| ':' |]) >> (fun a -> (a.[0], a.[1])))
+                |> Seq.toList
+            | false -> List.Empty
+        { p with Parallel = All
+                 ExcludeTraits = excludeTraits
+                 Silent = false }) (!!(solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
+    |> DoNothing)
 
 /// build nuget packages
 Target "Pack" (fun _ ->
@@ -68,22 +84,6 @@ Target "Pack" (fun _ ->
                                         | false -> NugetSymbolPackage.None
                        Properties = ["Configuration", configuration]}) nuspec))
 
-/// run the unit tests
-Target "Test" (fun _ ->
-    xUnit2 (fun p ->
-        let excludeTraits =
-            match hasBuildParam "excludeTraits" with
-            | true ->
-                (getBuildParam "excludeTraits").Split [| ';' |]
-                |> Seq.map ((fun a -> a.Split [| ':' |]) >> (fun a -> (a.[0], a.[1])))
-                |> Seq.toList
-            | false -> List.Empty
-        { p with Parallel = All
-                 ExcludeTraits = excludeTraits
-                 Silent = false }) (!!(solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
-    |> DoNothing)
-
-
 let guessApiKey pushTo =
     if hasBuildParam "apikey"
         then getBuildParam "apikey"
@@ -93,20 +93,26 @@ let guessApiKey pushTo =
 
 let doPush pushTo =
     let apiKey = guessApiKey pushTo
-    !!(outputDir + "\\*." + packageVersion + ".nupkg")
-    |> Seq.map GetMetaDataFromPackageFile
-    |> Seq.iter (fun f ->
+    let publishUrl = feeds.[pushTo]
+    !!(solutionDir + "/**/*.nuspec")
+    |> Seq.map (fun p -> getNuspecProperties (ReadFileAsString p))
+    |> Seq.iter(fun nuspec ->
            NuGetPublish(fun p ->
                { p with Publish = true
-                        PublishUrl = feeds.[pushTo]
+                        PublishUrl = publishUrl
                         AccessKey = apiKey
                         Version = packageVersion
                         OutputPath = outputDir
                         WorkingDir = solutionDir
-                        Project = f.Id }))
-    DeleteDir outputDir
-
-
+                        Project = nuspec.Id })
+           NuGetPublish(fun p ->
+               { p with Publish = true
+                        PublishUrl = publishUrl
+                        AccessKey = apiKey
+                        Version = packageVersion + ".symbols"
+                        OutputPath = outputDir
+                        WorkingDir = solutionDir
+                        Project = nuspec.Id }))
 
 // push packages to myget/nuget
 Target "Push" (fun _ -> doPush pushTo)
