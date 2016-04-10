@@ -14,6 +14,7 @@ namespace Enyim.Caching.Memcached
 		/// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
 		/// </summary>
 		public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
+		public static readonly ServerStats Empty = new ServerStats();
 
 		// Summable StatItems start at OpSum
 		private const int OpSum = 0x100;

@@ -117,7 +117,7 @@ namespace Enyim.Caching.Memcached
 			{
 				LogTo.Error(e);
 
-				return new ServerStats();
+				return ServerStats.Empty;
 			}
 		}
 

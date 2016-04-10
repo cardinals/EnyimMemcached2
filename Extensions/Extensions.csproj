@@ -26,6 +26,7 @@
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="ISimpleMemcachedClient.cs" />
     <Compile Include="MemcachedClient\Add.cs" />
     <Compile Include="MemcachedClient\Append.cs" />
     <Compile Include="MemcachedClient\Concate.cs" />
@@ -42,6 +43,7 @@
     <Compile Include="MemcachedClient\Stats.cs" />
     <Compile Include="MemcachedClient\Store.cs" />
     <Compile Include="MemcachedClient\Touch.cs" />
+    <Compile Include="SimpleMemcachedClient.cs" />
     <Compile Include="SimpleMemcachedClient\Add.cs" />
     <Compile Include="SimpleMemcachedClient\Append.cs" />
     <Compile Include="SimpleMemcachedClient\Concate.cs" />

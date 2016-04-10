@@ -60,7 +60,6 @@
     <Compile Include="CacheItem.cs" />
     <Compile Include="Contracts\ITranscoder.cs" />
     <Compile Include="Contracts\IMemcachedClient.cs" />
-    <Compile Include="Contracts\ISimpleMemcachedClient.cs" />
     <Compile Include="MemcachedClientBase.cs" />
     <Compile Include="MemcachedClient.cs" />
     <Compile Include="MemcachedCluster.cs" />
@@ -102,7 +101,6 @@
     <Compile Include="Transcoders\DefaultTranscoder.cs" />
     <Compile Include="KeyTransformers\Murmur32KeyTransformer.cs" />
     <Compile Include="KeyTransformers\NullKeyTransformer.cs" />
-    <Compile Include="SimpleMemcachedClient.cs" />
     <Compile Include="Operations\Protocol.cs" />
     <Compile Include="Operations\NoOp.cs" />
     <Compile Include="MemcachedNode.cs" />
