@@ -58,14 +58,19 @@ namespace Enyim.Caching
 				get { return logger.IsFatalEnabled; }
 			}
 
-			public void Trace(object message)
+			public void Trace(string message)
 			{
 				logger.Trace(message);
 			}
 
-			public void Trace(string message, Exception exception)
+			public void Trace(Exception exception)
 			{
-				logger.Trace(message, exception);
+				logger.Trace(exception);
+			}
+
+			public void Trace(Exception exception, string message = null)
+			{
+				logger.Trace(exception, message);
 			}
 
 			public void Trace(string format, params object[] args)
@@ -73,19 +78,14 @@ namespace Enyim.Caching
 				logger.Trace(format, args);
 			}
 
-			public void Trace(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Trace(provider, format, args);
-			}
-
-			public void Debug(object message)
+			public void Debug(string message)
 			{
 				logger.Debug(message);
 			}
 
-			public void Debug(string message, Exception exception)
+			public void Debug(Exception exception, string message = null)
 			{
-				logger.Debug(message, exception);
+				logger.Debug(exception, message);
 			}
 
 			public void Debug(string format, params object[] args)
@@ -93,19 +93,14 @@ namespace Enyim.Caching
 				logger.Debug(format, args);
 			}
 
-			public void Debug(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Debug(provider, format, args);
-			}
-
-			public void Info(object message)
+			public void Info(string message)
 			{
 				logger.Info(message);
 			}
 
-			public void Info(string message, Exception exception)
+			public void Info(Exception exception, string message = null)
 			{
-				logger.Info(message, exception);
+				logger.Info(exception, message);
 			}
 
 			public void Info(string format, params object[] args)
@@ -113,19 +108,14 @@ namespace Enyim.Caching
 				logger.Info(format, args);
 			}
 
-			public void Info(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Info(provider, format, args);
-			}
-
-			public void Warn(object message)
+			public void Warn(string message)
 			{
 				logger.Warn(message);
 			}
 
-			public void Warn(string message, Exception exception)
+			public void Warn(Exception exception, string message = null)
 			{
-				logger.Warn(message, exception);
+				logger.Warn(exception, message);
 			}
 
 			public void Warn(string format, params object[] args)
@@ -133,19 +123,14 @@ namespace Enyim.Caching
 				logger.Warn(format, args);
 			}
 
-			public void Warn(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Warn(provider, format, args);
-			}
-
-			public void Error(object message)
+			public void Error(string message)
 			{
 				logger.Error(message);
 			}
 
-			public void Error(string message, Exception exception)
+			public void Error(Exception exception, string message = null)
 			{
-				logger.Error(message, exception);
+				logger.Error(exception, message);
 			}
 
 			public void Error(string format, params object[] args)
@@ -153,29 +138,19 @@ namespace Enyim.Caching
 				logger.Error(format, args);
 			}
 
-			public void Error(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Error(provider, format, args);
-			}
-
-			public void Fatal(object message)
+			public void Fatal(string message)
 			{
 				logger.Fatal(message);
 			}
 
-			public void Fatal(string message, Exception exception)
+			public void Fatal(Exception exception, string message = null)
 			{
-				logger.Fatal(message, exception);
+				logger.Fatal(exception, message);
 			}
 
 			public void Fatal(string format, params object[] args)
 			{
 				logger.Fatal(format, args);
-			}
-
-			public void Fatal(IFormatProvider provider, string format, params object[] args)
-			{
-				logger.Fatal(provider, format, args);
 			}
 		}
 	}

@@ -1,7 +1,6 @@
 @echo off
 
 if not exist "packages\fake" (
-	rem 4.5.3 throws an excption during install
 	build\nuget install fake -outputdirectory packages -excludeversion
 )
 

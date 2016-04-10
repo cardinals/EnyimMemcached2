@@ -62,14 +62,17 @@ namespace Enyim.Caching
 			return k1;
 		}
 
+		// HACK PEVerify will not be able to load the parent type
+		// [IL]: Error: [...\Enyim.Caching.Core.dll : Enyim.Caching.Murmur32::ComputeHash] Type load failed.
+		// [token  0x02000043] Type load failed.
 		[StructLayout(LayoutKind.Explicit)]
 		private struct ArrayConverter
 		{
 			[FieldOffset(0)]
-			public Byte[] AsByte;
+			public byte[] AsByte;
 
 			[FieldOffset(0)]
-			public UInt32[] AsUInt;
+			public uint[] AsUInt;
 		}
 	}
 }

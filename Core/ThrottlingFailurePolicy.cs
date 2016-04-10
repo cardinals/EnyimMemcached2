@@ -9,8 +9,6 @@ namespace Enyim.Caching
 	/// </summary>
 	public class ThrottlingFailurePolicy : IFailurePolicy
 	{
-		private static readonly ILog log = LogManager.GetLogger(typeof(ThrottlingFailurePolicy));
-
 		private DateTime lastFailed;
 		private int counter;
 
@@ -38,14 +36,14 @@ namespace Enyim.Caching
 
 			if (counter == 0)
 			{
-				if (log.IsDebugEnabled) log.Debug("Never failed before, setting counter to 1.");
+				LogTo.Debug("Never failed before, setting counter to 1.");
 
 				counter = 1;
 			}
 			else
 			{
 				var diff = now - lastFailed;
-				if (log.IsDebugEnabled) log.Debug("Last fail was {0} ago with counter {1}.", diff, counter);
+				LogTo.Debug("Last fail was {0} ago with counter {1}.", diff, counter);
 
 				counter = diff <= ResetAfter ? (counter + 1) : 1;
 			}
@@ -54,13 +52,13 @@ namespace Enyim.Caching
 
 			if (counter == Threshold)
 			{
-				if (log.IsDebugEnabled) log.Debug("Threshold reached, failing node.");
+				LogTo.Debug("Threshold reached, failing node.");
 				counter = 0;
 
 				return true;
 			}
 
-			if (log.IsDebugEnabled) log.Debug("Threshold not reached, current value is {0}.", counter);
+			LogTo.Debug("Threshold not reached, current value is {0}.", counter);
 
 			return false;
 		}

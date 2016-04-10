@@ -15,7 +15,6 @@ namespace Enyim.Caching.Memcached
 		/// </summary>
 		public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
 
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		// Summable StatItems start at OpSum
 		private const int OpSum = 0x100;
 
@@ -157,13 +156,11 @@ namespace Enyim.Caching.Memcached
 				if (serverValues.TryGetValue(key, out retval))
 					return retval;
 
-				if (log.IsDebugEnabled)
-					log.Debug($"The stat item {key} does not exist for {server}");
+				LogTo.Debug($"The stat item {key} does not exist for {server}");
 			}
 			else
 			{
-				if (log.IsDebugEnabled)
-					log.Debug($"No stats are stored for {server}");
+				LogTo.Debug($"No stats are stored for {server}");
 			}
 
 			return null;

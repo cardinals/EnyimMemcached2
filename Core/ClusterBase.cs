@@ -10,11 +10,6 @@ namespace Enyim.Caching
 {
 	public abstract class ClusterBase : ICluster
 	{
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
-		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
-		private static readonly bool LogInfoEnabled = log.IsInfoEnabled;
-
 		private static readonly TaskCompletionSource<IOperation> failSingle;
 		private static readonly TaskCompletionSource<IOperation[]> failBroadcast;
 
@@ -81,8 +76,7 @@ namespace Enyim.Caching
 					try { node.Shutdown(); }
 					catch (Exception e)
 					{
-						if (log.IsErrorEnabled)
-							log.Error("Error while shutting down " + node, e);
+						LogTo.Error(e, "Error while shutting down " + node);
 					}
 				}
 
@@ -133,7 +127,7 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		public void NeedsIO(INode node)
 		{
-			if (LogTraceEnabled) log.Trace("Node {0} has pending IO, requeueing", node);
+			LogTo.Trace("Node {0} has pending IO, requeueing", node);
 			ioQueue.Add(node);
 		}
 
@@ -161,7 +155,7 @@ namespace Enyim.Caching
 				}
 			}
 
-			if (LogDebugEnabled) log.Debug("shutdownToken was cancelled, finishing work");
+			LogTo.Debug("shutdownToken was cancelled, finishing work");
 
 			workerIsDone.Set();
 		}
@@ -174,7 +168,7 @@ namespace Enyim.Caching
 		/// <remarks>Only called from the IO thread.</remarks>
 		private void FailNode(INode node, Exception e)
 		{
-			if (log.IsWarnEnabled) log.Warn("Node {0} failed", node.EndPoint);
+			LogTo.Warn("Node {0} failed", node.EndPoint);
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler
@@ -208,18 +202,18 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		protected virtual void ScheduleReconnect(INode node)
 		{
-			if (LogInfoEnabled) log.Info("Scheduling reconnect for " + node.EndPoint);
+			LogTo.Info("Scheduling reconnect for " + node.EndPoint);
 
 			var when = reconnectPolicy.Schedule(node);
 
 			if (when == TimeSpan.Zero)
 			{
-				if (LogInfoEnabled) log.Info("Will reconnect now");
+				LogTo.Info("Will reconnect now");
 				ReconnectNow(node);
 			}
 			else
 			{
-				if (LogInfoEnabled) log.Info("Will reconnect after " + when);
+				LogTo.Info("Will reconnect after " + when);
 				Task
 					.Delay(when, shutdownToken.Token)
 					.ContinueWith(_ => ReconnectNow(node), TaskContinuationOptions.OnlyOnRanToCompletion);
@@ -239,8 +233,7 @@ namespace Enyim.Caching
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled)
-					log.Error("Failed to reconnect", e);
+				LogTo.Error(e, "Failed to reconnect");
 
 				ScheduleReconnect(node);
 			}
@@ -253,7 +246,7 @@ namespace Enyim.Caching
 		/// <remarks>Can be called from a background thread (Task pool)</remarks>
 		private void ReAddNode(INode node)
 		{
-			if (LogDebugEnabled) log.Debug("Node {0} was reconnected", node.EndPoint);
+			LogTo.Debug("Node {0} was reconnected", node.EndPoint);
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler

@@ -3,17 +3,19 @@ using System.Diagnostics.Tracing;
 
 namespace Enyim.Caching
 {
-	public abstract partial class CoreEventSource
+	public static partial class CoreEventSource
 	{
-		[Event(31, Message = "Write operation enqueued for {0}", Keywords = Keywords.OpQueue)]
-		public abstract void EnqueueWriteOp(string address);
-		[Event(32, Message = "Write operation dequeued for {0}", Keywords = Keywords.OpQueue)]
-		public abstract void DequeueWriteOp(string address);
+		private const int NodeBaseTaskId = 20;
 
-		[Event(33, Message = "Read operation enqueued for {0}", Keywords = Keywords.OpQueue)]
-		public abstract void EnqueueReadOp(string address);
-		[Event(34, Message = "Read operation dequeued for {0}", Keywords = Keywords.OpQueue)]
-		public abstract void DequeueReadOp(string address);
+		[Event(NodeBaseTaskId + 1, Message = "Write operation enqueued for {0}", Keywords = Keywords.OpQueue)]
+		public static void EnqueueWriteOp(string address) { }
+		[Event(NodeBaseTaskId + 2, Message = "Write operation dequeued for {0}", Keywords = Keywords.OpQueue)]
+		public static void DequeueWriteOp(string address) { }
+
+		[Event(NodeBaseTaskId + 3, Message = "Read operation enqueued for {0}", Keywords = Keywords.OpQueue)]
+		public static void EnqueueReadOp(string address) { }
+		[Event(NodeBaseTaskId + 4, Message = "Read operation dequeued for {0}", Keywords = Keywords.OpQueue)]
+		public static void DequeueReadOp(string address) { }
 
 		public static partial class Keywords
 		{

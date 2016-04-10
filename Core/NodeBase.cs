@@ -18,12 +18,6 @@ namespace Enyim.Caching
 		private const int ALIVE = 1;
 		private const int DEAD = 0;
 
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-		private static readonly bool LogTraceEnabled = log.IsTraceEnabled;
-		private static readonly bool LogDebugEnabled = log.IsDebugEnabled;
-		private static readonly bool LogInfoEnabled = log.IsInfoEnabled;
-		private readonly CoreEventSource trace = EventSources.CoreEventSource;
-
 		private readonly ICluster owner;
 		private readonly IPEndPoint endpoint;
 		private readonly IFailurePolicy failurePolicy;
@@ -104,7 +98,7 @@ namespace Enyim.Caching
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 
-			if (LogDebugEnabled) log.Debug("Connecting node to " + endpoint);
+			LogTo.Debug("Connecting node to " + endpoint);
 
 			socket.Connect(endpoint, token);
 
@@ -134,7 +128,7 @@ namespace Enyim.Caching
 				counterEnqueuePerSec.Increment();
 				counterWriteQueue.Increment();
 
-				if (trace.IsEnabled()) trace.EnqueueWriteOp(name);
+				CoreEventSource.EnqueueWriteOp(name);
 			}
 			else
 			{
@@ -163,7 +157,7 @@ namespace Enyim.Caching
 				// happens when OPs are coming in, but we're still processing the previous batch
 				if (socket.IsBusy)
 				{
-					if (LogTraceEnabled) log.Trace("Node {0}'s socket is busy", endpoint);
+					LogTo.Trace("Node {0}'s socket is busy", endpoint);
 					return;
 				}
 
@@ -206,7 +200,7 @@ namespace Enyim.Caching
 							if (data.IsEmpty) break;
 
 							counterDequeuePerSec.Increment();
-							if (trace.IsEnabled()) trace.DequeueWriteOp(name);
+							CoreEventSource.DequeueWriteOp(name);
 							WriteOp(data);
 						}
 					}
@@ -251,13 +245,12 @@ namespace Enyim.Caching
 			if (currentWriteCopier.WriteTo(socket.WriteBuffer)) return true;
 
 			// last chunk was sent
-			if (LogTraceEnabled) log.Trace("Sent & finished " + currentWriteOp.Op);
-
+			LogTo.Trace("Sent & finished " + currentWriteOp.Op);
 
 			// op is sent fully; response can be expected
 			readQueue.Enqueue(currentWriteOp);
 			counterReadQueue.Increment();
-			if (trace.IsEnabled()) trace.EnqueueReadOp(name);
+			CoreEventSource.EnqueueReadOp(name);
 
 			// clean up
 			currentWriteCopier.Dispose();
@@ -295,7 +288,7 @@ namespace Enyim.Caching
 
 			if (writeQueue.TryDequeue(out data))
 			{
-				if (trace.IsEnabled()) trace.DequeueWriteOp(name);
+				CoreEventSource.DequeueWriteOp(name);
 				counterWriteQueue.Decrement();
 				return data;
 			}
@@ -318,10 +311,10 @@ namespace Enyim.Caching
 			{
 				readQueue.Enqueue(data);
 				counterReadQueue.Increment();
-				if (trace.IsEnabled()) trace.EnqueueReadOp(name);
+				CoreEventSource.EnqueueReadOp(name);
 				request.Dispose();
 
-				if (LogTraceEnabled) log.Trace("Full send of " + data.Op);
+				LogTo.Trace("Full send of " + data.Op);
 			}
 			else
 			{
@@ -329,17 +322,17 @@ namespace Enyim.Caching
 				// as "in-progress"; DoRun will loop until it's fully sent
 				currentWriteOp = data;
 				currentWriteCopier = request;
-				if (LogTraceEnabled) log.Trace("Partial send of " + data.Op);
+				LogTo.Trace("Partial send of " + data.Op);
 			}
 		}
 
 		private void PerformReceive()
 		{
-		fill:
+			fill:
 			// no data to process => read the socket
 			if (socket.ReadBuffer.IsEmpty)
 			{
-				if (LogTraceEnabled) log.Trace("Read buffer is empty, ask for more.");
+				LogTo.Trace("Read buffer is empty, ask for more.");
 
 				socket.ScheduleReceive(success =>
 				{
@@ -372,7 +365,7 @@ namespace Enyim.Caching
 				if (response.Read(socket.ReadBuffer))
 				{
 					inprogressResponse = response;
-					if (LogTraceEnabled) log.Trace("Response is not read fully, continue reading from the socket.");
+					LogTo.Trace("Response is not read fully, continue reading from the socket.");
 
 					// refill the buffer
 					// TODO if Receive returns synchrously several times, a node with a huge inprogress response can monopolize the IO thread
@@ -393,7 +386,7 @@ namespace Enyim.Caching
 					// successful silent ops will receive null as response (since we have no real response)
 					// (or we've ran into a bug)
 					matching = data.Op.Handles(response);
-					if (LogTraceEnabled) log.Trace("Command {0} handles reponse: {1}", data.Op, matching);
+					LogTo.Trace("Command {0} handles reponse: {1}", data.Op, matching);
 
 					// returns false when no more IO is required => command is processed
 					// otherwise continue filling the buffer
@@ -402,7 +395,7 @@ namespace Enyim.Caching
 						readQueue.Dequeue();
 						counterReadQueue.Decrement();
 						counterOpReadPerSec.Increment();
-						if (trace.IsEnabled()) trace.DequeueReadOp(name);
+						CoreEventSource.DequeueReadOp(name);
 
 						if (data.Task != null)
 							data.Task.TrySetResult(data.Op);

@@ -57,7 +57,7 @@ Target "Pack" (fun _ ->
 Target "Test" (fun _ ->
     xUnit2 (fun p ->
         {p with Parallel = All
-                ExcludeTraits = [ "slow", "yes" ]
+                /// ExcludeTraits = [ "slow", "yes" ]
                 Silent = false })
         (!! (solutionDir + "/**/bin/" + configuration + "/*.tests.dll"))
     |> DoNothing)

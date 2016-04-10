@@ -11,35 +11,29 @@ namespace Enyim.Caching
 		bool IsErrorEnabled { get; }
 		bool IsFatalEnabled { get; }
 
-		void Trace(object message);
-		void Trace(string message, Exception exception);
+		void Trace(string message);
+		void Trace(Exception exception, string message = null);
 		void Trace(string format, params object[] args);
-		void Trace(IFormatProvider provider, string format, params object[] args);
 
-		void Debug(object message);
-		void Debug(string message, Exception exception);
+		void Debug(string message);
+		void Debug(Exception exception, string message = null);
 		void Debug(string format, params object[] args);
-		void Debug(IFormatProvider provider, string format, params object[] args);
 
-		void Info(object message);
-		void Info(string message, Exception exception);
+		void Info(string message);
+		void Info(Exception exception, string message = null);
 		void Info(string format, params object[] args);
-		void Info(IFormatProvider provider, string format, params object[] args);
 
-		void Warn(object message);
-		void Warn(string message, Exception exception);
+		void Warn(string message);
+		void Warn(Exception exception, string message = null);
 		void Warn(string format, params object[] args);
-		void Warn(IFormatProvider provider, string format, params object[] args);
 
-		void Error(object message);
-		void Error(string message, Exception exception);
+		void Error(string message);
+		void Error(Exception exception, string message = null);
 		void Error(string format, params object[] args);
-		void Error(IFormatProvider provider, string format, params object[] args);
 
-		void Fatal(object message);
-		void Fatal(string message, Exception exception);
+		void Fatal(string message);
+		void Fatal(Exception exception, string message = null);
 		void Fatal(string format, params object[] args);
-		void Fatal(IFormatProvider provider, string format, params object[] args);
 	}
 }
 

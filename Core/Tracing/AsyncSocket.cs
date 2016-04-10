@@ -4,79 +4,31 @@ using System.Net.Sockets;
 
 namespace Enyim.Caching
 {
-	public abstract partial class CoreEventSource : EventSource
+	partial class CoreEventSource
 	{
-		[Event(1, Level = EventLevel.Informational, Keywords = Keywords.Socket)]
-		public abstract void ConnectStart(string endpoint);
-		[Event(2, Level = EventLevel.Informational, Keywords = Keywords.Socket)]
-		public abstract void ConnectStop(string endpoint);
+		private const int AsyncSocketTaskId = 0;
 
-		[Event(3, Level = EventLevel.Error, Keywords = Keywords.Socket)]
-		public abstract void ConnectFail(string endpoint, SocketError status);
+		[Event(AsyncSocketTaskId + 1, Level = EventLevel.Informational, Keywords = Keywords.Socket)]
+		public static void ConnectStart(string endpoint) { }
+		[Event(AsyncSocketTaskId + 2, Level = EventLevel.Informational, Keywords = Keywords.Socket)]
+		public static void ConnectStop(string endpoint) { }
 
-		[Event(10, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public abstract void SendStart(string endpoint, bool isAlive, int byteCount);
-		[Event(11, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public abstract void SendStop(string endpoint, bool isAlive, bool success);
+		[Event(AsyncSocketTaskId + 3, Level = EventLevel.Error, Keywords = Keywords.Socket)]
+		public static void ConnectFail(string endpoint, SocketError status) { }
 
-		[Event(12, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public unsafe void SendChunk(string endpoint, bool isAlive, int bytesSent, SocketError status)
-		{
-			if (IsEnabled())
-			{
-				fixed (char* pEndpoint = endpoint)
-				{
-					var data = stackalloc EventData[4];
+		[Event(AsyncSocketTaskId + 4, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void SendStart(string endpoint, bool isAlive, int byteCount) { }
+		[Event(AsyncSocketTaskId + 5, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void SendStop(string endpoint, bool isAlive, bool success) { }
+		[Event(AsyncSocketTaskId + 6, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void SendChunk(string endpoint, bool isAlive, int bytesSent, SocketError status) { }
 
-					data[0].DataPointer = (IntPtr)(pEndpoint);
-					data[0].Size = (endpoint.Length + 1) * 2;
-
-					var alive = isAlive ? 1 : 0;
-					data[1].DataPointer = (IntPtr)(&alive);
-					data[1].Size = sizeof(int);
-
-					data[2].DataPointer = (IntPtr)(&bytesSent);
-					data[2].Size = sizeof(int);
-
-					data[3].Size = sizeof(int);
-					data[3].DataPointer = (IntPtr)(&status);
-
-					WriteEventCore(12, 4, data);
-				}
-			}
-		}
-
-		[Event(20, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public abstract void ReceiveStart(string endpoint, bool isAlive);
-		[Event(21, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public abstract void ReceiveStop(string endpoint, bool isAlive, bool success);
-
-		[Event(22, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
-		public unsafe void ReceiveChunk(string endpoint, bool isAlive, int bytesReceived, SocketError status)
-		{
-			if (IsEnabled())
-			{
-				fixed (char* pEndpoint = endpoint)
-				{
-					var data = stackalloc EventData[4];
-
-					data[0].DataPointer = (IntPtr)(pEndpoint);
-					data[0].Size = (endpoint.Length + 1) * 2;
-
-					var alive = isAlive ? 1 : 0;
-					data[1].DataPointer = (IntPtr)(&alive);
-					data[1].Size = sizeof(int);
-
-					data[2].DataPointer = (IntPtr)(&bytesReceived);
-					data[2].Size = sizeof(int);
-
-					data[3].Size = sizeof(int);
-					data[3].DataPointer = (IntPtr)(&status);
-
-					WriteEventCore(22, 4, data);
-				}
-			}
-		}
+		[Event(AsyncSocketTaskId + 7, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void ReceiveStart(string endpoint, bool isAlive) { }
+		[Event(AsyncSocketTaskId + 8, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void ReceiveStop(string endpoint, bool isAlive, bool success) { }
+		[Event(AsyncSocketTaskId + 9, Level = EventLevel.Verbose, Keywords = Keywords.Socket)]
+		public static void ReceiveChunk(string endpoint, bool isAlive, int bytesReceived, SocketError status) { }
 
 		public static partial class Keywords
 		{

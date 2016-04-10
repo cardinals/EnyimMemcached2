@@ -6,8 +6,6 @@ namespace Enyim.Caching.Memcached
 {
 	public partial class SimpleMemcachedClient : MemcachedClientBase, ISimpleMemcachedClient
 	{
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
-
 		public SimpleMemcachedClient() { }
 		public SimpleMemcachedClient(IContainer container) : base(container) { }
 		public SimpleMemcachedClient(ICluster cluster, IOperationFactory opFactory, IKeyTransformer keyTransformer, ITranscoder transcoder)
@@ -34,7 +32,7 @@ namespace Enyim.Caching.Memcached
 					}
 					catch (Exception e)
 					{
-						if (log.IsErrorEnabled) log.Error(e);
+						LogTo.Error(e);
 						retval[kvp.Key] = null;
 					}
 				}
@@ -43,7 +41,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled) log.Error(e);
+				LogTo.Error(e);
 
 				return new Dictionary<string, object>();
 			}
@@ -65,7 +63,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled) log.Error(e);
+				LogTo.Error(e);
 
 				return default(T);
 			}
@@ -101,7 +99,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled) log.Error(e);
+				LogTo.Error(e);
 
 				return 0;
 			}
@@ -117,7 +115,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled) log.Error(e);
+				LogTo.Error(e);
 
 				return new ServerStats();
 			}
@@ -138,7 +136,7 @@ namespace Enyim.Caching.Memcached
 			}
 			catch (Exception e)
 			{
-				if (log.IsErrorEnabled) log.Error(e);
+				LogTo.Error(e);
 
 				return false;
 			}

@@ -3,8 +3,9 @@ using System.Diagnostics.Tracing;
 
 namespace Enyim.Caching
 {
+	// this class will be implemented & replaced by the EventSource weaver
 	[EventSource(Name = "Enyim-Caching-Core")]
-	public abstract partial class CoreEventSource : EventSource
+	public static partial class CoreEventSource
 	{
 		public static partial class Keywords
 		{

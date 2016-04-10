@@ -29,9 +29,7 @@ namespace Enyim.Caching
 
 		#endregion
 
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 		private readonly object ConnectLock = new object();
-		private readonly CoreEventSource trace = EventSources.CoreEventSource;
 
 		private IPEndPoint endpoint;
 		private string name; // used for tracing
@@ -81,7 +79,7 @@ namespace Enyim.Caching
 			using (var mre = new ManualResetEventSlim(false))
 			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
 			{
-				trace.ConnectStart(name);
+				CoreEventSource.ConnectStart(name);
 
 				opt.Completed += (a, b) => mre.Set();
 				RecreateSocket();
@@ -92,14 +90,14 @@ namespace Enyim.Caching
 					if (socket.ConnectAsync(opt)
 						&& !mre.Wait((int)ConnectionTimeout.TotalMilliseconds, token))
 					{
-						trace.ConnectFail(name, SocketError.TimedOut);
+						CoreEventSource.ConnectFail(name, SocketError.TimedOut);
 						Socket.CancelConnectAsync(opt);
 						throw new TimeoutException($"Connection timeout {ConnectionTimeout} has been exceeded while trying to connect to {endpoint}");
 					}
 
 					if (opt.SocketError != SocketError.Success)
 					{
-						trace.ConnectFail(name, opt.SocketError);
+						CoreEventSource.ConnectFail(name, opt.SocketError);
 						throw new IOException($"Could not connect to {endpoint}");
 					}
 
@@ -151,7 +149,7 @@ namespace Enyim.Caching
 
 		public void ScheduleSend(Action<bool> whenDone)
 		{
-			if (trace.IsEnabled()) trace.SendStart(name, IsAlive, sendBuffer.Position);
+			CoreEventSource.SendStart(name, IsAlive, sendBuffer.Position);
 
 			if (!IsAlive)
 			{
@@ -176,7 +174,7 @@ namespace Enyim.Caching
 
 				// send was done synchronously
 				var sent = sendArgs.BytesTransferred;
-				if (trace.IsEnabled()) trace.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
+				CoreEventSource.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
 
 				// check for fail
 				if (sendArgs.SocketError != SocketError.Success || sent < 1)
@@ -205,7 +203,7 @@ namespace Enyim.Caching
 		private void SendAsyncCompleted(object sender, SocketAsyncEventArgs e)
 		{
 			var sent = sendArgs.BytesTransferred;
-			if (trace.IsEnabled()) trace.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
+			CoreEventSource.SendChunk(name, IsAlive, sent, sendArgs.SocketError);
 
 			// failed during send
 			if (sendArgs.SocketError != SocketError.Success || sent < 1)
@@ -234,7 +232,7 @@ namespace Enyim.Caching
 
 		private void FinishSending(bool success)
 		{
-			if (trace.IsEnabled()) trace.SendStop(name, IsAlive, success);
+			CoreEventSource.SendStop(name, IsAlive, success);
 
 			var callback = (Action<bool>)sendArgs.UserToken;
 			IsBusy = false;
@@ -243,7 +241,7 @@ namespace Enyim.Caching
 
 		public void ScheduleReceive(Action<bool> whenDone)
 		{
-			if (trace.IsEnabled()) trace.ReceiveStart(name, IsAlive);
+			CoreEventSource.ReceiveStart(name, IsAlive);
 
 			if (!IsAlive)
 			{
@@ -264,7 +262,7 @@ namespace Enyim.Caching
 		private void ReceiveAsyncCompleted(object sender, SocketAsyncEventArgs recvArgs)
 		{
 			var received = recvArgs.BytesTransferred;
-			if (trace.IsEnabled()) trace.ReceiveChunk(name, IsAlive, received, recvArgs.SocketError);
+			CoreEventSource.ReceiveChunk(name, IsAlive, received, recvArgs.SocketError);
 
 			var success = recvArgs.SocketError == SocketError.Success && received > 0;
 			recvBuffer.SetAvailableLength(success ? received : 0);
@@ -274,7 +272,7 @@ namespace Enyim.Caching
 
 		private void FinishReceiving(bool success)
 		{
-			if (trace.IsEnabled()) trace.ReceiveStop(name, IsAlive, success);
+			CoreEventSource.ReceiveStop(name, IsAlive, success);
 
 			var callback = (Action<bool>)recvArgs.UserToken;
 			IsBusy = false;
@@ -413,7 +411,7 @@ namespace Enyim.Caching
 				}
 				catch (Exception e)
 				{
-					if (log.IsDebugEnabled) log.Debug("Exception while destroying socket.", e);
+					LogTo.Debug(e, "Exception while destroying socket.");
 				}
 
 				socket = null;

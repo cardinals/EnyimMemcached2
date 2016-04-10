@@ -31,14 +31,19 @@ namespace Enyim.Caching
 				this.name = name;
 			}
 
-			public void Trace(object message)
+			public void Trace(string message)
 			{
-				Write(Severities.Trace, String.Format("{0}", message));
+				Write(Severities.Trace, message);
 			}
 
-			public void Trace(string message, Exception exception)
+			public void Trace(Exception exception)
 			{
-				Write(Severities.Trace, String.Format("{0} {1}", message, exception));
+				Write(Severities.Trace, exception.ToString());
+			}
+
+			public void Trace(Exception exception, string message)
+			{
+				Write(Severities.Trace, message + " " + exception.ToString());
 			}
 
 			public void Trace(string format, params object[] args)
@@ -51,14 +56,19 @@ namespace Enyim.Caching
 				Write(Severities.Trace, String.Format(provider, format, args));
 			}
 
-			public void Debug(object message)
+			public void Debug(string message)
 			{
-				Write(Severities.Debug, String.Format("{0}", message));
+				Write(Severities.Debug, message);
 			}
 
-			public void Debug(string message, Exception exception)
+			public void Debug(Exception exception)
 			{
-				Write(Severities.Debug, String.Format("{0} {1}", message, exception));
+				Write(Severities.Debug, exception.ToString());
+			}
+
+			public void Debug(Exception exception, string message)
+			{
+				Write(Severities.Debug, message + " " + exception.ToString());
 			}
 
 			public void Debug(string format, params object[] args)
@@ -71,14 +81,19 @@ namespace Enyim.Caching
 				Write(Severities.Debug, String.Format(provider, format, args));
 			}
 
-			public void Info(object message)
+			public void Info(string message)
 			{
-				Write(Severities.Info, String.Format("{0}", message));
+				Write(Severities.Info, message);
 			}
 
-			public void Info(string message, Exception exception)
+			public void Info(Exception exception)
 			{
-				Write(Severities.Info, String.Format("{0} {1}", message, exception));
+				Write(Severities.Info, exception.ToString());
+			}
+
+			public void Info(Exception exception, string message)
+			{
+				Write(Severities.Info, message + " " + exception.ToString());
 			}
 
 			public void Info(string format, params object[] args)
@@ -91,14 +106,19 @@ namespace Enyim.Caching
 				Write(Severities.Info, String.Format(provider, format, args));
 			}
 
-			public void Warn(object message)
+			public void Warn(string message)
 			{
-				Write(Severities.Warn, String.Format("{0}", message));
+				Write(Severities.Warn, message);
 			}
 
-			public void Warn(string message, Exception exception)
+			public void Warn(Exception exception)
 			{
-				Write(Severities.Warn, String.Format("{0} {1}", message, exception));
+				Write(Severities.Warn, exception.ToString());
+			}
+
+			public void Warn(Exception exception, string message)
+			{
+				Write(Severities.Warn, message + " " + exception.ToString());
 			}
 
 			public void Warn(string format, params object[] args)
@@ -111,14 +131,19 @@ namespace Enyim.Caching
 				Write(Severities.Warn, String.Format(provider, format, args));
 			}
 
-			public void Error(object message)
+			public void Error(string message)
 			{
-				Write(Severities.Error, String.Format("{0}", message));
+				Write(Severities.Error, message);
 			}
 
-			public void Error(string message, Exception exception)
+			public void Error(Exception exception)
 			{
-				Write(Severities.Error, String.Format("{0} {1}", message, exception));
+				Write(Severities.Error, exception.ToString());
+			}
+
+			public void Error(Exception exception, string message)
+			{
+				Write(Severities.Error, message + " " + exception.ToString());
 			}
 
 			public void Error(string format, params object[] args)
@@ -131,14 +156,19 @@ namespace Enyim.Caching
 				Write(Severities.Error, String.Format(provider, format, args));
 			}
 
-			public void Fatal(object message)
+			public void Fatal(string message)
 			{
-				Write(Severities.Fatal, String.Format("{0}", message));
+				Write(Severities.Fatal, message);
 			}
 
-			public void Fatal(string message, Exception exception)
+			public void Fatal(Exception exception)
 			{
-				Write(Severities.Fatal, String.Format("{0} {1}", message, exception));
+				Write(Severities.Fatal, exception.ToString());
+			}
+
+			public void Fatal(Exception exception, string message)
+			{
+				Write(Severities.Fatal, message + " " + exception.ToString());
 			}
 
 			public void Fatal(string format, params object[] args)
@@ -174,10 +204,9 @@ namespace Enyim.Caching
 			void Write(string severity, string message)
 			{
 				var c = Console.ForegroundColor;
+
 				Console.ForegroundColor = Severities.Colors[severity];
-
 				Console.WriteLine("{0:HH:mm:ss.fffff} [{1}] {2} - {3}", DateTime.Now, severity, name, message);
-
 				Console.ForegroundColor = c;
 			}
 		}

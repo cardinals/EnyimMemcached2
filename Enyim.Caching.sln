@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Memcached", "Memcached\Memcached.csproj", "{934F5E21-0A76-4EDD-A6DF-E66379FA2E4C}"
 EndProject
@@ -38,8 +38,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions", "Extensions\Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weavers", "Weavers\Weavers.csproj", "{B41314E4-E22A-4F26-813F-C665A6D9CF97}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,10 +72,6 @@ Global
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B41314E4-E22A-4F26-813F-C665A6D9CF97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B41314E4-E22A-4F26-813F-C665A6D9CF97}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B41314E4-E22A-4F26-813F-C665A6D9CF97}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B41314E4-E22A-4F26-813F-C665A6D9CF97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -12,7 +12,6 @@ namespace Enyim.Caching.Memcached
 	public class MemcachedNode : NodeBase
 	{
 		private const int SilentCountThreshold = 50;
-		private static readonly ILog log = LogManager.GetCurrentClassLogger();
 
 		private readonly IBufferAllocator allocator;
 		private int silentCount;
@@ -51,12 +50,12 @@ namespace Enyim.Caching.Memcached
 		{
 			if (IsSilent(op))
 			{
-				if (log.IsTraceEnabled) log.Trace("Got a silent op " + op + " count: " + silentCount);
+				LogTo.Trace("Got a silent op " + op + " count: " + silentCount);
 
 				if (++silentCount < SilentCountThreshold)
 					return;
 
-				if (log.IsTraceEnabled) log.Trace("Got to threshold, injecting NoOp");
+				LogTo.Trace("Got to threshold, injecting NoOp");
 
 				base.Enqueue(new NoOp(allocator));
 			}
