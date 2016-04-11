@@ -1,10 +1,20 @@
 @echo off
+if not exist "packages\fake" goto :download
 
-if not exist "packages\fake" (
-	build\nuget install fake -outputdirectory packages -excludeversion
+SetLocal EnableDelayedExpansion
+
+if /i !1!=="-forceupdate" (
+    shift
+    goto :download
 )
 
-packages\fake\tools\fake .\build\build.fsx %* 
+goto run
+
+:download
+build\nuget install fake -outputdirectory packages -excludeversion
+
+:run
+packages\fake\tools\fake .\build\build.fsx %1 %2 %3 %4 %5 %6 %7 %8
 
 ::    Copyright (c) Attila Kiskó, enyim.com
 ::
