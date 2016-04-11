@@ -42,12 +42,6 @@
     <Compile Include="Tracing\NodeBase.cs" />
     <Compile Include="TrackingBufferAllocator.cs" />
     <Compile Include="BufferManagerAllocator.cs" />
-    <Compile Include="ConfigurationHelper.cs" />
-    <Compile Include="Configuration\NodeElement.cs" />
-    <Compile Include="Configuration\NodeElementCollection.cs" />
-    <Compile Include="Configuration\ProviderElement.cs" />
-    <Compile Include="Configuration\ProviderTypeNameConverter.cs" />
-    <Compile Include="Configuration\TextElement.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
     <Compile Include="Contracts\IBufferAllocator.cs" />
     <Compile Include="Contracts\ICluster.cs" />

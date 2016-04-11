@@ -38,6 +38,12 @@
     <Compile Include="ClusterConfigurationElement.cs" />
     <Compile Include="ClustersSection.cs" />
     <Compile Include="ClusterManager.cs" />
+    <Compile Include="ConfigurationHelper.cs" />
+    <Compile Include="NodeElement.cs" />
+    <Compile Include="NodeElementCollection.cs" />
+    <Compile Include="ProviderElement.cs" />
+    <Compile Include="ProviderTypeNameConverter.cs" />
+    <Compile Include="TextElement.cs" />
     <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
     <Compile Include="ConfigurationExtensions.cs" />

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching
 {
