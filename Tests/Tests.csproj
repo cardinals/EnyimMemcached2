@@ -129,7 +129,7 @@
     <Compile Include="ClusterBuilderTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ConfigurationHelperTests.cs">
+    <Compile Include="EndpointHelperTests.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ConfigurationSectionTests.cs">
@@ -183,6 +183,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AppConfig\AppConfig.csproj">
+      <Project>{0de5f916-74a8-49ba-9da3-47966c961af1}</Project>
+      <Name>AppConfig</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
       <Name>Core</Name>

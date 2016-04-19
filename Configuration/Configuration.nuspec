@@ -9,15 +9,14 @@
 		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
 		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
-		<description>Configuration classes (app.config/code) for the Enyim Memcached2 library.</description>
+		<description>Fluent configuration support for the Enyim Memcached2 library.</description>
 		<tags>memcached enyim cache caching configuration</tags>
 		<dependencies>
-			<dependency id="Enyim.Caching.Memcached2" />
+			<dependency id="Enyim.Caching.Memcached2" version="0.2.0" />
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="..\bin\$configuration$\*.configuration.*" target="lib\net45" />
-		<file src="*.xdt" target="content" />
-		<file src="..\**\*.cs" exclude="**\obj\**\*.cs" target="src" />
+		<file src="bin\$configuration$\*.configuration.*" target="lib\net45" />
+		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src" />
 	</files>
 </package>

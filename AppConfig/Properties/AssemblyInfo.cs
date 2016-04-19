@@ -1,38 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel.Channels;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
-namespace Enyim.Caching
-{
-	public sealed class BufferManagerAllocator : IBufferAllocator
-	{
-		private readonly BufferManager pool;
-
-		public BufferManagerAllocator(int maxBufferSize = 1024 * 1024, long maxBufferPoolSize = 1024 * 1024 * 16)
-		{
-			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
-		}
-
-		public void Dispose()
-		{
-			pool.Clear();
-		}
-
-		public byte[] Take(int size)
-		{
-			var buffer = pool.TakeBuffer(size);
-			Array.Clear(buffer, 0, size);
-
-			return buffer;
-		}
-
-		public void Return(byte[] buffer)
-		{
-			pool.ReturnBuffer(buffer);
-		}
-	}
-}
+[assembly: AssemblyTitle("Enyim.Caching.Memcached.AppConfig")]
+[assembly: AssemblyProduct("Enyim.Caching.Memcached.AppConfig")]
+[assembly: AssemblyDescription("")]
+[assembly: ComVisible(false)]
+[assembly: Guid("0DE5F916-74A8-49BA-9DA3-47966C961AF1")]
 
 #region [ License information          ]
 

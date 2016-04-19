@@ -8,12 +8,12 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public class ConfigurationHelperTests
+	public class EndpointHelperTests
 	{
 		[Fact]
 		public void Parse_Localhost_Without_Port()
 		{
-			var ep = ConfigurationHelper.ParseEndPoint("localhost", 11211);
+			var ep = EndpointHelper.ParseEndPoint("localhost", 11211);
 			Assert.Equal(11211, ep.Port);
 			Assert.Equal(IPAddress.Loopback, ep.Address);
 		}
@@ -21,7 +21,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Parse_IP_Without_Port()
 		{
-			var ep = ConfigurationHelper.ParseEndPoint("10.0.10.10", 11211);
+			var ep = EndpointHelper.ParseEndPoint("10.0.10.10", 11211);
 			Assert.Equal(11211, ep.Port);
 			Assert.Equal(new byte[] { 10, 0, 10, 10 }, ep.Address.GetAddressBytes());
 		}
@@ -29,7 +29,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Parse_IP_With_Port()
 		{
-			var ep = ConfigurationHelper.ParseEndPoint("10.0.10.20:1234");
+			var ep = EndpointHelper.ParseEndPoint("10.0.10.20:1234");
 			Assert.Equal(1234, ep.Port);
 			Assert.Equal(new byte[] { 10, 0, 10, 20 }, ep.Address.GetAddressBytes());
 		}
@@ -37,7 +37,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Parse_Localhost_With_Port()
 		{
-			var ep = ConfigurationHelper.ParseEndPoint("localhost:1234");
+			var ep = EndpointHelper.ParseEndPoint("localhost:1234");
 			Assert.Equal(1234, ep.Port);
 			Assert.Equal(IPAddress.Loopback, ep.Address);
 		}
@@ -45,10 +45,10 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Invalid_Addresses_Should_Throw()
 		{
-			Assert.Throws<ArgumentNullException>(() => ConfigurationHelper.ParseEndPoint(null));
-			Assert.Throws<ArgumentException>(() => ConfigurationHelper.ParseEndPoint("address:port"));
-			Assert.Throws<SocketException>(() => ConfigurationHelper.ParseEndPoint("1234.56.78.9:1111"));
-			Assert.Throws<ArgumentOutOfRangeException>(() => ConfigurationHelper.ParseEndPoint("10.0.10.10:987654"));
+			Assert.Throws<ArgumentNullException>(() => EndpointHelper.ParseEndPoint(null));
+			Assert.Throws<ArgumentException>(() => EndpointHelper.ParseEndPoint("address:port"));
+			Assert.Throws<SocketException>(() => EndpointHelper.ParseEndPoint("1234.56.78.9:1111"));
+			Assert.Throws<ArgumentOutOfRangeException>(() => EndpointHelper.ParseEndPoint("10.0.10.10:987654"));
 		}
 	}
 }

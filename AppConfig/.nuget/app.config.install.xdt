@@ -6,8 +6,8 @@
 	<configSections xdt:Locator="XPath(/configuration/configSections[last()])">
 		<sectionGroup name="enyim.com" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing">
 			<sectionGroup name="memcached" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing">
-				<section name="clusters" type="Enyim.Caching.Configuration.ClustersConfigurationSection, Enyim.Caching.Memcached.Configuration" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
-				<section name="client" type="Enyim.Caching.Memcached.Configuration.ClientConfigurationSection, Enyim.Caching.Memcached.Configuration" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
+				<section name="clusters" type="Enyim.Caching.Configuration.ClustersConfigurationSection, Enyim.Caching.Memcached.AppConfig" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
+				<section name="client" type="Enyim.Caching.Memcached.Configuration.ClientConfigurationSection, Enyim.Caching.Memcached.AppConfig" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
 			</sectionGroup>
 		</sectionGroup>
 	</configSections>

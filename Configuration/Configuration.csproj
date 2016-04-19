@@ -33,23 +33,11 @@
     </Compile>
     <Compile Include="ClusterBuilderExtensions.cs" />
     <Compile Include="ClientConfigurationBuilderExtensions.cs" />
-    <Compile Include="ClientConfigurationSection.cs" />
-    <Compile Include="ClusterConfigurationCollection.cs" />
-    <Compile Include="ClusterConfigurationElement.cs" />
-    <Compile Include="ClustersSection.cs" />
     <Compile Include="ClusterManager.cs" />
     <Compile Include="ConfigurationHelper.cs" />
-    <Compile Include="NodeElement.cs" />
-    <Compile Include="NodeElementCollection.cs" />
-    <Compile Include="ProviderElement.cs" />
-    <Compile Include="ProviderTypeNameConverter.cs" />
-    <Compile Include="TextElement.cs" />
-    <Compile Include="ConnectionElement.cs" />
     <Compile Include="ContainerHelper.cs" />
-    <Compile Include="ConfigurationExtensions.cs" />
     <Compile Include="FunqContainerWrapper.cs" />
     <Compile Include="Properties\LocalSupressions.cs" />
-    <Compile Include="ObjectUpdater.cs" />
     <Compile Include="Syntax.cs" />
     <Compile Include="ClientConfigurationBuilder.cs" />
     <Compile Include="ClusterBuilder.cs" />
@@ -117,11 +105,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include=".nuget\app.config.install.xdt" />
-    <None Include=".nuget\Configuration.nuspec">
+    <None Include="Configuration.nuspec">
       <SubType>Designer</SubType>
     </None>
-    <None Include=".nuget\web.config.install.xdt" />
     <None Include="Funq\Container.LazyResolve.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Container.LazyResolve.cs</LastGenOutput>

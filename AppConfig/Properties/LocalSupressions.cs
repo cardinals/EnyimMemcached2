@@ -1,38 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel.Channels;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Enyim.Caching
-{
-	public sealed class BufferManagerAllocator : IBufferAllocator
-	{
-		private readonly BufferManager pool;
-
-		public BufferManagerAllocator(int maxBufferSize = 1024 * 1024, long maxBufferPoolSize = 1024 * 1024 * 16)
-		{
-			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
-		}
-
-		public void Dispose()
-		{
-			pool.Clear();
-		}
-
-		public byte[] Take(int size)
-		{
-			var buffer = pool.TakeBuffer(size);
-			Array.Clear(buffer, 0, size);
-
-			return buffer;
-		}
-
-		public void Return(byte[] buffer)
-		{
-			pool.ReturnBuffer(buffer);
-		}
-	}
-}
+[assembly: SuppressMessage("Redundancies in Code", "RedundantNameQualifierIssue:Removes namespace usages that are obsolete.", Scope = "type", Target = "Funq.ServiceKey")]
+[assembly: SuppressMessage("Potential Code Quality Issues", "CompareNonConstrainedGenericWithNullIssue:Possible compare of value type with 'null'", Scope = "type", Target = "Funq.Container")]
 
 #region [ License information          ]
 

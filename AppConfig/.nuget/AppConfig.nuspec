@@ -1,0 +1,23 @@
+﻿<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Enyim.Caching.Memcached2.Configuration.AppConfig</id>
+		<title>EnyimMemcached2 App/Web.config Support</title>
+		<version>$version$</version>
+		<authors>Attila Kiskó</authors>
+		<owners>Attila Kiskó</owners>
+		<licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+		<projectUrl>https://github.com/enyim/EnyimMemcached</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>APp/Web.config support for the Enyim Memcached2 library.</description>
+		<tags>memcached enyim cache caching configuration</tags>
+		<dependencies>
+			<dependency id="Enyim.Caching.Memcached2" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\bin\$configuration$\*.appconfig.*" target="lib\net45" />
+		<file src="*.xdt" target="content" />
+		<file src="..\**\*.cs" exclude="**\obj\**\*.cs" target="src" />
+	</files>
+</package>

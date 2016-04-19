@@ -57,11 +57,11 @@ namespace Enyim.Caching.Memcached.Configuration
 		}
 
 		public static IClusterBuilderNext SocketOpts(this IClusterBuilderNext services,
-			int? sendBufferSize = null,
-			int? receiveBufferSize = null,
-			TimeSpan? connectionTimeout = null,
-			TimeSpan? sendTimeout = null,
-			TimeSpan? receiveTimeout = null)
+														int? sendBufferSize = null,
+														int? receiveBufferSize = null,
+														TimeSpan? connectionTimeout = null,
+														TimeSpan? sendTimeout = null,
+														TimeSpan? receiveTimeout = null)
 		{
 			services.Use.Service<Func<ISocket>>(() => () =>
 			{
@@ -81,7 +81,7 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		public static IClusterBuilderNext Endpoints(this IClusterBuilder builder, params string[] endpoints)
 		{
-			return builder.Endpoints(endpoints.Select(e => ConfigurationHelper.ParseEndPoint(e, DefaultPort)));
+			return builder.Endpoints(endpoints.Select(e => EndpointHelper.ParseEndPoint(e, DefaultPort)));
 		}
 	}
 }

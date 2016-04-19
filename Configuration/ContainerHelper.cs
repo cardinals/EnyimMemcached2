@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached.Configuration
 #if TRACK_ALLOCATIONS
 			container.Register<IBufferAllocator>(new TrackingBufferAllocator(1024 * 1024, 1024 * 1024 * 20));
 #else
-			container.Register<IBufferAllocator>(new BufferManagerAllocator(1024 * 1024, 1024 * 1024 * 20));
+			container.Register<IBufferAllocator>(new BufferManagerAllocator());
 #endif
 		}
 

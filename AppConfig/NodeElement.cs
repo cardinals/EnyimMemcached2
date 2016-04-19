@@ -15,7 +15,11 @@ namespace Enyim.Caching.Configuration
 		public string Address
 		{
 			get { return (string)base["address"]; }
-			set { base["address"] = value; }
+			set
+			{
+				base["address"] = value;
+				endpoint = null;
+			}
 		}
 
 		/// <summary>
@@ -23,7 +27,7 @@ namespace Enyim.Caching.Configuration
 		/// </summary>
 		public System.Net.IPEndPoint EndPoint
 		{
-			get { return this.endpoint ?? (this.endpoint = ConfigurationHelper.ParseEndPoint(this.Address)); }
+			get { return endpoint ?? (endpoint = EndpointHelper.ParseEndPoint(Address)); }
 		}
 
 		#region [ AddressValidator             ]
