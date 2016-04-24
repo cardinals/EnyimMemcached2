@@ -76,7 +76,7 @@ namespace Enyim.Caching
 					try { node.Shutdown(); }
 					catch (Exception e)
 					{
-						LogTo.Error(e, "Error while shutting down " + node);
+						LogTo.Error(e, $"Error while shutting down {node.EndPoint}");
 					}
 				}
 
@@ -155,7 +155,7 @@ namespace Enyim.Caching
 				}
 			}
 
-			LogTo.Debug("shutdownToken was cancelled, finishing work");
+			LogTo.Trace("shutdownToken was cancelled, finishing work");
 
 			workerIsDone.Set();
 		}
@@ -168,7 +168,7 @@ namespace Enyim.Caching
 		/// <remarks>Only called from the IO thread.</remarks>
 		private void FailNode(INode node, Exception e)
 		{
-			LogTo.Warn("Node {0} failed", node.EndPoint);
+			LogTo.Error($"Node {node.EndPoint} failed", e);
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler
@@ -202,7 +202,7 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		protected virtual void ScheduleReconnect(INode node)
 		{
-			LogTo.Info("Scheduling reconnect for " + node.EndPoint);
+			LogTo.Info($"Scheduling reconnect for {node.EndPoint}");
 
 			var when = reconnectPolicy.Schedule(node);
 
@@ -213,7 +213,7 @@ namespace Enyim.Caching
 			}
 			else
 			{
-				LogTo.Info("Will reconnect after " + when);
+				LogTo.Info($"Will reconnect after {when}");
 				Task
 					.Delay(when, shutdownToken.Token)
 					.ContinueWith(_ => ReconnectNow(node), TaskContinuationOptions.OnlyOnRanToCompletion);

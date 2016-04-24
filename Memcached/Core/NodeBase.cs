@@ -98,7 +98,7 @@ namespace Enyim.Caching
 			Debug.Assert(inprogressResponse == null);
 			Debug.Assert(readQueue.Count == 0);
 
-			LogTo.Debug("Connecting node to " + endpoint);
+			LogTo.Info($"Connecting node to {name}");
 
 			socket.Connect(endpoint, token);
 
@@ -157,7 +157,7 @@ namespace Enyim.Caching
 				// happens when OPs are coming in, but we're still processing the previous batch
 				if (socket.IsBusy)
 				{
-					LogTo.Trace("Node {0}'s socket is busy", endpoint);
+					LogTo.Trace($"Node {name}'s socket is busy");
 					return;
 				}
 
@@ -245,7 +245,7 @@ namespace Enyim.Caching
 			if (currentWriteCopier.WriteTo(socket.WriteBuffer)) return true;
 
 			// last chunk was sent
-			LogTo.Trace("Sent & finished " + currentWriteOp.Op);
+			LogTo.Trace($"Sent & finished {currentWriteOp.Op}");
 
 			// op is sent fully; response can be expected
 			readQueue.Enqueue(currentWriteOp);
@@ -314,7 +314,7 @@ namespace Enyim.Caching
 				CoreEventSource.EnqueueReadOp(name);
 				request.Dispose();
 
-				LogTo.Trace("Full send of " + data.Op);
+				LogTo.Trace($"Full send of {data.Op}");
 			}
 			else
 			{
@@ -322,7 +322,7 @@ namespace Enyim.Caching
 				// as "in-progress"; DoRun will loop until it's fully sent
 				currentWriteOp = data;
 				currentWriteCopier = request;
-				LogTo.Trace("Partial send of " + data.Op);
+				LogTo.Trace($"Partial send of {data.Op}");
 			}
 		}
 
@@ -374,9 +374,9 @@ namespace Enyim.Caching
 
 				// successfully read a response from the read buffer
 				inprogressResponse = null;
-				var matching = false;
+				var isHandled = false;
 
-				while (!matching && readQueue.Count > 0)
+				while (!isHandled && readQueue.Count > 0)
 				{
 					var data = readQueue.Peek();
 					Debug.Assert(!data.IsEmpty);
@@ -385,12 +385,12 @@ namespace Enyim.Caching
 					// response to later command in the queue, so all commands before it are silent commands
 					// successful silent ops will receive null as response (since we have no real response)
 					// (or we've ran into a bug)
-					matching = data.Op.Handles(response);
-					LogTo.Trace("Command {0} handles reponse: {1}", data.Op, matching);
+					isHandled = data.Op.Handles(response);
+					LogTo.Trace($"Command {data.Op} handles reponse: {isHandled}");
 
 					// returns false when no more IO is required => command is processed
 					// otherwise continue filling the buffer
-					if (!data.Op.ProcessResponse(matching ? response : null))
+					if (!data.Op.ProcessResponse(isHandled ? response : null))
 					{
 						readQueue.Dequeue();
 						counterReadQueue.Decrement();
@@ -427,6 +427,7 @@ namespace Enyim.Caching
 		{
 			lock (failLock)
 			{
+				LogTo.Error(e, $"Node {name} has failed during IO.");
 				var fail = (e is IOException) ? e : new IOException("io fail; see inner exception", e);
 
 				// empty all queues
@@ -463,6 +464,8 @@ namespace Enyim.Caching
 				// otherwise reconnect immediately
 				// (when it's our turn again, to be precise)
 				mustReconnect = true;
+				LogTo.Info($"Node {endpoint} will reconnect immediately.");
+
 				MarkAsReady();
 
 				// reconnect from IO thread
@@ -480,10 +483,11 @@ namespace Enyim.Caching
 			foreach (var data in queue)
 			{
 				var t = data.Task;
-				if (t != null) t.TrySetException(e);
-				counterErrorPerSec.IncrementBy(queue.Count);
+				if (t == null) break;
+				t.TrySetException(e);
 			}
 
+			counterErrorPerSec.IncrementBy(queue.Count);
 			queue.Clear();
 		}
 

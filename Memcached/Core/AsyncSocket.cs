@@ -23,8 +23,8 @@ namespace Enyim.Caching
 			public const int ReceiveBufferSize = 64 * 1024;
 
 			public const int ConnectionTimeoutMsec = 10000;
-			public const int SendTimeoutMsec = 10000;
-			public const int ReceiveTimeoutMsec = 10000;
+			public const int SendTimeoutMsec = 1000;//0;
+			public const int ReceiveTimeoutMsec = 1000;//0;
 		}
 
 		#endregion
@@ -75,6 +75,7 @@ namespace Enyim.Caching
 			this.endpoint = endpoint;
 			this.name = endpoint.ToString();
 			this.IsAlive = false;
+			var sw = Stopwatch.StartNew();
 
 			using (var mre = new ManualResetEventSlim(false))
 			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
@@ -106,6 +107,7 @@ namespace Enyim.Caching
 				finally
 				{
 					IsBusy = false;
+					LogTo.Debug($"Connected to {endpoint} in {sw.ElapsedMilliseconds} msec");
 				}
 			}
 		}

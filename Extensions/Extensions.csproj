@@ -69,11 +69,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj">
-      <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
-      <MergedSource>True</MergedSource>
-      <Name>Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Memcached\Memcached.csproj">
       <Project>{934f5e21-0a76-4edd-a6df-e66379fa2e4c}</Project>
       <Name>Memcached</Name>

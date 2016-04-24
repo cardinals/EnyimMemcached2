@@ -15,6 +15,5 @@
 	<files>
 		<file src="bin\$configuration$\*" target="lib\net45" />
 		<file src="**\*.cs" exclude="**\obj\**\*.cs" target="src\Memcached" />
-		<file src="..\Core\**\*.cs" exclude="**\obj\**\*.cs" target="src\Core" />
 	</files>
 </package>
