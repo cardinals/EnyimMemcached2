@@ -14,6 +14,11 @@ namespace Enyim.Caching.Tests
 
 		private string cfg;
 
+		static PrivateServerFixture()
+		{
+			Enyim.Caching.NLogFactory.Use();
+		}
+
 		public PrivateServerFixture()
 		{
 			var p = Interlocked.Increment(ref port);

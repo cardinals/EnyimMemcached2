@@ -28,6 +28,10 @@
       <HintPath>..\packages\Moq.4.2.1510.2205\lib\net40\Moq.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
@@ -174,6 +178,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="NLog.config">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
@@ -187,11 +195,6 @@
       <Project>{0de5f916-74a8-49ba-9da3-47966c961af1}</Project>
       <Name>AppConfig</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Core\Core.csproj">
-      <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
-      <Name>Core</Name>
-      <MergedSource>True</MergedSource>
-    </ProjectReference>
     <ProjectReference Include="..\Configuration\Configuration.csproj">
       <Project>{dd7b7346-2928-446b-a0d2-0466be2ba905}</Project>
       <Name>Configuration</Name>
@@ -199,6 +202,10 @@
     <ProjectReference Include="..\Extensions\Extensions.csproj">
       <Project>{6b53d1c7-44a5-49f1-882c-7be718ca2857}</Project>
       <Name>Extensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Logging\NLog\NLogAdapter.csproj">
+      <Project>{d26418c0-ba05-4067-8f68-2493da3e0e11}</Project>
+      <Name>NLogAdapter</Name>
     </ProjectReference>
     <ProjectReference Include="..\Memcached\Memcached.csproj">
       <Project>{934f5e21-0a76-4edd-a6df-e66379fa2e4c}</Project>

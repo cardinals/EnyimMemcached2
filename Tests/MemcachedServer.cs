@@ -15,7 +15,7 @@ namespace Enyim.Caching.Tests
 		{
 			var process = Process.Start(new ProcessStartInfo
 			{
-				Arguments = "-vv -E default_engine.so -p " + port,
+				Arguments = $"-vv -E default_engine.so -p {port} -m 512",
 				FileName = ExePath,
 				WorkingDirectory = BasePath,
 				//WindowStyle = ProcessWindowStyle.Hidden
