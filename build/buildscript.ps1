@@ -1,21 +1,11 @@
-﻿Framework "4.6x64"
-FormatTaskName (("-" * 20) + "[ {0} ]" + ("-" * 20))
+﻿$build_dir = Split-Path $psake.build_script_file
 
-$build_root = Split-Path $psake.build_script_file
-$solution_dir = resolve-path "$build_root\.."
-$out_dir = "$solution_dir\!out\"
-$nuget_exe = resolve-path "$build_root\nuget.exe"
+$solution_dir = Resolve-Path "$build_dir\.."
+$out_dir = (md "$solution_dir\output\" -force)
+$solution_file = Resolve-Path "$solution_dir\Enyim.Caching.sln"
 
 $package_push_urls = @{ "myget"="https://www.myget.org/F/enyimmemcached2/api/v2/package"; "nuget"=""; }
 $symbol_push_urls = @{ "myget"="https://nuget.symbolsource.org/MyGet/enyimmemcached2"; "nuget"="https://nuget.gw.symbolsource.org/Public/NuGet"; }
-
-$solution_file = "$solution_dir\Enyim.Caching.sln"
-$package_projects = (
-						"Memcached",
-						"NLog",
-						"log4net",
-						"Configuration"
-					) | % { resolve-path "$solution_dir\$_\$_.csproj" }
 
 #
 # build script
@@ -25,7 +15,6 @@ Properties {
 	#used by build/package
 	$configuration = "Release"
 	$platform = "Any CPU"
-	$verbosity = "q"
 
 	#used by push
 	$push_target = "myget"
@@ -33,7 +22,7 @@ Properties {
 	$push_key = $null
 }
 
-Task Default -depends Clean, Package
+Task Default -depends Pack
 Task Rebuild -depends Clean, Build -description "clean & build"
 
 #
@@ -41,9 +30,9 @@ Task Rebuild -depends Clean, Build -description "clean & build"
 #
 #
 
-Task Clean -description "removes all files created by the build process" {
+Task Clean -description "Remove all files created by the build process" {
 
-	invoke-msbuild -target "Clean" -project $solution_file
+	do-build -target "Clean" -project $solution_file
 }
 
 #
@@ -51,9 +40,41 @@ Task Clean -description "removes all files created by the build process" {
 #
 #
 
-Task Build -description "builds the projects" -depends _Restore {
+Task Build -description "Build the projects" -depends _Restore {
 
-	invoke-msbuild -target "Build" -project $solution_file
+	try
+	{
+		$v = Get-ProjectVersion $solution_dir
+		$p = Get-MSBuildSigningParameters "$solution_dir"
+
+		$p += @{
+				AssemblyVersion = $v.Assembly;
+				AssemblyInformalVersion = $v.Informal;
+		}
+
+		if ($env:APPVEYOR) {
+			appveyor UpdateBuild -version "$($v.Informal).$env:APPVEYOR_BUILD_NUMBER"
+		}
+
+		do-build -target "Build" -project $solution_file -properties $p
+	}
+	finally
+	{
+		Remove-SigningKey "$solution_dir"
+	}
+}
+
+#
+# TEST
+#
+#
+
+Task Test -description "Run the unit tests" -Depends Build {
+	Exec {
+		gci "*/bin/release/*.tests.dll" -Recurse |
+			Select-Object -ExpandProperty FullName |
+			Invoke-XUnit -Exclude @{ slow = "yes" } -Parallel All
+	}
 }
 
 #
@@ -61,42 +82,58 @@ Task Build -description "builds the projects" -depends _Restore {
 #
 #
 
-Task Package -description "builds the nuget packages" -Depends Build {
+Task Pack -description "Build the nuget packages" -Depends Test {
 
-	$package_projects | % {
+	$v = Get-ProjectVersion $solution_dir
 
-		write-Host -ForegroundColor Green "`n  Creating package for $( [System.IO.Path]::GetFileNameWithoutExtension($_) )"
+	gci $solution_dir "*.nuspec" -Recurse | % {
 
-		invoke-msbuild -target "CreatePackage" -project $_
+		write-Host -ForegroundColor Green "`nCreating package for $_"
+
+		$nuspec = $_.FullName
+
+		Exec {
+			Nuget-Pack $nuspec `
+					-symbols `
+					-properties @{ configuration=$configuration } `
+					-version $v.NuGet `
+					-output $out_dir
+		}
 	}
 }
 
 #
-# LOCAL COPY
+# PUSH
 #
 #
 
-Task LocalCopy -description "builds the nuget packages and copies them to the output directory" -Depends Package {
-	if (!(Test-Path $out_dir)) { mkdir $out_dir > $null }
+Task Push -description "Push the Nuget packages to `$push_target" -depends Pack {
 
-	find-packages | copy -destination $out_dir
-}
+	$target = $package_push_urls[$push_target]
+	assert (![String]::IsNullOrWhiteSpace($target)) "Invalid package host: $push_target"
+	assert (![String]::IsNullOrWhiteSpace($push_key)) "Invalid or missing API key."
 
-#
-# PUBLISH
-#
-#
+	$v = Get-ProjectVersion $solution_dir
 
-Task Publish -description "publishes the nuget packages" -depends Package {
+	(gci $out_dir "*$( $v.NuGet ).nupkg") | % {
 
-	$push_to = $package_push_urls[$push_target]
-	assert ($push_to -ne $null) ("Invalid package host: $push_target")
-	assert (![System.String]::IsNullOrEmpty($push_key)) ("Invalid or missing API key.")
+		$package = $_.FullName
 
-	$extras = @("-apikey", "$push_key")
-	if ($push_to -ne "") { $extras += "-source", $push_to }
+		Write-Host -ForegroundColor Green "`nPushing package $($_.Name) to $target"
 
-	find-packages | % { . $nuget_exe push ($_.FullName) $extras }
+		Exec { Nuget-Push $package -apikey $push_key -target $target }
+
+		$symbols = [System.IO.Path]::ChangeExtension($_.FullName, ".symbols.nupkg")
+		$symbol_target = $symbol_push_urls[$push_target]
+
+		if ($symbol_target) {
+			Write-Host "  Pushing symbol package $( [System.IO.Path]::GetFileName($symbols) ) to $target"
+			Exec { Nuget-Push $symbols -apikey $push_key -target $target }
+
+			Write-Host "  Pushing symbol package $( [System.IO.Path]::GetFileName($symbols) ) to $symbol_target"
+			Exec { Nuget-Push $symbols  -apikey $push_key -target $symbol_target }
+		}
+	}
 }
 
 #
@@ -104,12 +141,8 @@ Task Publish -description "publishes the nuget packages" -depends Package {
 #
 #
 
-Task _Restore -description "restores nuget packages" {
-	Exec {
-		pushd $solution_dir
-		. $nuget_exe restore
-		popd
-	}
+Task _Restore -description "Restore the Nuget packages" {
+	Exec { nuget restore $solution_file }
 }
 
 #
@@ -117,85 +150,32 @@ Task _Restore -description "restores nuget packages" {
 #
 #
 
-function guess-sha() {
-	$sha = git log --pretty=format:%h -1 2> $null
+function bootstrap {
 
-	if ($LASTEXITCODE -ne 0) { $sha = $env:APPVEYOR_REPO_COMMIT }
+	set-location $solution_dir
 
-	return $sha
+	[string] $packages_dir = (md "$solution_dir\packages" -force)
+	Exec { & "$build_dir\nuget" restore "$build_dir\packages.config" -PackagesDirectory $packages_dir }
+
+	$packages_config = [xml](gc "$build_dir\packages.config")
+	$extras = $packages_config.packages.package | % { resolve-path "$packages_dir\$( $_.id ).$( $_.version )\tools" }
+	$extras = $extras -join ";"
+	$env:Path = "$build_dir;$extras;$env:Path"
 }
 
-function guess-branch() {
-	$branch = git rev-parse --abbrev-ref HEAD 2> $null
+function do-build($target, $project, $properties) {
 
-	if ($LASTEXITCODE -ne 0) { $branch = $env:APPVEYOR_REPO_BRANCH }
+	Assert $configuration "Configuration must be specified"
+	Assert $platform "Platform must be specified"
 
-	return $branch
-}
-
-function non-empty($v) { $v | ? { $_ } }
-
-function get-informal-version($v) {
-
-	$sha = guess-sha
-	$branch = guess-branch
-	$counter = $env:APPVEYOR_BUILD_NUMBER
-
-	# version+branch.sha.counter
-	return ((non-empty @($v, ((non-empty @($branch, $sha, $counter)) -join "."))) -join "+")
-}
-
-function prepare-version-numbers() {
-	$version = gc "$solution_dir\VERSION"
-	assert ($version -match "\d+.\d+(.\d+)?") ("Invalid version number: $version")
-
-	$normal = $Matches[0]
-	$informal = get-informal-version $version
-
-	return @{ ProjectVersion=$normal; ProjectInformalVersion=$informal }
-}
-
-function invoke-msbuild($target, $props, $project) {
-
-	Assert (![System.String]::IsNullOrEmpty($configuration)) ("Configuration must be specified")
-	Assert (![System.String]::IsNullOrEmpty($platform)) ("Platform must be specified")
-
-	$p = (
-			($props + (prepare-version-numbers) + @{
-				Configuration = $configuration;
-				Platform = $platform;
-				ILMergeEnabled = "True";
-				SolutionDir = "$solution_dir\\";
-			}).GetEnumerator() | % { $_.Name + "=""$( $_.Value )""" }
-		) -join ";"
-
-	$v = $verbosity
-	if ([String]::IsNullOrWhiteSpace($v)) { $v = "q" }
-
-	$msbuildargs = @(
-		"""$project""",
-		"/t:$target",
-		"/p:$p",
-		"/v:$v",
-		"/nologo"
-	)
-
-	if (![String]::IsNullOrWhiteSpace($env:AppVeyorCI)) {
-		$msbuildargs += @( "/logger:C:\Program^ Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" )
-	}
-
-	msbuild $msbuildargs
-}
-
-function find-packages
-{
-	$package_projects | % {
-
-		$p = join-Path (split-path -Parent $_) "bin\$configuration"
-
-		gci $p *.nupkg
+	Exec { $project | Invoke-MSBuild -Target $target `
+									-Configuration $configuration `
+									-Platform $platform `
+									-Properties $properties
 	}
 }
+
+bootstrap
 
 <#
 

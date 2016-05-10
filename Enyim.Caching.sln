@@ -14,10 +14,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{940B7653-D6D4-4469-A79E-F142D103E5FC}"
 	ProjectSection(SolutionItems) = preProject
 		AssemblyInfo.cs = AssemblyInfo.cs
-		build\build.fsx = build\build.fsx
+		build.ps1 = build.ps1
+		build\buildscript.ps1 = build\buildscript.ps1
 		footer.txt = footer.txt
 		LICENSE = LICENSE
-		build\utils.fsx = build\utils.fsx
 		VERSION = VERSION
 	EndProjectSection
 EndProject
@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "msbuild", "msbuild", "{3A1C
 		build\ILMerge.targets = build\ILMerge.targets
 		build\ProjectDefaults.targets = build\ProjectDefaults.targets
 		build\SignAssembly.targets = build\SignAssembly.targets
+		build\SignAssembly2.targets = build\SignAssembly2.targets
 		build\Tasks.targets = build\Tasks.targets
 		build\VersionInfo.targets = build\VersionInfo.targets
 	EndProjectSection
@@ -39,6 +40,16 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppConfig", "AppConfig\AppConfig.csproj", "{0DE5F916-74A8-49BA-9DA3-47966C961AF1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{9929ECCC-96EA-45CD-8BE3-32CAA5FE793F}"
+	ProjectSection(SolutionItems) = preProject
+		build\modules\CommandLine.psm1 = build\modules\CommandLine.psm1
+		build\modules\GitVersion.psm1 = build\modules\GitVersion.psm1
+		build\modules\MSBuild.psm1 = build\modules\MSBuild.psm1
+		build\modules\Nuget.psm1 = build\modules\Nuget.psm1
+		build\modules\Utils.psm1 = build\modules\Utils.psm1
+		build\modules\XUnit.psm1 = build\modules\XUnit.psm1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,5 +98,6 @@ Global
 		{A220B349-B7BB-483A-B4DA-1A91CB875E9D} = {FD390421-EA66-4D81-8805-521D35CCA8D1}
 		{3A1C1621-CC53-4D7A-AADD-CC7D45605A01} = {940B7653-D6D4-4469-A79E-F142D103E5FC}
 		{048DA362-F36E-4D8D-8104-FEA2BE6C5AB3} = {FD390421-EA66-4D81-8805-521D35CCA8D1}
+		{9929ECCC-96EA-45CD-8BE3-32CAA5FE793F} = {940B7653-D6D4-4469-A79E-F142D103E5FC}
 	EndGlobalSection
 EndGlobal

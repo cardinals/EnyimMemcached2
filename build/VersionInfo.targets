@@ -1,52 +1,23 @@
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<!-- override project version -->
-
-	<!--<PropertyGroup>
-		<ProjectVersion>1234</ProjectVersion>
-		<ProjectInformalVersion></ProjectInformalVersion>
-	</PropertyGroup>-->
-
-	<UsingTask TaskName="ParseVersionNumber" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-		<ParameterGroup>
-			<VersionFile ParameterType="System.String" Required="true"/>
-			<ProjectVersion ParameterType="System.String" Output="true" />
-			<ProjectInformalVersion ParameterType="System.String" Output="true" />
-		</ParameterGroup>
-		<Task>
-			<Reference Include="System" />
-			<Reference Include="System.IO" />
-			<Code Type="Fragment" Language="cs">
-				<![CDATA[
-					var content = File.ReadAllLines(VersionFile)[0];
-					var match = System.Text.RegularExpressions.Regex.Match(content, @"^(?'V'(\d+)\.(\d+)(\.\d+)?)");
-					if (!match.Success) throw new InvalidOperationException("Cannot parse version info from " + VersionFile);
-					ProjectVersion = match.Groups["V"].ToString();
-					ProjectInformalVersion = content;
-				]]>
-			</Code>
-		</Task>
-	</UsingTask>
-	<!-- internals -->
 	<PropertyGroup>
-		<BuildDependsOn>_ParseVersion;_GetCache;_CreateAssemblyInfo;_AddVersion;$(BuildDependsOn)</BuildDependsOn>
-		<CleanDependsOn>_DeleteVersionCache;$(CleanDependsOn)</CleanDependsOn>
-
-		<GeneratedAssemblyInfo>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__versioninfo.cs'))</GeneratedAssemblyInfo>
-		<VersionCache>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__lastversion'))</VersionCache>
+		<AssemblyVersion Condition=" '$(AssemblyVersion)' == '' ">0.0.1.0</AssemblyVersion>
+		<AssemblyInformalVersion Condition=" '$(AssemblyInformalVersion)' == '' ">0.0.1.0-local</AssemblyInformalVersion>
 	</PropertyGroup>
 
-	<Target Name="_ParseVersion" Condition=" '$(ProjectVersion)' == '' ">
-		<ParseVersionNumber VersionFile="$(SolutionDir)\VERSION">
-			<Output TaskParameter="ProjectVersion" PropertyName="ProjectVersion"/>
-			<Output TaskParameter="ProjectInformalVersion" PropertyName="ProjectInformalVersion"/>
-		</ParseVersionNumber>
-	</Target>
+	<!-- internals -->
+	<PropertyGroup>
+		<BuildDependsOn>_GetCache;_CreateAssemblyInfo;_AddVersion;$(BuildDependsOn)</BuildDependsOn>
+		<CleanDependsOn>_DeleteVersionCache;$(CleanDependsOn)</CleanDependsOn>
+
+		<_GeneratedAssemblyInfoPath>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__versioninfo.cs'))</_GeneratedAssemblyInfoPath>
+		<_VersionCachePath>$([System.IO.Path]::Combine($(IntermediateOutputPath), '__lastversion'))</_VersionCachePath>
+	</PropertyGroup>
 
 	<Target Name="_GetCache">
 		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
-		<ReadLinesFromFile File="$(VersionCache)" ContinueOnError="true">
-			<Output TaskParameter="Lines" PropertyName="_Cache_ProjectInformalVersion"/>
+		<ReadLinesFromFile File="$(_VersionCachePath)" ContinueOnError="true">
+			<Output TaskParameter="Lines" PropertyName="_VersionCache"/>
 		</ReadLinesFromFile>
 	</Target>
 
@@ -55,29 +26,30 @@
 		this speeds up local builds considerably
 	-->
 	<Target Name="_CreateAssemblyInfo"
-			Condition=" '$(_Cache_ProjectInformalVersion)' != '$(ProjectInformalVersion)' Or '$(Configuration)' == 'Release' ">
+			Condition=" '$(_VersionCache)' != '$(AssemblyVersion):$(AssemblyInformalVersion)' Or '$(Configuration)' == 'Release' ">
 
 		<MakeDir Directories="$(IntermediateOutputPath)" ContinueOnError="true" />
-		<Message Text="Version: $(ProjectVersion)" Importance="normal" />
-		<Message Text="Informal Version: $(ProjectInformalVersion)" Importance="normal" />
 
-		<WriteLinesToFile File="$(VersionCache)" Lines="$(ProjectInformalVersion)" Overwrite="true"/>
-		<WriteLinesToFile File="$(GeneratedAssemblyInfo)" Overwrite="true"
+		<Message Text="Version: $(AssemblyVersion)" Importance="normal" />
+		<Message Text="Informal Version: $(AssemblyInformalVersion)" Importance="normal" />
+
+		<WriteLinesToFile File="$(_VersionCachePath)" Lines="$(AssemblyVersion):$(AssemblyInformalVersion)" Overwrite="true"/>
+		<WriteLinesToFile File="$(_GeneratedAssemblyInfoPath)" Overwrite="true"
 						  Lines="
-[assembly: System.Reflection.AssemblyVersion(&quot;$(ProjectVersion)&quot;)]
-[assembly: System.Reflection.AssemblyFileVersion(&quot;$(ProjectVersion)&quot;)]
-[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ProjectInformalVersion)&quot;)]
+[assembly: System.Reflection.AssemblyVersion(&quot;$(AssemblyVersion)&quot;)]
+[assembly: System.Reflection.AssemblyFileVersion(&quot;$(AssemblyVersion)&quot;)]
+[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(AssemblyInformalVersion)&quot;)]
 " />
 	</Target>
 
 	<Target Name="_AddVersion">
-		<CreateItem Include="$(GeneratedAssemblyInfo)">
+		<CreateItem Include="$(_GeneratedAssemblyInfoPath)">
 			<Output TaskParameter="Include" ItemName="Compile"/>
 		</CreateItem>
 	</Target>
 
 	<Target Name="_DeleteVersionCache">
-		<Delete Files="$(GeneratedAssemblyInfo);$(VersionCache)" ContinueOnError="true" />
+		<Delete Files="$(_GeneratedAssemblyInfoPath);$(_VersionCachePath)" ContinueOnError="true" />
 	</Target>
 </Project>
 
