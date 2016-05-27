@@ -10,9 +10,6 @@ namespace Enyim.Caching
 {
 	public abstract class ClusterBase : ICluster
 	{
-		private static readonly TaskCompletionSource<IOperation> failSingle;
-		private static readonly TaskCompletionSource<IOperation[]> failBroadcast;
-
 		private readonly IPEndPoint[] endpoints;
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy reconnectPolicy;
@@ -40,17 +37,6 @@ namespace Enyim.Caching
 			this.workerIsDone = new ManualResetEventSlim(false);
 		}
 
-		static ClusterBase()
-		{
-			var allDead = new IOException("All nodes are dead.");
-
-			// cached tasks for error reporting
-			failSingle = new TaskCompletionSource<IOperation>();
-			failBroadcast = new TaskCompletionSource<IOperation[]>();
-			failSingle.SetException(allDead);
-			failBroadcast.SetException(allDead);
-		}
-
 		protected abstract INode CreateNode(IPEndPoint endpoint);
 
 		public virtual void Start()
@@ -76,7 +62,7 @@ namespace Enyim.Caching
 					try { node.Shutdown(); }
 					catch (Exception e)
 					{
-						LogTo.Error(e, $"Error while shutting down {node.EndPoint}");
+						LogTo.Error(e, $"Error while shutting down {node}");
 					}
 				}
 
@@ -90,8 +76,8 @@ namespace Enyim.Caching
 		{
 			var node = locator.Locate(op.Key);
 
-			if (!node.IsAlive)
-				return failSingle.Task;
+			if (node == null) new IOException("All nodes are dead");
+			if (!node.IsAlive) new IOException($"Node {node} is dead");
 
 			var retval = node.Enqueue(op);
 			ioQueue.Add(node);
@@ -116,7 +102,7 @@ namespace Enyim.Caching
 			}
 
 			if (tasks.Count == 0)
-				return failBroadcast.Task;
+				throw new IOException("All nodes are dead");
 
 			return Task.WhenAll(tasks);
 		}
@@ -127,7 +113,7 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		public void NeedsIO(INode node)
 		{
-			LogTo.Trace("Node {0} has pending IO, requeueing", node);
+			LogTo.Trace($"Node {node} has pending IO, requeueing");
 			ioQueue.Add(node);
 		}
 
@@ -142,6 +128,8 @@ namespace Enyim.Caching
 					try
 					{
 						node.Run();
+
+						LogTo.Trace($"Node {node} was processed");
 						if (shutdownToken.IsCancellationRequested) break;
 					}
 					catch (Exception e)
@@ -166,9 +154,9 @@ namespace Enyim.Caching
 		/// <param name="node">The failed node</param>
 		/// <param name="e">The reason of the failure</param>
 		/// <remarks>Only called from the IO thread.</remarks>
-		private void FailNode(INode node, Exception e)
+		protected void FailNode(INode node, Exception e)
 		{
-			LogTo.Error($"Node {node.EndPoint} failed", e);
+			LogTo.Error($"Node {node} failed", e);
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler
@@ -202,7 +190,7 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		protected virtual void ScheduleReconnect(INode node)
 		{
-			LogTo.Info($"Scheduling reconnect for {node.EndPoint}");
+			LogTo.Info($"Scheduling reconnect for {node}");
 
 			var when = reconnectPolicy.Schedule(node);
 
@@ -220,7 +208,7 @@ namespace Enyim.Caching
 			}
 		}
 
-		protected virtual void ReconnectNow(INode node)
+		protected void ReconnectNow(INode node)
 		{
 			try
 			{
@@ -244,9 +232,9 @@ namespace Enyim.Caching
 		/// </summary>
 		/// <param name="node"></param>
 		/// <remarks>Can be called from a background thread (Task pool)</remarks>
-		private void ReAddNode(INode node)
+		protected void ReAddNode(INode node)
 		{
-			LogTo.Debug("Node {0} was reconnected", node.EndPoint);
+			LogTo.Debug($"Node {node} was reconnected");
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler

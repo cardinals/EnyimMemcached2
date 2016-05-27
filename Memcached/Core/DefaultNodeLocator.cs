@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace Enyim.Caching
 		private const int ServerAddressMutations = 160;
 		private static readonly Encoding NoPreambleUtf8 = new UTF8Encoding(false);
 
+		private readonly object InitLock = new Object();
 		private INode[] nodes;
 		private uint[] keyRing;
 		private int keyRingLengthComplement;
@@ -20,29 +22,32 @@ namespace Enyim.Caching
 
 		public void Initialize(IEnumerable<INode> currentNodes)
 		{
-			// quit if we've been initialized because we can handle dead nodes
-			if (keyRing != null) return;
-
-			nodes = currentNodes.ToArray();
-			keyRing = new uint[this.nodes.Length * ServerAddressMutations];
-			keyToServer = new Dictionary<uint, INode>(keyRing.Length);
-			keyRingLengthComplement = ~keyRing.Length;
-
-			var i = 0;
-
-			foreach (var node in nodes)
+			lock (InitLock)
 			{
-				for (var mutation = 0; mutation < ServerAddressMutations; mutation++)
+				// quit if we've been initialized because we can handle dead nodes
+				if (keyRing != null) return;
+
+				nodes = currentNodes.ToArray();
+				keyRing = new uint[this.nodes.Length * ServerAddressMutations];
+				keyToServer = new Dictionary<uint, INode>(keyRing.Length);
+				keyRingLengthComplement = ~keyRing.Length;
+
+				var i = 0;
+
+				foreach (var node in nodes)
 				{
-					var address = node.EndPoint.ToString();
-					var hash = GetKeyHash(address + "-" + mutation);
+					for (var mutation = 0; mutation < ServerAddressMutations; mutation++)
+					{
+						var address = node.EndPoint.ToString();
+						var hash = GetKeyHash(address + "-" + mutation);
 
-					keyRing[i++] = hash;
-					keyToServer[hash] = node;
+						keyRing[i++] = hash;
+						keyToServer[hash] = node;
+					}
 				}
-			}
 
-			Array.Sort<uint>(keyRing);
+				Array.Sort(keyRing);
+			}
 		}
 
 		private static uint GetKeyHash(string key)
@@ -99,7 +104,7 @@ namespace Enyim.Caching
 		private INode LocateNode(uint itemKeyHash)
 		{
 			// get the index of the server assigned to this hash
-			var foundIndex = Array.BinarySearch<uint>(keyRing, itemKeyHash);
+			var foundIndex = Array.BinarySearch(keyRing, itemKeyHash);
 
 			if (foundIndex == keyRingLengthComplement) foundIndex = 0;
 			else if (foundIndex == ~0) foundIndex = keyRing.Length - 1;
@@ -127,8 +132,8 @@ namespace Enyim.Caching
 				return "FailedNode";
 			}
 
-			public bool IsAlive { get { return false; } }
-			public System.Net.IPEndPoint EndPoint { get { throw new InvalidOperationException("node failed"); } }
+			public bool IsAlive { get; } = false;
+			public IPEndPoint EndPoint { get; } = new IPEndPoint(IPAddress.None, 0);
 
 			public void Run() { }
 			public Task<IOperation> Enqueue(IOperation op) { return FailedTask.Task; }

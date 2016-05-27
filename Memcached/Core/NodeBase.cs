@@ -411,6 +411,11 @@ namespace Enyim.Caching
 			owner.NeedsIO(this);
 		}
 
+		public override string ToString()
+		{
+			return name;
+		}
+
 		protected struct Data
 		{
 			public static readonly Data Empty = new Data();
