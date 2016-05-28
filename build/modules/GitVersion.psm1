@@ -21,7 +21,7 @@ function Get-ProjectVersion {
 		#Informal = "$semver+$( join-ne @($c.CommitsSinceVersionSource, $c.BranchName, $short) "." )";
 		FullSemver = "$semver+$short"
 		Informal = "$semver+$($c.BranchName).$short";
-		NuGet = "$mmp-$( $c.PreReleaseTag -replace '\.','' )";
+		NuGet = (join-ne "$mmp",($c.PreReleaseTag -replace '\.','') "-");
 
 		Major = $c.Major;
 		Minor = $c.Minor;
