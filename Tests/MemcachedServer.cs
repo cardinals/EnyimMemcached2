@@ -15,10 +15,16 @@ namespace Enyim.Caching.Tests
 		{
 			var process = Process.Start(new ProcessStartInfo
 			{
-				Arguments = $"-vv -E default_engine.so -p {port} -m 512",
+				Arguments =
+#if DEBUG
+				"-vv " +
+#endif
+				$"-E default_engine.so -p {port} -m 512",
 				FileName = ExePath,
-				WorkingDirectory = BasePath,
-				//WindowStyle = ProcessWindowStyle.Hidden
+				WorkingDirectory = BasePath
+#if !DEBUG
+				,WindowStyle = ProcessWindowStyle.Hidden
+#endif
 			});
 
 			return new KillProcess(process);
