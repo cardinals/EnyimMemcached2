@@ -28,44 +28,14 @@ namespace Enyim.Caching
 				this.logger = logger;
 			}
 
-			public bool IsTraceEnabled
-			{
-				get { return logger.IsTraceEnabled; }
-			}
-
-			public bool IsDebugEnabled
-			{
-				get { return logger.IsDebugEnabled; }
-			}
-
-			public bool IsInfoEnabled
-			{
-				get { return logger.IsInfoEnabled; }
-			}
-
-			public bool IsWarnEnabled
-			{
-				get { return logger.IsWarnEnabled; }
-			}
-
-			public bool IsErrorEnabled
-			{
-				get { return logger.IsErrorEnabled; }
-			}
-
-			public bool IsFatalEnabled
-			{
-				get { return logger.IsFatalEnabled; }
-			}
+			public bool IsTraceEnabled { get { return logger.IsTraceEnabled; } }
+			public bool IsInfoEnabled { get { return logger.IsInfoEnabled; } }
+			public bool IsWarnEnabled { get { return logger.IsWarnEnabled; } }
+			public bool IsErrorEnabled { get { return logger.IsErrorEnabled; } }
 
 			public void Trace(string message)
 			{
 				logger.Trace(message);
-			}
-
-			public void Trace(Exception exception)
-			{
-				logger.Trace(exception);
 			}
 
 			public void Trace(Exception exception, string message = null)
@@ -76,21 +46,6 @@ namespace Enyim.Caching
 			public void Trace(string format, params object[] args)
 			{
 				logger.Trace(format, args);
-			}
-
-			public void Debug(string message)
-			{
-				logger.Debug(message);
-			}
-
-			public void Debug(Exception exception, string message = null)
-			{
-				logger.Debug(exception, message);
-			}
-
-			public void Debug(string format, params object[] args)
-			{
-				logger.Debug(format, args);
 			}
 
 			public void Info(string message)
@@ -136,21 +91,6 @@ namespace Enyim.Caching
 			public void Error(string format, params object[] args)
 			{
 				logger.Error(format, args);
-			}
-
-			public void Fatal(string message)
-			{
-				logger.Fatal(message);
-			}
-
-			public void Fatal(Exception exception, string message = null)
-			{
-				logger.Fatal(exception, message);
-			}
-
-			public void Fatal(string format, params object[] args)
-			{
-				logger.Fatal(format, args);
 			}
 		}
 	}

@@ -37,35 +37,10 @@ namespace Enyim.Caching
 				this.logger = logger;
 			}
 
-			public bool IsTraceEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Verbose); }
-			}
-
-			public bool IsDebugEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Debug); }
-			}
-
-			public bool IsInfoEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Information); }
-			}
-
-			public bool IsWarnEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Warning); }
-			}
-
-			public bool IsErrorEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Error); }
-			}
-
-			public bool IsFatalEnabled
-			{
-				get { return logger.IsEnabled(LogEventLevel.Fatal); }
-			}
+			public bool IsTraceEnabled { get { return logger.IsEnabled(LogEventLevel.Verbose); } }
+			public bool IsInfoEnabled { get { return logger.IsEnabled(LogEventLevel.Information); } }
+			public bool IsWarnEnabled { get { return logger.IsEnabled(LogEventLevel.Warning); } }
+			public bool IsErrorEnabled { get { return logger.IsEnabled(LogEventLevel.Error); } }
 
 			public void Trace(string message)
 			{
@@ -80,21 +55,6 @@ namespace Enyim.Caching
 			public void Trace(string format, params object[] args)
 			{
 				logger.Verbose(format, args);
-			}
-
-			public void Debug(string message)
-			{
-				logger.Debug(message);
-			}
-
-			public void Debug(Exception exception, string message = null)
-			{
-				logger.Debug(exception, message);
-			}
-
-			public void Debug(string format, params object[] args)
-			{
-				logger.Debug(format, args);
 			}
 
 			public void Info(string message)
@@ -140,21 +100,6 @@ namespace Enyim.Caching
 			public void Error(string format, params object[] args)
 			{
 				logger.Error(format, args);
-			}
-
-			public void Fatal(string message)
-			{
-				logger.Fatal(message);
-			}
-
-			public void Fatal(Exception exception, string message = null)
-			{
-				logger.Fatal(exception, message);
-			}
-
-			public void Fatal(string format, params object[] args)
-			{
-				logger.Fatal(format, args);
 			}
 		}
 	}

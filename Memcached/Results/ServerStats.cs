@@ -157,11 +157,11 @@ namespace Enyim.Caching.Memcached
 				if (serverValues.TryGetValue(key, out retval))
 					return retval;
 
-				LogTo.Debug($"The stat item {key} does not exist for {server}");
+				LogTo.Trace($"The stat item {key} does not exist for {server}");
 			}
 			else
 			{
-				LogTo.Debug($"No stats are stored for {server}");
+				LogTo.Trace($"No stats are stored for {server}");
 			}
 
 			return null;

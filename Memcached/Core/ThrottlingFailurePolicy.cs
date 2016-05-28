@@ -34,14 +34,14 @@ namespace Enyim.Caching
 
 			if (counter == 0)
 			{
-				LogTo.Debug("Never failed before, setting counter to 1.");
+				LogTo.Trace("Never failed before, setting counter to 1.");
 
 				counter = 1;
 			}
 			else
 			{
 				var diff = now - lastFailed;
-				LogTo.Debug("Last fail was {0} ago with counter {1}.", diff, counter);
+				LogTo.Trace($"Last fail was {diff} ago with counter {counter}.");
 
 				counter = diff <= ResetAfter ? (counter + 1) : 1;
 			}
@@ -50,13 +50,13 @@ namespace Enyim.Caching
 
 			if (counter == Threshold)
 			{
-				LogTo.Debug("Threshold reached, failing node.");
+				LogTo.Trace("Threshold reached, failing node.");
 				counter = 0;
 
 				return true;
 			}
 
-			LogTo.Debug("Threshold not reached, current value is {0}.", counter);
+			LogTo.Trace($"Threshold not reached, current value is {counter}");
 
 			return false;
 		}

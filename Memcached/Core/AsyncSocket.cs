@@ -107,7 +107,7 @@ namespace Enyim.Caching
 				finally
 				{
 					IsBusy = false;
-					LogTo.Debug($"Connected to {endpoint} in {sw.ElapsedMilliseconds} msec");
+					LogTo.Info($"Connected to {endpoint} in {sw.ElapsedMilliseconds} msec");
 				}
 			}
 		}
@@ -413,7 +413,7 @@ namespace Enyim.Caching
 				}
 				catch (Exception e)
 				{
-					LogTo.Debug(e, "Exception while destroying socket.");
+					LogTo.Info(e, "Exception while destroying socket.");
 				}
 
 				socket = null;

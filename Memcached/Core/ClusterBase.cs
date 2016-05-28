@@ -234,7 +234,7 @@ namespace Enyim.Caching
 		/// <remarks>Can be called from a background thread (Task pool)</remarks>
 		protected void ReAddNode(INode node)
 		{
-			LogTo.Debug($"Node {node} was reconnected");
+			LogTo.Info($"Node {node} was reconnected");
 
 			// serialize the reconnect attempts to make
 			// IReconnectPolicy and INodeLocator implementations simpler

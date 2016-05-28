@@ -5,19 +5,13 @@ namespace Enyim.Caching
 	public interface ILog
 	{
 		bool IsTraceEnabled { get; }
-		bool IsDebugEnabled { get; }
 		bool IsInfoEnabled { get; }
 		bool IsWarnEnabled { get; }
 		bool IsErrorEnabled { get; }
-		bool IsFatalEnabled { get; }
 
 		void Trace(string message);
 		void Trace(Exception exception, string message = null);
 		void Trace(string format, params object[] args);
-
-		void Debug(string message);
-		void Debug(Exception exception, string message = null);
-		void Debug(string format, params object[] args);
 
 		void Info(string message);
 		void Info(Exception exception, string message = null);
@@ -30,10 +24,6 @@ namespace Enyim.Caching
 		void Error(string message);
 		void Error(Exception exception, string message = null);
 		void Error(string format, params object[] args);
-
-		void Fatal(string message);
-		void Fatal(Exception exception, string message = null);
-		void Fatal(string format, params object[] args);
 	}
 }
 

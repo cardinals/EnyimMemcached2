@@ -13,10 +13,6 @@ namespace Enyim.Caching
 		public static void Trace(Exception exception, string message = null) { }
 		public static void Trace(string format, params object[] args) { }
 
-		public static void Debug(string message) { }
-		public static void Debug(Exception exception, string message = null) { }
-		public static void Debug(string format, params object[] args) { }
-
 		public static void Info(string message) { }
 		public static void Info(Exception exception, string message = null) { }
 		public static void Info(string format, params object[] args) { }
@@ -28,10 +24,6 @@ namespace Enyim.Caching
 		public static void Error(string message) { }
 		public static void Error(Exception e, string message = null) { }
 		public static void Error(string format, params object[] args) { }
-
-		public static void Fatal(string message) { }
-		public static void Fatal(Exception exception, string message = null) { }
-		public static void Fatal(string format, params object[] args) { }
 	}
 }
 

@@ -23,35 +23,10 @@ namespace Enyim.Caching
 				this.logger = logger;
 			}
 
-			public bool IsTraceEnabled
-			{
-				get { return logger.IsDebugEnabled; }
-			}
-
-			public bool IsDebugEnabled
-			{
-				get { return logger.IsDebugEnabled; }
-			}
-
-			public bool IsInfoEnabled
-			{
-				get { return logger.IsInfoEnabled; }
-			}
-
-			public bool IsWarnEnabled
-			{
-				get { return logger.IsWarnEnabled; }
-			}
-
-			public bool IsErrorEnabled
-			{
-				get { return logger.IsErrorEnabled; }
-			}
-
-			public bool IsFatalEnabled
-			{
-				get { return logger.IsFatalEnabled; }
-			}
+			public bool IsTraceEnabled { get { return logger.IsDebugEnabled; } }
+			public bool IsInfoEnabled { get { return logger.IsInfoEnabled; } }
+			public bool IsWarnEnabled { get { return logger.IsWarnEnabled; } }
+			public bool IsErrorEnabled { get { return logger.IsErrorEnabled; } }
 
 			public void Trace(string message)
 			{
@@ -68,21 +43,6 @@ namespace Enyim.Caching
 			public void Trace(string format, params object[] args)
 			{
 				// send all Trace message to Debug
-				logger.DebugFormat(format, args);
-			}
-
-			public void Debug(string message)
-			{
-				logger.Debug(message);
-			}
-
-			public void Debug(Exception exception, string message = null)
-			{
-				logger.Debug(message, exception);
-			}
-
-			public void Debug(string format, params object[] args)
-			{
 				logger.DebugFormat(format, args);
 			}
 
@@ -129,21 +89,6 @@ namespace Enyim.Caching
 			public void Error(string format, params object[] args)
 			{
 				logger.ErrorFormat(format, args);
-			}
-
-			public void Fatal(string message)
-			{
-				logger.Fatal(message);
-			}
-
-			public void Fatal(Exception exception, string message = null)
-			{
-				logger.Fatal(message, exception);
-			}
-
-			public void Fatal(string format, params object[] args)
-			{
-				logger.FatalFormat(format, args);
 			}
 		}
 	}
