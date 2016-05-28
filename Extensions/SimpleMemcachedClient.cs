@@ -105,7 +105,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public async Task<ServerStats> StatsAsync(string key)
+		public async Task<ServerStats> StatsAsync(string key = null)
 		{
 			try
 			{

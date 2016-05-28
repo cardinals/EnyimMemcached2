@@ -80,7 +80,7 @@ namespace Enyim.Caching.Memcached
 			return new FlushOperation(allocator);
 		}
 
-		public IStatsOperation Stats(string type)
+		public IStatsOperation Stats(string type = null)
 		{
 			return new StatsOperation(allocator, type);
 		}

@@ -76,7 +76,7 @@ namespace Enyim.Caching.Memcached
 			return PerformFlushAll();
 		}
 
-		public Task<IStatsOperationResult> StatsAsync(string key)
+		public Task<IStatsOperationResult> StatsAsync(string key = null)
 		{
 			return PerformStats(key);
 		}

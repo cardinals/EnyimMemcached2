@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached
 		Task<IMutateOperationResult> MutateAsync(MutationMode mode, string key, Expiration expiration, ulong delta, ulong defaultValue, ulong cas);
 
 		Task<IOperationResult> FlushAllAsync();
-		Task<IStatsOperationResult> StatsAsync(string key);
+		Task<IStatsOperationResult> StatsAsync(string key = null);
 	}
 }
 

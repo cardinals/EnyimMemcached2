@@ -13,7 +13,7 @@ namespace Enyim.Caching.Memcached
 		ITouchOperation Touch(Key key, uint expires, ulong cas);
 		IConcatOperation Concat(ConcatenationMode mode, Key key, ArraySegment<byte> data, ulong cas);
 
-		IStatsOperation Stats(string type);
+		IStatsOperation Stats(string type = null);
 		IFlushOperation Flush();
 	}
 }
