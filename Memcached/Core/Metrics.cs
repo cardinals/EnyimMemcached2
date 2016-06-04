@@ -210,7 +210,7 @@ namespace Enyim.Caching
 
 		protected override void Visit(IMeter meter)
 		{
-			sb.AppendFormat("{0:0.##}/{1}", meter.Rate, meter.Interval.ToString().ToLower());
+			sb.AppendFormat("{0:0.##}/{1} ({2})", meter.Rate, meter.Interval.ToString().ToLower(), meter.Count);
 		}
 
 		protected override void Visit(ICounter counter)
@@ -314,7 +314,7 @@ namespace Enyim.Caching
 		{
 			public ICounter Counter(string name)
 			{
-				return new SharedCounter(name);
+				return new Counter(name);
 			}
 
 			public IMeter Meter(string name, Interval interval)
@@ -329,7 +329,7 @@ namespace Enyim.Caching
 
 			public ICounter Counter(ICounter parent, string instance)
 			{
-				return new SharedCounter(parent, instance);
+				return new Counter(parent, instance);
 			}
 
 			public IMeter Meter(IMeter parent, string instance, Interval interval)
@@ -386,18 +386,27 @@ namespace Enyim.Caching
 			public long Max { get; private set; }
 		}
 
-		internal class SharedCounter : DefaultMetric, ICounter
+		internal class Counter : DefaultMetric, ICounter
 		{
-			private long global;
-			private Entry[] slices;
+			// TODO tune this
+			private const int STRIPE_COUNT = 32;
 
-			public SharedCounter(string name)
+			// we have two counters and we pad them with 64 bytes (length of the cache-line)
+			private const int STRIPE_LENGTH = 10;
+
+			private const int IDX_THREAD_ID = 0;
+			private const int IDX_VALUE = 1;
+
+			private long global;
+			private long[] data;
+
+			public Counter(string name)
 				: base(name)
 			{
 				Initialize();
 			}
 
-			public SharedCounter(IMetric parent, string instance)
+			public Counter(IMetric parent, string instance)
 				: base(parent, instance)
 			{
 				Initialize();
@@ -405,17 +414,11 @@ namespace Enyim.Caching
 
 			public ICounter Parent { get { return ((IMetric)this).Parent as ICounter; } }
 
-			private struct Entry
-			{
-				public int ThreadId;
-				public long Value;
-			}
-
 			private void Initialize()
 			{
-				slices = new Entry[Environment.ProcessorCount + 16];
-				global = 0;
-				Thread.MemoryBarrier();
+				// add an extra padding to the beginning of the array to avoid false-sharing with the array's length
+				Volatile.Write(ref data, new long[STRIPE_LENGTH * STRIPE_COUNT + STRIPE_LENGTH]);
+				Volatile.Write(ref global, 0);
 			}
 
 			public virtual void Reset()
@@ -424,16 +427,6 @@ namespace Enyim.Caching
 
 				var p = Parent;
 				if (p != null) p.Reset();
-			}
-
-			public void Increment()
-			{
-				ChangeBy(1);
-			}
-
-			public void Decrement()
-			{
-				ChangeBy(-1);
 			}
 
 			public void IncrementBy(int value)
@@ -448,24 +441,32 @@ namespace Enyim.Caching
 
 			private void ChangeBy(int by)
 			{
-				var p = Parent as SharedCounter;
+				var p = Parent as Counter;
 				if (p != null) p.ChangeBy(by);
 
 				var threadId = Thread.CurrentThread.ManagedThreadId;
+				var hash = threadId;
 
-				for (var i = 0; i < slices.Length; i++)
+				for (var i = 0; i < 3; i++)
 				{
-					if (slices[i].ThreadId == threadId)
+					var index = ((hash % STRIPE_COUNT) + 1) * STRIPE_LENGTH;
+					var bucketThread = data[index + IDX_THREAD_ID];
+
+					if (bucketThread == threadId)
 					{
-						slices[i].Value = slices[i].Value + by;
+						data[index + IDX_VALUE] += by;
 						return;
+					}
+					else if (bucketThread == 0)
+					{
+						if (Interlocked.CompareExchange(ref data[index + IDX_VALUE], threadId, 0) == 0)
+						{
+							data[index + IDX_VALUE] = by;
+							return;
+						}
 					}
 
-					if (Interlocked.CompareExchange(ref slices[i].ThreadId, threadId, 0) == 0)
-					{
-						slices[i].Value = by;
-						return;
-					}
+					hash ^= (hash << 5) + (hash >> 2) + threadId;
 				}
 
 				Interlocked.Add(ref global, by);
@@ -475,11 +476,11 @@ namespace Enyim.Caching
 			{
 				get
 				{
-					long retval = global;
-					for (var i = 0; i < slices.Length; i++)
+					var retval = global;
+
+					for (var i = STRIPE_LENGTH; i < data.Length; i += STRIPE_LENGTH)
 					{
-						if (slices[i].ThreadId > 0)
-							retval += slices[i].Value;
+						retval += data[i + IDX_VALUE];
 					}
 
 					return retval;
@@ -487,12 +488,11 @@ namespace Enyim.Caching
 			}
 		}
 
-		internal class DefaultMeter : SharedCounter, IMeter
+		internal class DefaultMeter : Counter, IMeter
 		{
 			private static readonly long NanoTick = 1000 * 1000 * 1000 / Stopwatch.Frequency;
 			private readonly Stopwatch stopwatch;
 			private readonly Interval interval;
-			private double lastSnapshot;
 
 			public DefaultMeter(string name, Interval interval)
 				: base(name)
@@ -521,12 +521,12 @@ namespace Enyim.Caching
 				get
 				{
 					var by = IntervalConverter.Convert(stopwatch.ElapsedTicks * NanoTick, Interval.Nanoseconds, interval);
-					if (by == 0) return lastSnapshot;
+					if (by == 0) return Count;
 
-					lastSnapshot = (double)Count / by;
+					var retval = (double)Count / by;
 					Reset();
 
-					return lastSnapshot;
+					return retval;
 				}
 			}
 		}
