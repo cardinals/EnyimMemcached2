@@ -123,7 +123,6 @@ namespace Enyim.Caching
 		{
 			counter.IncrementBy(-value);
 		}
-
 	}
 
 	public interface IMeter : ICounter

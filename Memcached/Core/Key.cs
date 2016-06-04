@@ -59,7 +59,7 @@ namespace Enyim.Caching
 
 		public override int GetHashCode()
 		{
-			return array == null ? 0 : array.GetHashCode() ^ length;
+			return array == null ? 0 : HashCodeCombiner.Combine(array.GetHashCode(), length);
 		}
 
 		public static bool operator ==(Key a, Key b)

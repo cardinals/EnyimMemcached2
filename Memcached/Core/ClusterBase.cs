@@ -219,6 +219,10 @@ namespace Enyim.Caching
 				ReAddNode(node);
 				ioQueue.Add(node); // trigger IO on this node
 			}
+			catch (OperationCanceledException)
+			{
+				LogTo.Info("Cluster was shut down during reconnect, aborting.");
+			}
 			catch (Exception e)
 			{
 				LogTo.Error(e, "Failed to reconnect");

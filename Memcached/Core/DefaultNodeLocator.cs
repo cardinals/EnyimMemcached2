@@ -129,7 +129,7 @@ namespace Enyim.Caching
 
 			public override string ToString()
 			{
-				return "FailedNode";
+				return "AlreadyFailedNode";
 			}
 
 			public bool IsAlive { get; } = false;

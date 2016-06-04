@@ -38,16 +38,7 @@ namespace Enyim.Caching
 		private IResponse inprogressResponse;
 
 		private bool mustReconnect;
-
-		private readonly ICounter counterEnqueuePerSec;
-		private readonly ICounter counterDequeuePerSec;
-		private readonly ICounter counterOpReadPerSec;
-		private readonly ICounter counterWritePerSec;
-		private readonly ICounter counterErrorPerSec;
-		private readonly ICounter counterItemCount;
-		private readonly ICounter counterWriteQueue;
-		private readonly ICounter counterReadQueue;
-		private readonly IGauge gaugeSendSpeed;
+		private NodePerformanceMonitor npm;
 
 		protected NodeBase(ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 		{
@@ -64,16 +55,7 @@ namespace Enyim.Caching
 			mustReconnect = true;
 			IsAlive = true;
 
-			counterEnqueuePerSec = Metrics.Meter("node write enqueue/sec", endpoint.ToString(), Interval.Seconds);
-			counterDequeuePerSec = Metrics.Meter("node write dequeue/sec", endpoint.ToString(), Interval.Seconds);
-			counterOpReadPerSec = Metrics.Meter("node op read/sec", endpoint.ToString(), Interval.Seconds);
-			counterWriteQueue = Metrics.Counter("write queue length", endpoint.ToString());
-			counterReadQueue = Metrics.Counter("read queue length", endpoint.ToString());
-
-			counterWritePerSec = Metrics.Meter("node write/sec", endpoint.ToString(), Interval.Seconds);
-			counterErrorPerSec = Metrics.Meter("node in error/sec", endpoint.ToString(), Interval.Seconds);
-			counterItemCount = Metrics.Counter("commands", endpoint.ToString());
-			gaugeSendSpeed = Metrics.Gauge("send speed", endpoint.ToString());
+			npm = new NodePerformanceMonitor(name);
 		}
 
 		protected abstract IResponse CreateResponse();
@@ -120,20 +102,31 @@ namespace Enyim.Caching
 		public virtual Task<IOperation> Enqueue(IOperation op)
 		{
 			var tcs = new TaskCompletionSource<IOperation>();
-			counterItemCount.Increment();
+			npm.NewOp();
 
-			if (IsAlive)
+			try
 			{
-				writeQueue.Enqueue(new Data { Op = op, Task = tcs });
-				counterEnqueuePerSec.Increment();
-				counterWriteQueue.Increment();
+				if (IsAlive)
+				{
+					writeQueue.Enqueue(new Data { Op = op, Task = tcs });
 
-				CoreEventSource.EnqueueWriteOp(name);
+					npm.EnqueueWriteOp();
+					CoreEventSource.EnqueueWriteOp(name);
+				}
+				else
+				{
+					tcs.TrySetException(new IOException(endpoint + " is not alive"));
+
+					npm.Error();
+					CoreEventSource.NodeError(name);
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				counterErrorPerSec.Increment();
-				tcs.SetException(new IOException(endpoint + " is not alive"));
+				tcs.TrySetException(new IOException(endpoint + " enqueue failed. See inner excption for details.", e));
+
+				npm.Error();
+				CoreEventSource.NodeError(name);
 			}
 
 			return tcs.Task;
@@ -199,8 +192,6 @@ namespace Enyim.Caching
 							var data = GetNextOp();
 							if (data.IsEmpty) break;
 
-							counterDequeuePerSec.Increment();
-							CoreEventSource.DequeueWriteOp(name);
 							WriteOp(data);
 						}
 					}
@@ -249,7 +240,8 @@ namespace Enyim.Caching
 
 			// op is sent fully; response can be expected
 			readQueue.Enqueue(currentWriteOp);
-			counterReadQueue.Increment();
+
+			npm.EnqueueReadOp();
 			CoreEventSource.EnqueueReadOp(name);
 
 			// clean up
@@ -262,7 +254,7 @@ namespace Enyim.Caching
 
 		protected virtual void FlushWriteBuffer()
 		{
-			counterWritePerSec.Increment();
+			npm.Flush();
 
 			socket.ScheduleSend(success =>
 			{
@@ -288,8 +280,9 @@ namespace Enyim.Caching
 
 			if (writeQueue.TryDequeue(out data))
 			{
+				npm.DequeueWriteOp();
 				CoreEventSource.DequeueWriteOp(name);
-				counterWriteQueue.Decrement();
+
 				return data;
 			}
 
@@ -310,9 +303,10 @@ namespace Enyim.Caching
 			if (!request.WriteTo(socket.WriteBuffer)) // no pending IO => fully written
 			{
 				readQueue.Enqueue(data);
-				counterReadQueue.Increment();
-				CoreEventSource.EnqueueReadOp(name);
 				request.Dispose();
+
+				npm.EnqueueReadOp();
+				CoreEventSource.EnqueueReadOp(name);
 
 				LogTo.Trace($"Full send of {data.Op}");
 			}
@@ -381,10 +375,11 @@ namespace Enyim.Caching
 					var data = readQueue.Peek();
 					Debug.Assert(!data.IsEmpty);
 
-					// if the response does not matches the current op, it means it's a
-					// response to later command in the queue, so all commands before it are silent commands
-					// successful silent ops will receive null as response (since we have no real response)
-					// (or we've ran into a bug)
+					// If the response does not matches the current op, it means it's a
+					// response to a later command in the queue, so all commands before it
+					// were silent commands without a response (== usually success).
+					// So, successful silent ops will receive null as response (since
+					// we have no real response (or we've ran into a bug))
 					isHandled = data.Op.Handles(response);
 					LogTo.Trace($"Command {data.Op} handles reponse: {isHandled}");
 
@@ -393,8 +388,8 @@ namespace Enyim.Caching
 					if (!data.Op.ProcessResponse(isHandled ? response : null))
 					{
 						readQueue.Dequeue();
-						counterReadQueue.Decrement();
-						counterOpReadPerSec.Increment();
+
+						npm.DequeueReadOp();
 						CoreEventSource.DequeueReadOp(name);
 
 						if (data.Task != null)
@@ -438,8 +433,8 @@ namespace Enyim.Caching
 				// empty all queues
 				FailQueue(writeQueue, fail);
 				FailQueue(readQueue, fail);
-				counterReadQueue.Reset();
-				counterWriteQueue.Reset();
+
+				npm.ResetQueues();
 
 				// kill the partially sent op (if any)
 				if (currentWriteCopier != null)
@@ -490,9 +485,11 @@ namespace Enyim.Caching
 				var t = data.Task;
 				if (t == null) break;
 				t.TrySetException(e);
+
+				npm.Error();
+				CoreEventSource.NodeError(name);
 			}
 
-			counterErrorPerSec.IncrementBy(queue.Count);
 			queue.Clear();
 		}
 
@@ -502,22 +499,20 @@ namespace Enyim.Caching
 		private void FailQueue(ConcurrentQueue<Data> queue, Exception e)
 		{
 			Data data;
-			var have = queue.Count;
-			var i = 0;
 
-			while (queue.TryDequeue(out data))// && i < have)
+			while (queue.TryDequeue(out data))
 			{
 				var t = data.Task;
 				if (t != null) t.SetException(e);
-				counterErrorPerSec.IncrementBy(have);
-				i++;
-			}
 
-			Debug.Assert(queue.Count == 0);
+				npm.Error();
+				CoreEventSource.NodeError(name);
+			}
 		}
 
 		#endregion
 	}
+
 }
 
 #region [ License information          ]

@@ -74,44 +74,6 @@ namespace Enyim.Caching
 		}
 
 		#endregion
-		#region [ SimpleIndexSet               ]
-		// TODO check if we need memory barriers
-		internal class SimpleIndexSet
-		{
-			private const int TRUE = 1;
-			private const int FALSE = 0;
-			private const int GAP = 64 / sizeof(int);
-
-			private readonly int[] data;
-
-			public SimpleIndexSet(int capacity)
-			{
-				data = new int[capacity * GAP];
-			}
-
-			public bool Set(int index)
-			{
-				var old = data[index * GAP];
-				data[index * GAP] = TRUE;
-
-				return old == FALSE;
-			}
-
-			public bool Unset(int index)
-			{
-				var old = data[index * GAP];
-				data[index * GAP] = FALSE;
-
-				return old == TRUE;
-			}
-
-			public bool Contains(int index)
-			{
-				return data[index * GAP] == TRUE;
-			}
-		}
-
-		#endregion
 	}
 }
 

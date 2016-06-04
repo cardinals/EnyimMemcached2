@@ -17,6 +17,9 @@ namespace Enyim.Caching
 		[Event(NodeBaseTaskId + 4, Message = "Read operation dequeued for {0}", Keywords = Keywords.OpQueue)]
 		public static void DequeueReadOp(string address) { }
 
+		[Event(NodeBaseTaskId + 5, Message = "Error while enqueueing for {0}", Keywords = Keywords.OpQueue)]
+		public static void NodeError(string address) { }
+
 		public static partial class Keywords
 		{
 			public const EventKeywords OpQueue = (EventKeywords)2;

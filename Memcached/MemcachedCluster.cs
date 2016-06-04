@@ -11,10 +11,12 @@ namespace Enyim.Caching.Memcached
 		private readonly IFailurePolicy failurePolicy;
 		private readonly Func<ISocket> socketFactory;
 
-		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints, IBufferAllocator allocator,
-			INodeLocator locator, IReconnectPolicy reconnectPolicy, IFailurePolicy failurePolicy,
-			Func<ISocket> socketFactory)
-			: base(endpoints, locator, reconnectPolicy)
+		public MemcachedCluster(IEnumerable<IPEndPoint> endpoints,
+								IBufferAllocator allocator,
+								INodeLocator locator,
+								IReconnectPolicy reconnectPolicy,
+								IFailurePolicy failurePolicy,
+								Func<ISocket> socketFactory) : base(endpoints, locator, reconnectPolicy)
 		{
 			this.allocator = allocator;
 			this.failurePolicy = failurePolicy;
