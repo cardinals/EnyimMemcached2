@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Enyim.Caching.Tests
 {
@@ -11,19 +12,19 @@ namespace Enyim.Caching.Tests
 		static readonly string BasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tools");
 		static readonly string ExePath = Path.Combine(BasePath, "memcached.exe");
 
-		public static IDisposable Run(int port = 11211)
+		public static IDisposable Run(int port = 11211, bool verbose = false, int maxMem = 512)
 		{
+			var args = $"-E default_engine.so -p {port} -m {maxMem}";
+			if (verbose) args += " -vv";
+
 			var process = Process.Start(new ProcessStartInfo
 			{
-				Arguments =
-#if DEBUG
-				"-vv " +
-#endif
-				$"-E default_engine.so -p {port} -m 512",
+				Arguments = args,
 				FileName = ExePath,
 				WorkingDirectory = BasePath
 #if !DEBUG
-				,WindowStyle = ProcessWindowStyle.Hidden
+				,
+				WindowStyle = ProcessWindowStyle.Hidden
 #endif
 			});
 
@@ -39,10 +40,34 @@ namespace Enyim.Caching.Tests
 			public KillProcess(Process process)
 			{
 				this.process = process;
+
+				SetConsoleCtrlHandler(ConsoleHandler, true);
+
+				AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+				AppDomain.CurrentDomain.DomainUnload += CurrentDomain_ProcessExit;
+			}
+
+			~KillProcess()
+			{
+				GC.WaitForPendingFinalizers();
+
+				Dispose();
+			}
+
+			private void CurrentDomain_ProcessExit(object sender, EventArgs e)
+			{
+				Dispose();
+			}
+
+			private void ConsoleHandler(int kind)
+			{
+				Dispose();
 			}
 
 			public void Dispose()
 			{
+				GC.SuppressFinalize(this);
+
 				if (process != null)
 				{
 					using (process)
@@ -51,6 +76,11 @@ namespace Enyim.Caching.Tests
 					process = null;
 				}
 			}
+
+			delegate void ConsoleCtrlHandler(int type);
+
+			[DllImport("Kernel32")]
+			private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
 		}
 
 		#endregion
