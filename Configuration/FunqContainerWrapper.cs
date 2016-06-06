@@ -16,7 +16,8 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		public TService Resolve<TService>()
 		{
-			return root.Resolve<TService>();
+			lock (root)
+				return root.Resolve<TService>();
 		}
 
 		public void Dispose()
