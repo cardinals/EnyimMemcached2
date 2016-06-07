@@ -5,18 +5,24 @@ using Enyim.Caching.Memcached.Operations;
 
 namespace Enyim.Caching.Memcached
 {
-	public class MemcachedOperationFactory : IOperationFactory
+	public abstract class OperationFactoryBase : IOperationFactory
 	{
+		private readonly bool silent = false;
 		private readonly IBufferAllocator allocator;
 
-		public MemcachedOperationFactory(IBufferAllocator allocator)
+		protected OperationFactoryBase(IBufferAllocator allocator, bool silent)
 		{
 			this.allocator = allocator;
+			this.silent = silent;
 		}
 
 		public IGetOperation Get(Key key, ulong cas)
 		{
-			return new GetOperation(allocator, key) { Cas = cas };
+			return new GetOperation(allocator, key)
+			{
+				Cas = cas,
+				Silent = silent
+			};
 		}
 
 		public IGetAndTouchOperation GetAndTouch(Key key, uint expires, ulong cas)
@@ -24,7 +30,8 @@ namespace Enyim.Caching.Memcached
 			return new GetAndTouchOperation(allocator, key)
 			{
 				Expires = expires,
-				Cas = cas
+				Cas = cas,
+				Silent = silent
 			};
 		}
 
@@ -33,7 +40,8 @@ namespace Enyim.Caching.Memcached
 			return new StoreOperation(allocator, mode, key, value)
 			{
 				Cas = cas,
-				Expires = expires
+				Expires = expires,
+				Silent = silent
 			};
 		}
 
@@ -41,7 +49,8 @@ namespace Enyim.Caching.Memcached
 		{
 			return new DeleteOperation(allocator, key)
 			{
-				Cas = cas
+				Cas = cas,
+				Silent = silent
 			};
 		}
 
@@ -52,7 +61,8 @@ namespace Enyim.Caching.Memcached
 				DefaultValue = defaultValue,
 				Delta = delta,
 				Cas = cas,
-				Expires = expires
+				Expires = expires,
+				Silent = silent
 			};
 
 		}
@@ -71,7 +81,8 @@ namespace Enyim.Caching.Memcached
 			return new ConcatOperation(allocator, mode, key)
 			{
 				Cas = cas,
-				Data = data
+				Data = data,
+				Silent = silent
 			};
 		}
 

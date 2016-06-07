@@ -103,6 +103,8 @@
     <Compile Include="MemcachedClientBase.cs" />
     <Compile Include="MemcachedClient.cs" />
     <Compile Include="MemcachedCluster.cs" />
+    <Compile Include="Factories\DefaultOperationFactory.cs" />
+    <Compile Include="Factories\SilentOperationFactory.cs" />
     <Compile Include="Operations\StatsOperation.cs" />
     <Compile Include="Operations\GetAndTouchOperation.cs" />
     <Compile Include="Operations\TouchOperation.cs" />
@@ -113,7 +115,7 @@
     <Compile Include="Results\StatItem.cs" />
     <Compile Include="Results\StatusCode.cs" />
     <Compile Include="SystemTime.cs" />
-    <Compile Include="MemcachedOperationFactory.cs" />
+    <Compile Include="OperationFactoryBase.cs" />
     <Compile Include="MutationMode.cs" />
     <Compile Include="NullPerformanceMonitor.cs" />
     <Compile Include="Operations\ConcatOperation.cs">

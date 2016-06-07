@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached.Configuration
 		/// <param name="container"></param>
 		internal static void AddClientDefauls(this Container container)
 		{
-			container.AutoWireAs<IOperationFactory, MemcachedOperationFactory>();
+			container.AutoWireAs<IOperationFactory, DefaultOperationFactory>();
 			container.AutoWireAs<ITranscoder, DefaultTranscoder>();
 			container.AutoWireAs<IPerformanceMonitor, NullPerformanceMonitor>();
 			container.AutoWireAs<IKeyTransformer, NullKeyTransformer>();
