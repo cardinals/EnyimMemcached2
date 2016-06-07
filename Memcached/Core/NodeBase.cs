@@ -12,28 +12,23 @@ namespace Enyim.Caching
 {
 	public abstract class NodeBase : INode
 	{
-		private const int MODE_SEND = 0;
-		private const int MODE_RECEIVE = 1;
-
-		private const int ALIVE = 1;
-		private const int DEAD = 0;
-
 		private readonly ICluster owner;
 		private readonly IPEndPoint endpoint;
 		private readonly IFailurePolicy failurePolicy;
 		private readonly string name; // used for tracing
 
-		private readonly ISocket socket;
+		private ISocket socket;
 
-		private int runMode; // state machine flag, if it should sending (MODE_SEND) or receiving (MODE_RECEIVE) data
-		private int isAlive; // if the socket is alive (ALIVE) or not (DEAD)
-		private int workLock; // if it is "running", to prevent re-entrancy when a node is queued for IO multiple times
+		private bool isAlive; // if the socket is alive (ALIVE) or not (DEAD)
+		private int currentlyReading; // if a read is in progress, to prevent re-entrancy on reads when a node is queued for IO multiple times
+		private int currentlyWriting; // if a write is in progress, to prevent re-entrancy on writes when a node is queued for IO multiple times
+
 		private object failLock;
 
-		private readonly ConcurrentQueue<Data> writeQueue;
-		private readonly Queue<Data> readQueue;
+		private readonly ConcurrentQueue<OpQueueEntry> writeQueue;
+		private readonly Queue<OpQueueEntry> readQueue;
 
-		private Data currentWriteOp;
+		private OpQueueEntry currentWriteOp;
 		private IRequest currentWriteCopier;
 		private IResponse inprogressResponse;
 
@@ -46,11 +41,11 @@ namespace Enyim.Caching
 			this.endpoint = endpoint;
 			this.socket = socket;
 			this.failurePolicy = failurePolicy;
-			this.name = endpoint.ToString();
 
+			name = endpoint.ToString();
 			failLock = new Object();
-			writeQueue = new ConcurrentQueue<Data>();
-			readQueue = new Queue<Data>();
+			writeQueue = new ConcurrentQueue<OpQueueEntry>();
+			readQueue = new Queue<OpQueueEntry>();
 
 			mustReconnect = true;
 			IsAlive = true;
@@ -65,8 +60,8 @@ namespace Enyim.Caching
 
 		public bool IsAlive
 		{
-			get { return Volatile.Read(ref isAlive) == ALIVE; }
-			private set { Volatile.Write(ref isAlive, value ? ALIVE : DEAD); }
+			get { return Volatile.Read(ref isAlive); }
+			private set { Volatile.Write(ref isAlive, value); }
 		}
 
 		public void Connect()
@@ -95,7 +90,7 @@ namespace Enyim.Caching
 			if (socket != null)
 			{
 				socket.Dispose();
-				//socket = null;
+				socket = null;
 			}
 		}
 
@@ -108,25 +103,31 @@ namespace Enyim.Caching
 			{
 				if (IsAlive)
 				{
-					writeQueue.Enqueue(new Data { Op = op, Task = tcs });
+					writeQueue.Enqueue(new OpQueueEntry(op, tcs));
 
+					#region Diagnostics
 					npm.EnqueueWriteOp();
 					CoreEventSource.EnqueueWriteOp(name);
+					#endregion
 				}
 				else
 				{
 					tcs.TrySetException(new IOException(endpoint + " is not alive"));
 
+					#region Diagnostics
 					npm.Error();
 					CoreEventSource.NodeError(name);
+					#endregion
 				}
 			}
 			catch (Exception e)
 			{
 				tcs.TrySetException(new IOException(endpoint + " enqueue failed. See inner excption for details.", e));
 
+				#region Diagnostics
 				npm.Error();
 				CoreEventSource.NodeError(name);
+				#endregion
 			}
 
 			return tcs.Task;
@@ -134,24 +135,14 @@ namespace Enyim.Caching
 
 		public virtual void Run()
 		{
-			if (!MarkAsBusy()) return;
-
 			try
 			{
 				if (mustReconnect) Connect(CancellationToken.None);
 				if (!IsAlive)
 				{
-					var dead = new IOException("Node is dead: " + EndPoint);
+					var dead = new IOException($"Node is dead: {name}");
 					FailQueue(writeQueue, dead);
 					throw dead;
-				}
-
-				// socket still working but we got requeued, so quit
-				// happens when OPs are coming in, but we're still processing the previous batch
-				if (socket.IsBusy)
-				{
-					LogTo.Trace($"Node {name}'s socket is busy");
-					return;
 				}
 
 				DoRun();
@@ -162,66 +153,42 @@ namespace Enyim.Caching
 			}
 		}
 
-		private bool MarkAsBusy()
-		{
-			return Interlocked.CompareExchange(ref workLock, 1, 0) == 0;
-		}
-
-		private void MarkAsReady()
-		{
-#if DEBUG
-			var v = Interlocked.CompareExchange(ref workLock, 0, 1);
-			Debug.Assert(v == 1);
-#else
-			Interlocked.Exchange(ref workLock, 0);
-#endif
-		}
-
 		private void DoRun()
 		{
-			switch (runMode)
+			if (_TryStartWriting())
 			{
-				case MODE_SEND:
-					// write the current (in progress) op into the write buffer
-					// - or -
-					// start writing a new one (until we run out of ops or space)
-					if (!ContinueWritingCurrentOp())
+				// write the current (in progress) op into the write buffer
+				// - or -
+				// start writing a new one (until we run out of ops or space)
+				if (!ContinueWritingCurrentOp())
+				{
+					while (!socket.WriteBuffer.IsFull)
 					{
-						while (!socket.WriteBuffer.IsFull)
-						{
-							var data = GetNextOp();
-							if (data.IsEmpty) break;
+						var data = GetNextOp();
+						if (data.IsEmpty) break;
 
-							WriteOp(data);
-						}
+						WriteOp(data);
 					}
+				}
 
-					// did we write anything?
-					if (socket.WriteBuffer.Position > 0)
-					{
-						FlushWriteBuffer();
-					}
-					else
-					{
-						// did not have any ops to send, quit
-						MarkAsReady();
-					}
+				// did we write anything?
+				if (socket.WriteBuffer.Position > 0)
+				{
+					FlushWriteBuffer();
+				}
+				else
+				{
+					// did not have any ops to send, quit
+					_FinishedWriting();
+				}
+			}
 
-					break;
+			if (_TryStartReading())
+			{
+				TryAskForMoreData();
 
-				case MODE_RECEIVE:
-					// do we have ops queued to be read?
-					if (readQueue.Count > 0)
-					{
-						PerformReceive();
-					}
-					else
-					{
-						// nothing to receive, switch to send mode
-						Volatile.Write(ref runMode, MODE_SEND);
-						goto case MODE_SEND;
-					}
-					break;
+				if (!socket.IsReceiving)
+					TryProcessReceivedData();
 			}
 		}
 
@@ -247,7 +214,7 @@ namespace Enyim.Caching
 			// clean up
 			currentWriteCopier.Dispose();
 			currentWriteCopier = null;
-			currentWriteOp = Data.Empty;
+			currentWriteOp = OpQueueEntry.Empty;
 
 			return false;
 		}
@@ -260,23 +227,24 @@ namespace Enyim.Caching
 			{
 				if (success)
 				{
-					// successfully sent the buffer, switch to receive mode
-					Volatile.Write(ref runMode, MODE_RECEIVE);
-					MarkAsReady();
+					LogTo.Trace($"{name} send the write buffer successfully");
+
+					_FinishedWriting();
 					owner.NeedsIO(this);
+
+					return;
 				}
-				else
-				{
-					// this is a soft fail (cannot throw from other thread)
-					// so we requeue for IO and Run() will throw instead
-					FailMe(new IOException("send fail"));
-				}
+
+				// this is a soft fail (cannot throw from other thread)
+				// so we requeue for IO and Run() will throw instead
+				LogTo.Trace($"{name}'s FlushWriteBuffer failed");
+				FailMe(new IOException("send fail"));
 			});
 		}
 
-		protected virtual Data GetNextOp()
+		protected virtual OpQueueEntry GetNextOp()
 		{
-			Data data;
+			OpQueueEntry data;
 
 			if (writeQueue.TryDequeue(out data))
 			{
@@ -286,14 +254,14 @@ namespace Enyim.Caching
 				return data;
 			}
 
-			return Data.Empty;
+			return OpQueueEntry.Empty;
 		}
 
 		/// <summary>
 		/// Writes an operation to the output buffer. Handles the case where the op does not fit the buffer fully.
 		/// </summary>
 		/// <param name="data"></param>
-		protected virtual void WriteOp(Data data)
+		protected virtual void WriteOp(OpQueueEntry data)
 		{
 			if (currentWriteCopier != null)
 				throw new InvalidOperationException("Cannot write an operation while another is in progress.");
@@ -320,11 +288,10 @@ namespace Enyim.Caching
 			}
 		}
 
-		private void PerformReceive()
+		private void TryAskForMoreData()
 		{
-			fill:
 			// no data to process => read the socket
-			if (socket.ReadBuffer.IsEmpty)
+			if (socket.ReadBuffer.IsEmpty && !socket.IsReceiving)
 			{
 				LogTo.Trace("Read buffer is empty, ask for more.");
 
@@ -332,20 +299,22 @@ namespace Enyim.Caching
 				{
 					if (success)
 					{
-						MarkAsReady();
+						LogTo.Trace($"{name} successfully received data");
+						_FinishedReading();
 						owner.NeedsIO(this);
+
+						return;
 					}
-					else
-					{
-						// this is a soft fail (cannot throw from other thread),
-						// so we requeue for IO and exception will be thrown by Receive()
-						FailMe(new IOException("Failed receiving from " + endpoint));
-					}
+
+					// this is a soft fail (cannot throw from other thread),
+					// so we requeue for IO and exception will be thrown by Receive()
+					FailMe(new IOException("Failed receiving from " + endpoint));
 				});
-
-				return;
 			}
+		}
 
+		private void TryProcessReceivedData()
+		{
 			// process the commands in the readQueue
 			while (readQueue.Count > 0)
 			{
@@ -362,8 +331,10 @@ namespace Enyim.Caching
 					LogTo.Trace("Response is not read fully, continue reading from the socket.");
 
 					// refill the buffer
-					// TODO if Receive returns synchrously several times, a node with a huge inprogress response can monopolize the IO thread
-					goto fill;
+					_FinishedReading();
+					owner.NeedsIO(this);
+
+					return;
 				}
 
 				// successfully read a response from the read buffer
@@ -388,22 +359,21 @@ namespace Enyim.Caching
 					if (!data.Op.ProcessResponse(isHandled ? response : null))
 					{
 						readQueue.Dequeue();
+						//if (data.Task != null)
+						data.Task.TrySetResult(data.Op);
 
+						#region Diagnostics
 						npm.DequeueReadOp();
 						CoreEventSource.DequeueReadOp(name);
-
-						if (data.Task != null)
-							data.Task.TrySetResult(data.Op);
+						#endregion
 					}
 				}
 
 				response.Dispose();
 			}
 
-			// set the node into send mode and requeue for IO
-			Volatile.Write(ref runMode, MODE_SEND);
-			MarkAsReady();
-			owner.NeedsIO(this);
+			LogTo.Trace($"{name} fininshed RECEIVE, unlock read");
+			_FinishedReading();
 		}
 
 		public override string ToString()
@@ -411,16 +381,51 @@ namespace Enyim.Caching
 			return name;
 		}
 
-		protected struct Data
-		{
-			public static readonly Data Empty = new Data();
+		#region [ Busy signals                 ]
 
-			public IOperation Op;
-			public TaskCompletionSource<IOperation> Task;
+		private bool _TryStartReading()
+		{
+			return Interlocked.CompareExchange(ref currentlyReading, 1, 0) == 0;
+		}
+
+		private bool _TryStartWriting()
+		{
+			return Interlocked.CompareExchange(ref currentlyWriting, 1, 0) == 0;
+		}
+
+		private void _FinishedReading()
+		{
+			Volatile.Write(ref currentlyReading, 0);
+		}
+
+		private void _FinishedWriting()
+		{
+			Volatile.Write(ref currentlyWriting, 0);
+		}
+
+		#endregion
+		#region [ OpQueueEntry                 ]
+
+		protected struct OpQueueEntry
+		{
+			public static readonly OpQueueEntry Empty = new OpQueueEntry();
+
+			public OpQueueEntry(IOperation op, TaskCompletionSource<IOperation> task)
+			{
+				Debug.Assert(op != null, "OpQueueEntry.Op cannot be null");
+				Debug.Assert(task != null, "OpQueueEntry.Task cannot be null");
+
+				Op = op;
+				Task = task;
+			}
+
+			public readonly IOperation Op;
+			public readonly TaskCompletionSource<IOperation> Task;
 
 			public bool IsEmpty { get { return Op == null; } }
 		}
 
+		#endregion
 		#region [ Failure handlers             ]
 
 		private bool FailMe(Exception e)
@@ -440,7 +445,7 @@ namespace Enyim.Caching
 				if (currentWriteCopier != null)
 				{
 					currentWriteOp.Task.SetException(fail);
-					currentWriteOp = Data.Empty;
+					currentWriteOp = OpQueueEntry.Empty;
 					currentWriteCopier = null;
 				}
 
@@ -451,22 +456,19 @@ namespace Enyim.Caching
 					inprogressResponse = null;
 				}
 
-				Volatile.Write(ref runMode, MODE_SEND);
+				_FinishedReading();
+				_FinishedWriting();
 
-				// mark as dead if policy says so
+				// mark as dead if policy says so...
 				if (failurePolicy.ShouldFail(this))
 				{
 					IsAlive = false;
-					MarkAsReady();
 					return true;
 				}
 
-				// otherwise reconnect immediately
-				// (when it's our turn again, to be precise)
+				// ...otherwise reconnect immediately (when it's our turn)
 				mustReconnect = true;
 				LogTo.Info($"Node {endpoint} will reconnect immediately.");
-
-				MarkAsReady();
 
 				// reconnect from IO thread
 				owner.NeedsIO(this);
@@ -478,7 +480,7 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Cleans up an AdvQueue, marking all items as failed
 		/// </summary>
-		private void FailQueue(Queue<Data> queue, Exception e)
+		private void FailQueue(Queue<OpQueueEntry> queue, Exception e)
 		{
 			foreach (var data in queue)
 			{
@@ -496,9 +498,9 @@ namespace Enyim.Caching
 		/// <summary>
 		/// Cleans up a ConcurrentQueue, marking all items as failed
 		/// </summary>
-		private void FailQueue(ConcurrentQueue<Data> queue, Exception e)
+		private void FailQueue(ConcurrentQueue<OpQueueEntry> queue, Exception e)
 		{
-			Data data;
+			OpQueueEntry data;
 
 			while (queue.TryDequeue(out data))
 			{

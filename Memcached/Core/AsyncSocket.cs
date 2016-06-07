@@ -41,8 +41,10 @@ namespace Enyim.Caching
 		private int receiveBufferSize;
 
 		private Socket socket;
+
 		private int isAlive;
-		private int isWorking;
+		private int isReceiving;
+		private int isSending;
 
 		private SocketAsyncEventArgs recvArgs;
 		private ReadBuffer recvBuffer;
@@ -84,7 +86,6 @@ namespace Enyim.Caching
 
 				opt.Completed += (a, b) => mre.Set();
 				RecreateSocket();
-				IsBusy = true;
 
 				try
 				{
@@ -106,7 +107,6 @@ namespace Enyim.Caching
 				}
 				finally
 				{
-					IsBusy = false;
 					LogTo.Info($"Connected to {endpoint} in {sw.ElapsedMilliseconds} msec");
 				}
 			}
@@ -149,20 +149,23 @@ namespace Enyim.Caching
 
 		#endregion
 
-		public void ScheduleSend(Action<bool> whenDone)
+		public bool ScheduleSend(Action<bool> whenDone)
 		{
 			CoreEventSource.SendStart(name, IsAlive, sendBuffer.Position);
 
 			if (!IsAlive)
 			{
 				whenDone(false);
-				return;
+				return false;
 			}
 
-			IsBusy = true;
-			sendArgs.UserToken = whenDone;
+			if (Interlocked.CompareExchange(ref isSending, 1, 0) != 0)
+				return false;
 
+			sendArgs.UserToken = whenDone;
 			PerformSend(sendBuffer.BufferOffset, sendBuffer.Position);
+
+			return true;
 		}
 
 		private void PerformSend(int sendOffset, int sendCount)
@@ -236,22 +239,24 @@ namespace Enyim.Caching
 		{
 			CoreEventSource.SendStop(name, IsAlive, success);
 
-			var callback = (Action<bool>)sendArgs.UserToken;
-			IsBusy = false;
-			callback(success);
+			Volatile.Write(ref isSending, 0);
+
+			((Action<bool>)sendArgs.UserToken)?.Invoke(success);
 		}
 
-		public void ScheduleReceive(Action<bool> whenDone)
+		public bool ScheduleReceive(Action<bool> whenDone)
 		{
 			CoreEventSource.ReceiveStart(name, IsAlive);
 
 			if (!IsAlive)
 			{
 				whenDone(false);
-				return;
+				return false;
 			}
 
-			IsBusy = true;
+			if (Interlocked.CompareExchange(ref isReceiving, 1, 0) != 0)
+				return false;
+
 			recvArgs.UserToken = whenDone;
 
 			if (!socket.ReceiveAsync(recvArgs))
@@ -259,6 +264,8 @@ namespace Enyim.Caching
 				// receive was done synchronously
 				ReceiveAsyncCompleted(null, recvArgs);
 			}
+
+			return true;
 		}
 
 		private void ReceiveAsyncCompleted(object sender, SocketAsyncEventArgs recvArgs)
@@ -269,16 +276,10 @@ namespace Enyim.Caching
 			var success = recvArgs.SocketError == SocketError.Success && received > 0;
 			recvBuffer.SetAvailableLength(success ? received : 0);
 
-			FinishReceiving(success);
-		}
-
-		private void FinishReceiving(bool success)
-		{
 			CoreEventSource.ReceiveStop(name, IsAlive, success);
+			Volatile.Write(ref isReceiving, 0);
 
-			var callback = (Action<bool>)recvArgs.UserToken;
-			IsBusy = false;
-			callback(success);
+			((Action<bool>)recvArgs.UserToken).Invoke(success);
 		}
 
 		private static int ToTimeout(TimeSpan time)
@@ -294,10 +295,14 @@ namespace Enyim.Caching
 			private set { Volatile.Write(ref isAlive, value ? 1 : 0); }
 		}
 
-		public bool IsBusy
+		public bool IsReceiving
 		{
-			get { return Volatile.Read(ref isWorking) == 1; }
-			private set { Volatile.Write(ref isWorking, value ? 1 : 0); }
+			get { return Volatile.Read(ref isReceiving) == 1; }
+		}
+
+		public bool IsSending
+		{
+			get { return Volatile.Read(ref isSending) == 1; }
 		}
 
 		public ReadBuffer ReadBuffer { get { return recvBuffer; } }

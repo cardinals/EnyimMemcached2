@@ -113,7 +113,7 @@ namespace Enyim.Caching
 		/// <param name="node"></param>
 		public void NeedsIO(INode node)
 		{
-			LogTo.Trace($"Node {node} has pending IO, requeueing");
+			LogTo.Trace($"Node {node} is requeued for IO");
 			ioQueue.Add(node);
 		}
 
@@ -129,7 +129,7 @@ namespace Enyim.Caching
 					{
 						node.Run();
 
-						LogTo.Trace($"Node {node} was processed");
+						LogTo.Trace($"Node {node} finished IO");
 						if (shutdownToken.IsCancellationRequested) break;
 					}
 					catch (Exception e)

@@ -15,7 +15,7 @@ namespace Enyim.Caching.Memcached
 
 		private readonly IBufferAllocator allocator;
 		private int silentCount;
-		private bool lasWasSilent = false;
+		private bool lastWasSilent;
 
 		public MemcachedNode(IBufferAllocator allocator, ICluster owner, IPEndPoint endpoint, IFailurePolicy failurePolicy, ISocket socket)
 			: base(owner, endpoint, failurePolicy, socket)
@@ -48,7 +48,9 @@ namespace Enyim.Caching.Memcached
 		/// <param name="op"></param>
 		private void EnqueueNoOpIfNeeded(IOperation op)
 		{
-			if (IsSilent(op))
+			var silent = op as ICanBeSilent;
+
+			if (silent != null && silent.Silent)
 			{
 				LogTo.Trace("Got a silent op " + op + " count: " + silentCount);
 
@@ -63,15 +65,7 @@ namespace Enyim.Caching.Memcached
 			silentCount = 0;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static bool IsSilent(IOperation op)
-		{
-			var silent = op as ICanBeSilent;
-
-			return silent != null && silent.Silent;
-		}
-
-		protected override void WriteOp(Data data)
+		protected override void WriteOp(OpQueueEntry data)
 		{
 			// remember of the last op was silent so that when we
 			// run out of ops we'll know if we have to emit an additional NoOp
@@ -80,18 +74,23 @@ namespace Enyim.Caching.Memcached
 			// S = Silent
 			// noop should be at <EOF> otherwise we won't get responses to the last
 			// command until we get a new op queued up
-			lasWasSilent = IsSilent(data.Op);
+			var silent = data.Op as ICanBeSilent;
+			lastWasSilent = silent != null && silent.Silent;
 
 			base.WriteOp(data);
 		}
 
-		protected override Data GetNextOp()
+		protected override OpQueueEntry GetNextOp()
 		{
 			var data = base.GetNextOp();
 
 			// we've temporarily ran out of commands
-			if (data.IsEmpty && lasWasSilent)
-				return new Data { Op = new NoOp(allocator) };
+			if (data.IsEmpty && lastWasSilent)
+			{
+				lastWasSilent = false;
+
+				return new OpQueueEntry(new NoOp(allocator), new TaskCompletionSource<IOperation>());
+			}
 
 			return data;
 		}

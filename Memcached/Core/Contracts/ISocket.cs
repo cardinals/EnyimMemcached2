@@ -10,7 +10,8 @@ namespace Enyim.Caching
 		/// Gets a value that indicates whether the socket is still connected and can be used for communication.
 		/// </summary>
 		bool IsAlive { get; }
-		bool IsBusy { get; }
+		bool IsReceiving { get; }
+		bool IsSending { get; }
 
 		/// <summary>
 		/// Gets or sets a value that specifies the size of the send buffer.
@@ -50,8 +51,9 @@ namespace Enyim.Caching
 		/// <param name="endpoint">The endpoint to connect to.</param>
 		/// <param name="token">cancel</param>
 		void Connect(IPEndPoint endpoint, CancellationToken token);
-		void ScheduleSend(Action<bool> whenDone);
-		void ScheduleReceive(Action<bool> whenDone);
+
+		bool ScheduleSend(Action<bool> whenDone);
+		bool ScheduleReceive(Action<bool> whenDone);
 	}
 }
 

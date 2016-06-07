@@ -6,6 +6,7 @@ using System.Threading;
 
 namespace Enyim.Caching
 {
+	using System.Diagnostics;
 	using __IndexSet = NodeQueue.ConcurrentIndexSet;
 
 	/// <summary>
@@ -47,6 +48,12 @@ namespace Enyim.Caching
 
 		internal class ConcurrentIndexSet
 		{
+			private const int SIZEOF_ITEM = 4;
+			private const int CACHE_LINE_SIZE = 64;
+			private const int STRIPE_LENGTH = CACHE_LINE_SIZE / SIZEOF_ITEM; // align each counter to a spearate cache-line
+
+			private const int INDEX_OF_FLAG = 0;
+
 			private const int TRUE = 1;
 			private const int FALSE = 0;
 
@@ -54,22 +61,22 @@ namespace Enyim.Caching
 
 			public ConcurrentIndexSet(int capacity)
 			{
-				data = new int[capacity];
+				// add an extra padding to the beginning of the array to avoid false-sharing with the array's length
+				data = new int[capacity * STRIPE_LENGTH + STRIPE_LENGTH];
 			}
 
 			public bool Set(int index)
 			{
-				return Interlocked.CompareExchange(ref data[index], TRUE, FALSE) == FALSE;
+				var realIndex = STRIPE_LENGTH * (index + 1) + INDEX_OF_FLAG;
+
+				return Interlocked.CompareExchange(ref data[realIndex], TRUE, FALSE) == FALSE;
 			}
 
-			public bool Unset(int index)
+			public void Unset(int index)
 			{
-				return Interlocked.CompareExchange(ref data[index], FALSE, TRUE) == TRUE;
-			}
+				var realIndex = STRIPE_LENGTH * (index + 1) + INDEX_OF_FLAG;
 
-			public bool Contains(int index)
-			{
-				return Interlocked.CompareExchange(ref data[index], -1, -1) == TRUE;
+				Interlocked.Exchange(ref data[realIndex], FALSE);
 			}
 		}
 
