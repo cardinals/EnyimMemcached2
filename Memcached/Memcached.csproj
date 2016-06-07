@@ -155,7 +155,8 @@
     <Compile Include="OpCode.cs" />
     <Compile Include="StoreMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Transcoders\PooledBitConverter.cs" />
+    <Compile Include="Transcoders\PooledBitConverter_safe.cs" />
+    <Compile Include="Transcoders\PooledBitConverter_unsafe.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

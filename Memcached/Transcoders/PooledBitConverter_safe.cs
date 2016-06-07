@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !UNSAFE
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -39,11 +40,11 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, short value)
+		public static PooledSegment GetBytes(IBufferAllocator allocator, short value)
 		{
 			var retval = new PooledSegment(allocator, 2);
 
-			fixed (byte* ptr = retval.Array)
+			var ptr = retval.Array;
 			{
 				ptr[0] = (byte)value;
 				ptr[1] = (byte)(value >> 8);
@@ -53,11 +54,11 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, int value)
+		public static PooledSegment GetBytes(IBufferAllocator allocator, int value)
 		{
 			var retval = new PooledSegment(allocator, 4);
 
-			fixed (byte* ptr = retval.Array)
+			var ptr = retval.Array;
 			{
 				ptr[0] = (byte)value;
 				ptr[1] = (byte)(value >> 8);
@@ -69,7 +70,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, decimal value)
+		public static PooledSegment GetBytes(IBufferAllocator allocator, decimal value)
 		{
 			// should use 'internal static void GetBytes(decimal d, byte[] buffer)'
 			int v;
@@ -81,7 +82,7 @@ namespace Enyim.Caching.Memcached
 			const int I_2 = 8;
 			const int I_3 = 12;
 
-			fixed (byte* ptr = retval.Array)
+			var ptr = retval.Array;
 			{
 				v = tmp[0];
 				ptr[0 + I_0] = (byte)v;
@@ -112,7 +113,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static decimal ToDecimal(PooledSegment value)
+		public static decimal ToDecimal(PooledSegment value)
 		{
 			if (value.Count != 16)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 16");
@@ -122,7 +123,7 @@ namespace Enyim.Caching.Memcached
 			const int I_2 = 8;
 			const int I_3 = 12;
 
-			fixed (byte* ptr = value.Array)
+			var ptr = value.Array;
 			{
 				var v0 = ptr[0 + I_0]
 							+ (ptr[1 + I_0] << 8)
@@ -149,11 +150,11 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, long value)
+		public static PooledSegment GetBytes(IBufferAllocator allocator, long value)
 		{
 			var retval = new PooledSegment(allocator, 8);
 
-			fixed (byte* ptr = retval.Array)
+			var ptr = retval.Array;
 			{
 				ptr[0] = (byte)value;
 				ptr[1] = (byte)(value >> 8);
@@ -187,13 +188,13 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, float value)
+		public static unsafe PooledSegment GetBytes(IBufferAllocator allocator, float value)
 		{
 			return GetBytes(allocator, *(int*)(&value));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, double value)
+		public static unsafe PooledSegment GetBytes(IBufferAllocator allocator, double value)
 		{
 			return GetBytes(allocator, *(long*)(&value));
 		}
@@ -211,24 +212,24 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static short ToInt16(PooledSegment value)
+		public static short ToInt16(PooledSegment value)
 		{
 			if (value.Count != 2)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 2");
 
-			fixed (byte* ptr = value.Array)
+			var ptr = value.Array;
 			{
 				return (short)(ptr[0] + (ptr[1] << 8));
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static int ToInt32(PooledSegment value)
+		public static int ToInt32(PooledSegment value)
 		{
 			if (value.Count != 4)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 4");
 
-			fixed (byte* ptr = value.Array)
+			var ptr = value.Array;
 			{
 				return (ptr[0]
 							+ (ptr[1] << 8)
@@ -238,12 +239,12 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static long ToInt64(PooledSegment value)
+		public static long ToInt64(PooledSegment value)
 		{
 			if (value.Count < 8)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be >= 8");
 
-			fixed (byte* ptr = value.Array)
+			var ptr = value.Array;
 			{
 				return (ptr[0]
 							+ (ptr[1] << 8)
@@ -286,6 +287,8 @@ namespace Enyim.Caching.Memcached
 		}
 	}
 }
+
+#endif
 
 #region [ License information          ]
 
