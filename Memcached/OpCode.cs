@@ -13,14 +13,17 @@ namespace Enyim.Caching.Memcached
 		Decrement = 0x06,
 		Quit = 0x07,
 		Flush = 0x08,
-		GetQ = 0x09,
 		NoOp = 0x0A,
 		Version = 0x0B,
 		GetK = 0x0C,
-		GetKQ = 0x0D,
 		Append = 0x0E,
 		Prepend = 0x0F,
 		Stat = 0x10,
+		Touch = 0x1c,
+		GAT = 0x1d,
+
+		GetKQ = 0x0D,
+		GetQ = 0x09,
 		SetQ = 0x11,
 		AddQ = 0x12,
 		ReplaceQ = 0x13,
@@ -31,9 +34,6 @@ namespace Enyim.Caching.Memcached
 		FlushQ = 0x18,
 		AppendQ = 0x19,
 		PrependQ = 0x1A,
-
-		Touch = 0x1c,
-		GAT = 0x1d,
 		GATQ = 0x1e,
 
 		// SASL authentication op-codes

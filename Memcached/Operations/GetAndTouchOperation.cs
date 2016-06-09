@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached.Operations
 	{
 		protected const int ExtraLength = 4;
 		private const OpCode LoudOp = OpCode.GAT;
-		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
+		private const OpCode SilentOp = OpCode.GATQ;
 
 		private OpCode operation = LoudOp;
 		private bool silent;

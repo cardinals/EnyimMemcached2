@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached.Operations
 	public class DeleteOperation : BinarySingleItemOperation<IOperationResult>, IDeleteOperation
 	{
 		private const OpCode LoudOp = OpCode.Delete;
-		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
+		private const OpCode SilentOp = OpCode.DeleteQ;
 
 		private OpCode operation = LoudOp;
 		private bool silent;
@@ -40,7 +40,7 @@ namespace Enyim.Caching.Memcached.Operations
 		{
 			var retval = new BinaryOperationResult();
 
-			return response == null
+			return (response == null)
 					? retval.Success(this)
 					: retval.WithResponse(response);
 		}

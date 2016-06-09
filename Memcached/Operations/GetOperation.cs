@@ -8,7 +8,7 @@ namespace Enyim.Caching.Memcached.Operations
 	public class GetOperation : BinarySingleItemOperation<IGetOperationResult>, IGetOperation
 	{
 		private const OpCode LoudOp = OpCode.Get;
-		private const OpCode SilentOp = (OpCode)((int)LoudOp | Protocol.SILENT_MASK);
+		private const OpCode SilentOp = OpCode.GetQ;
 
 		private OpCode operation = LoudOp;
 		private bool silent;

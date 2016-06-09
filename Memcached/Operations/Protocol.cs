@@ -18,15 +18,12 @@ namespace Enyim.Caching.Memcached
 		internal const int HEADER_INDEX_KEY = 2; // 2-3
 		internal const int HEADER_INDEX_EXTRA = 4;
 		internal const int HEADER_INDEX_DATATYPE = 5;
-		internal const int HEADER_INDEX_STATUS = 6;	// 6-7
+		internal const int HEADER_INDEX_STATUS = 6; // 6-7
 		internal const int HEADER_INDEX_BODY = 8; // 8-11
 		internal const int HEADER_INDEX_OPAQUE = 12; // 12-15
 		internal const int HEADER_INDEX_CAS = 16; // 16-23
 
 		internal const int MUTATE_EXTRA_LENGTH = 20;
-
-		internal const byte SILENT_MASK = 0x10;
-		internal const byte LOUD_MASK = 0x0F;
 
 		public static class Status
 		{
@@ -36,6 +33,32 @@ namespace Enyim.Caching.Memcached
 		public const ulong NO_CAS = 0;
 		public const ulong MUTATE_DEFAULT_DELTA = 1;
 		public const ulong MUTATE_DEFAULT_VALUE = 1;
+
+		private static readonly bool[] SilentOps;
+
+		static Protocol()
+		{
+			var values = Enum.GetValues(typeof(OpCode)).Cast<OpCode>().ToDictionary(o => o.ToString(), o => (int)o);
+			var flags = new bool[values.Values.Max() + 1];
+
+			foreach (var kvp in values)
+			{
+				if (kvp.Key.EndsWith("Q"))
+					flags[kvp.Value] = true;
+			}
+
+			SilentOps = flags;
+		}
+
+		internal static bool IsSilent(byte opcode)
+		{
+			return SilentOps[opcode];
+		}
+
+		internal static bool IsSilent(OpCode opcode)
+		{
+			return SilentOps[(int)opcode];
+		}
 	}
 }
 
