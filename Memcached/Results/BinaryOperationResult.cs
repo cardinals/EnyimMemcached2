@@ -10,25 +10,10 @@ namespace Enyim.Caching.Memcached.Results
 		public bool Success { get; set; }
 		public string Message { get; set; }
 		public Exception Exception { get; set; }
-		public int? StatusCode { get; set; }
-		public IOperationResult InnerResult { get; set; }
+		public int StatusCode { get; set; }
+		public bool Silent { get; set; }
 
 		public ulong Cas { get; set; }
-
-		public static BinaryOperationResult FromResponse(BinaryResponse response, string failMessage = null)
-		{
-			var success = response.StatusCode == 0;
-
-			var retval = new BinaryOperationResult
-			{
-				StatusCode = response.StatusCode,
-				Success = success,
-				Message = success ? null : response.GetStatusMessage() ?? failMessage,
-				Cas = response.CAS
-			};
-
-			return retval;
-		}
 	}
 
 	public class BinaryOperationResult<T> : BinaryOperationResult, IOperationResult<T>

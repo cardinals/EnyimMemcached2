@@ -19,7 +19,7 @@ namespace Enyim.Caching.Memcached.Operations
 		{
 			Debug.Assert(response != null);
 
-			return BinaryOperationResult.FromResponse(response);
+			return new BinaryOperationResult().WithResponse(response);
 		}
 	}
 }

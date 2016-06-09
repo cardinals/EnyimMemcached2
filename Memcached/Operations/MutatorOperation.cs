@@ -56,7 +56,11 @@ namespace Enyim.Caching.Memcached.Operations
 			var retval = new MutateOperationResult();
 
 			if (response == null)
-				return retval.NotFound(this);
+			{
+				return Silent
+						? retval.Success(this)
+						: retval.NotFound(this);
+			}
 
 			if (response.Success)
 			{

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public abstract class MemcachedOperationBase<TResult> : IOperation, IHaveResult<TResult>
+	public abstract class MemcachedOperationBase<TResult> : IOperation, IHaveResult<TResult>, IMemcachedOperation
 	{
 		protected MemcachedOperationBase(IBufferAllocator allocator)
 		{
@@ -38,6 +38,10 @@ namespace Enyim.Caching.Memcached.Operations
 
 			return result == null;
 		}
+	}
+
+	public interface IMemcachedOperation
+	{
 	}
 }
 

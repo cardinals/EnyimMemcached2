@@ -6,6 +6,7 @@ namespace Enyim.Caching
 	public interface IItemOperation : IOperation
 	{
 		Key Key { get; }
+		ulong Cas { get; }
 	}
 }
 

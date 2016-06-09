@@ -9,29 +9,26 @@ namespace Enyim.Caching.Memcached.Results
 		/// <summary>
 		/// A value indicating whether an operation was successful
 		/// </summary>
-		bool Success { get; set; }
+		bool Success { get; }
 
 		/// <summary>
 		/// A message indicating success, warning or failure reason for an operation
 		/// </summary>
-		string Message { get; set; }
+		string Message { get; }
 
 		/// <summary>
 		/// An exception that caused a failure
 		/// </summary>
-		Exception Exception { get; set; }
+		Exception Exception { get; }
 
 		/// <summary>
 		/// The StatusCode returned from the server
 		/// </summary>
-		int? StatusCode { get; set; }
+		int StatusCode { get; }
 
-		/// <summary>
-		/// A result that influenced the current result
-		/// </summary>
-		IOperationResult InnerResult { get; set; }
+		ulong Cas { get; }
 
-		ulong Cas { get; set; }
+		bool Silent { get; }
 	}
 
 	public interface IOperationResult<T> : IOperationResult

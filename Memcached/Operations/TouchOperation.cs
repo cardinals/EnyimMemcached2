@@ -32,10 +32,9 @@ namespace Enyim.Caching.Memcached.Operations
 		{
 			var retval = new BinaryOperationResult();
 
-			if (response == null)
-				return retval.Success(this);
-
-			return retval.WithResponse(response);
+			return response == null
+					? retval.Success(this)
+					: retval.WithResponse(response);
 		}
 	}
 }
