@@ -36,7 +36,7 @@ namespace Enyim.Caching.Memcached.Configuration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public interface ICanAddServices<out TNext> : IFluentSyntax
 	{
-		TNext Service<TService>(Func<TService> factory);
+		TNext Service<TService>(Func<IContainer, TService> factory);
 		TNext Service<TService>(Type implementation, Action<TService> initializer) where TService : class;
 	}
 

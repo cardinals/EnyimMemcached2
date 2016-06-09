@@ -20,7 +20,7 @@ namespace Enyim.Caching.Memcached.Configuration
 		public IClientBuilderServices Use { get { return builder; } }
 
 		/// <summary>
-		/// Creates the container that can be ued to initialize the MecachedClient.
+		/// Creates the container that can be used to initialize the MemcachedClient.
 		/// </summary>
 		/// <returns></returns>
 		public IContainer Create()
@@ -46,6 +46,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			private Container container;
 			private string clusterName;
 			private bool isReadOnly;
+			private FunqContainerWrapper wrapper;
 
 			public Ω(ClientConfigurationBuilder owner)
 			{
@@ -61,7 +62,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				if (name != clusterName)
 				{
 					clusterName = name;
-					InitCluster(true);
+					InitContainer(true);
 				}
 
 				return owner;
@@ -69,9 +70,9 @@ namespace Enyim.Caching.Memcached.Configuration
 
 			public IContainer Create()
 			{
-				InitCluster(false);
+				InitContainer(false);
 
-				try { return new FunqContainerWrapper(container); }
+				try { return wrapper; }
 				finally
 				{
 					isReadOnly = true;
@@ -80,11 +81,11 @@ namespace Enyim.Caching.Memcached.Configuration
 				}
 			}
 
-			public IClientBuilderServicesNext Service<TService>(Func<TService> factory)
+			public IClientBuilderServicesNext Service<TService>(Func<IContainer, TService> factory)
 			{
-				InitCluster(false);
+				InitContainer(false);
 
-				container.Register<TService>(_ => factory());
+				container.Register(_ => factory(wrapper));
 
 				return this;
 			}
@@ -92,7 +93,7 @@ namespace Enyim.Caching.Memcached.Configuration
 			public IClientBuilderServicesNext Service<TService>(Type implementation, Action<TService> initializer = null)
 				where TService : class
 			{
-				InitCluster(false);
+				InitContainer(false);
 
 				var reg = container.AutoWireAs<TService>(implementation);
 				if (initializer != null) reg.InitializedBy((_, i) => initializer(i));
@@ -100,11 +101,9 @@ namespace Enyim.Caching.Memcached.Configuration
 				return this;
 			}
 
-			private void InitCluster(bool recreate)
+			private void InitContainer(bool recreate)
 			{
 				ThrowIfReadOnly();
-
-				var cluster = ClusterManager.GetCluster(clusterName);
 
 				if (container != null)
 				{
@@ -113,13 +112,15 @@ namespace Enyim.Caching.Memcached.Configuration
 					container.Dispose();
 				}
 
+				var cluster = ClusterManager.GetCluster(clusterName);
 				container = cluster.CreateChildContainer();
 				container.AddClientDefauls();
+				wrapper = new FunqContainerWrapper(container);
 			}
 
 			private void ThrowIfReadOnly()
 			{
-				if (isReadOnly) throw new InvalidOperationException("Client cannot be reconfigured.");
+				if (isReadOnly) throw new InvalidOperationException("Client config has been created already and cannot be changed.");
 			}
 		}
 

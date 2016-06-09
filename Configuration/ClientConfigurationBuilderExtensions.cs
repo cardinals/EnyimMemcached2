@@ -6,19 +6,34 @@ namespace Enyim.Caching.Memcached.Configuration
 {
 	public static class ClientConfigurationBuilderExtensions
 	{
-		public static IClientBuilderServicesNext Transcoder(this IClientBuilderServices services, Func<ITranscoder> factory)
+		public static IClientBuilderServicesNext Transcoder(this IClientBuilderServices services, Func<IContainer, ITranscoder> factory)
 		{
 			return services.Service(factory);
 		}
 
-		public static IClientBuilderServicesNext KeyTransformer(this IClientBuilderServices services, Func<IKeyTransformer> factory)
+		public static IClientBuilderServicesNext Transcoder<TService>(this IClientBuilderServices services, Action<ITranscoder> initializer = null)
+		{
+			return services.Service(typeof(TService), initializer);
+		}
+
+		public static IClientBuilderServicesNext KeyTransformer(this IClientBuilderServices services, Func<IContainer, IKeyTransformer> factory)
 		{
 			return services.Service(factory);
 		}
 
-		public static IClientBuilderServicesNext OperationFactory(this IClientBuilderServices services, Func<IOperationFactory> factory)
+		public static IClientBuilderServicesNext KeyTransformer<TService>(this IClientBuilderServices services, Action<IKeyTransformer> initializer = null)
+		{
+			return services.Service(typeof(TService), initializer);
+		}
+
+		public static IClientBuilderServicesNext OperationFactory(this IClientBuilderServices services, Func<IContainer, IOperationFactory> factory)
 		{
 			return services.Service(factory);
+		}
+
+		public static IClientBuilderServicesNext OperationFactory<TService>(this IClientBuilderServices services, Action<IOperationFactory> initializer = null)
+		{
+			return services.Service(typeof(TService), initializer);
 		}
 
 		public static void MakeDefault(this IContainer self, bool force = false)

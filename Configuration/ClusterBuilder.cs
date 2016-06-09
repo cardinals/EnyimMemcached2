@@ -53,12 +53,15 @@ namespace Enyim.Caching.Memcached.Configuration
 		{
 			private ClusterBuilder owner;
 			private Container container;
+			private readonly FunqContainerWrapper wrapper;
 
 			public Ω(ClusterBuilder owner)
 			{
 				this.owner = owner;
-				this.container = new Container();
-				this.container.AddClusterDefauls();
+
+				container = new Container();
+				container.AddClusterDefauls();
+				wrapper = new FunqContainerWrapper(container);
 			}
 
 			public IClusterBuilderServices Use { get { return this; } }
@@ -84,7 +87,7 @@ namespace Enyim.Caching.Memcached.Configuration
 				{
 					ClusterManager.CacheCluster(owner.Name, container);
 
-					return new FunqContainerWrapper(container);
+					return wrapper;
 				}
 				finally
 				{
@@ -93,11 +96,11 @@ namespace Enyim.Caching.Memcached.Configuration
 				}
 			}
 
-			public IClusterBuilderServicesNext Service<TService>(Func<TService> factory)
+			public IClusterBuilderServicesNext Service<TService>(Func<IContainer, TService> factory)
 			{
 				ThrowIfReadOnly();
 
-				container.Register<TService>(_ => factory());
+				container.Register(_ => factory(wrapper));
 
 				return this;
 			}

@@ -97,7 +97,7 @@ namespace Enyim.Caching.Memcached.Configuration
 								? null
 								: new Action<TService>(instance => ObjectUpdater.Update(instance, props));
 
-				services.Service<TService>(element.Type, init);
+				services.Service(element.Type, init);
 			}
 
 			return services;

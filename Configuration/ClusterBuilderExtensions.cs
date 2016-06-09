@@ -43,15 +43,30 @@ namespace Enyim.Caching.Memcached.Configuration
 
 		public static IClusterBuilderServicesNext NodeLocator(this IClusterBuilderServices services, Func<INodeLocator> factory)
 		{
+			return services.Service(_ => factory());
+		}
+
+		public static IClusterBuilderServicesNext NodeLocator(this IClusterBuilderServices services, Func<IContainer, INodeLocator> factory)
+		{
 			return services.Service(factory);
 		}
 
 		public static IClusterBuilderServicesNext FailurePolicy(this IClusterBuilderServices services, Func<IFailurePolicy> factory)
 		{
+			return services.Service(_ => factory());
+		}
+
+		public static IClusterBuilderServicesNext FailurePolicy(this IClusterBuilderServices services, Func<IContainer, IFailurePolicy> factory)
+		{
 			return services.Service(factory);
 		}
 
 		public static IClusterBuilderServicesNext ReconnectPolicy(this IClusterBuilderServices services, Func<IReconnectPolicy> factory)
+		{
+			return services.Service(_ => factory());
+		}
+
+		public static IClusterBuilderServicesNext ReconnectPolicy(this IClusterBuilderServices services, Func<IContainer, IReconnectPolicy> factory)
 		{
 			return services.Service(factory);
 		}
@@ -63,7 +78,7 @@ namespace Enyim.Caching.Memcached.Configuration
 														TimeSpan? sendTimeout = null,
 														TimeSpan? receiveTimeout = null)
 		{
-			services.Use.Service<Func<ISocket>>(() => () =>
+			services.Use.Service<Func<ISocket>>(_ => () =>
 			{
 				var retval = new AsyncSocket();
 
