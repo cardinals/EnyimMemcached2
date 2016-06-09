@@ -1,29 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
-using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class SimpleMemcachedClientTests : TestBase, IClassFixture<MemcachedClientConfigFixture>
+	public class SilentMemcachedClientConfigFixture : PrivateServerFixture
 	{
-		private readonly ISimpleMemcachedClient client;
-
-		public SimpleMemcachedClientTests(MemcachedClientConfigFixture fixture)
-			: base("SimpleMemcachedClientTests")
+		protected override void ConfigureServices(IClientBuilderServices services)
 		{
-			client = new SimpleMemcachedClient(fixture.Config);
-		}
-
-		protected Task<bool> Store(StoreMode mode = StoreMode.Set, string key = null, object value = null)
-		{
-			if (key == null) key = GetUniqueKey("store");
-			if (value == null) value = GetRandomString();
-
-			return client.StoreAsync(mode, key, value, Expiration.Never);
+			services.OperationFactory<SilentOperationFactory>();
 		}
 	}
 }
@@ -32,10 +19,7 @@ namespace Enyim.Caching.Tests
 
 /* ************************************************************
  *
- *    @author Couchbase <info@couchbase.com>
- *    @author Attila Kiskó <a@enyim.com>
- *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2014 Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kisk�, enyim.com
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

@@ -6,39 +6,62 @@ using Enyim.Caching.Memcached.Configuration;
 
 namespace Enyim.Caching.Tests
 {
-	public class PrivateServerFixture : IDisposable
+	public abstract class PrivateServerFixture
 	{
-		static int port = 11211;
-		private const string ClusterName = "MemcachedClientTests";
+		private const string ClusterPrefix = "MemcachedClientTests";
+		private static int port = 11211;
+
+		private object initLock = new Object();
 		private IDisposable server;
+		private string clusterName;
+		private IContainer config;
 
-		private string cfg;
+		protected abstract void ConfigureServices(IClientBuilderServices services);
 
-		static PrivateServerFixture()
+		protected void InitConfig()
 		{
-			Enyim.Caching.NLogFactory.Use();
+			lock (initLock)
+			{
+				if (clusterName == null)
+				{
+					var p = Interlocked.Increment(ref port);
+					server = MemcachedServer.Run(p);
+
+					clusterName = ClusterPrefix + p;
+					new ClusterBuilder(clusterName).Endpoints("localhost:" + p).Register();
+
+					var clientBuilder = new ClientConfigurationBuilder();
+					ConfigureServices(clientBuilder.Cluster(clusterName).Use);
+
+					config = clientBuilder.Create();
+				}
+			}
 		}
 
-		public PrivateServerFixture()
+		public IContainer Config
 		{
-			var p = Interlocked.Increment(ref port);
-			server = MemcachedServer.Run(p);
-
-			cfg = ClusterName + p;
-			new ClusterBuilder(cfg).Endpoints("localhost:" + p).Register();
-			ClientConfig = new ClientConfigurationBuilder().Cluster(cfg).Create();
+			get
+			{
+				InitConfig();
+				return config;
+			}
 		}
-
-		public IContainer ClientConfig { get; private set; }
 
 		public void Dispose()
 		{
-			server.Dispose();
-			ClientConfig.Dispose();
-			ClusterManager.Shutdown(cfg);
+			if (server != null)
+			{
+				server.Dispose();
+				server = null;
+			}
 
-			server = null;
-			ClientConfig = null;
+			if (config != null)
+			{
+				config.Dispose();
+				config = null;
+			}
+
+			ClusterManager.Shutdown(clusterName);
 		}
 	}
 }

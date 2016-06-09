@@ -41,8 +41,6 @@ namespace Enyim.Caching.Tests
 			{
 				this.process = process;
 
-				SetConsoleCtrlHandler(ConsoleHandler, true);
-
 				AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 				AppDomain.CurrentDomain.DomainUnload += CurrentDomain_ProcessExit;
 			}
@@ -59,11 +57,6 @@ namespace Enyim.Caching.Tests
 				Dispose();
 			}
 
-			private void ConsoleHandler(int kind)
-			{
-				Dispose();
-			}
-
 			public void Dispose()
 			{
 				GC.SuppressFinalize(this);
@@ -76,11 +69,6 @@ namespace Enyim.Caching.Tests
 					process = null;
 				}
 			}
-
-			delegate void ConsoleCtrlHandler(int type);
-
-			[DllImport("Kernel32")]
-			private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
 		}
 
 		#endregion

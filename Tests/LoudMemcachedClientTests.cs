@@ -1,13 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Collections.Generic;
+using System.Text;
 using Enyim.Caching.Memcached;
 using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientTests
+	public partial class LoudMemcachedClientTests : MemcachedClientTests, IClassFixture<MemcachedClientConfigFixture>
 	{
+		public LoudMemcachedClientTests(MemcachedClientConfigFixture fixture) : base("LoudMemcachedClientTests", fixture.Config) { }
+
+		[Fact]
+		public async void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		{
+			const string ToAppend = "The End";
+			var key = GetUniqueKey("Append_Cas_Fail");
+			var value = GetRandomString();
+
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(await Store(key: key, value: value));
+			var storeResult = ShouldPass(await Store(key: key, value: value));
+
+			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
+
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), storeResult.Cas - 1));
+			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public async void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
+		{
+			const string ToPrepend = "The Beginning";
+			var key = GetUniqueKey("Prepend_Cas_Fail");
+			var value = GetRandomString();
+
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(await Store(key: key, value: value));
+			var storeResult = ShouldPass(await Store(key: key, value: value));
+
+			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
+
+			ShouldFail(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), storeResult.Cas - 1));
+			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
+		}
+
+		[Fact]
+		public async void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
+		{
+			var key = GetUniqueKey("Cas_Success");
+			var value = GetRandomString();
+
+			var storeResult = ShouldPass(await Store(StoreMode.Add, key, value));
+			Assert.True(storeResult.Cas > 0, "Cas should be > 0");
+
+			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas));
+		}
+
+		[Fact]
+		public async void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+		{
+			var key = GetUniqueKey("Cas_Fail");
+			var value = GetRandomString();
+
+			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
+			ShouldPass(await Store(StoreMode.Set, key, value));
+			var storeResult = ShouldPass(await Store(StoreMode.Set, key, value));
+
+			Assert.True(storeResult.Cas > 0, "Cas should be > 0");
+			ShouldFail(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas - 1));
+		}
+
+
 		[Fact]
 		public async void When_Incrementing_Value_Result_Is_Successful()
 		{
@@ -72,10 +136,7 @@ namespace Enyim.Caching.Tests
 
 /* ************************************************************
  *
- *    @author Couchbase <info@couchbase.com>
- *    @author Attila Kiskó <a@enyim.com>
- *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2014 Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kisk�, enyim.com
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

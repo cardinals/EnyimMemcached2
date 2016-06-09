@@ -8,18 +8,18 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public abstract class MemcachedClientTestBase
+	public abstract class TestBase
 	{
 		private readonly string name;
 		private readonly Random random;
 
-		protected MemcachedClientTestBase(string name)
+		protected TestBase(string name)
 		{
 			this.name = name + "_";
 			this.random = new Random();
 		}
 
-		protected MemcachedClientTestBase()
+		protected TestBase()
 		{
 			this.name = GetType().Name + "_";
 			this.random = new Random();
@@ -40,37 +40,7 @@ namespace Enyim.Caching.Tests
 
 		protected string GetRandomString()
 		{
-			return "unit_test_value_" + random.Next();
-		}
-
-		public async static Task<T> IfThrowsAsync<T>(Func<Task> testCode) where T : Exception
-		{
-			try
-			{
-				await testCode();
-				Assert.Throws<T>(() => { });
-			}
-			catch (T exception)
-			{
-				return exception;
-			}
-
-			return null;
-		}
-
-		public async static Task<T> IfThrowsAsync<T>(Task testCode) where T : Exception
-		{
-			try
-			{
-				await testCode;
-				Assert.Throws<T>(() => { });
-			}
-			catch (T exception)
-			{
-				return exception;
-			}
-
-			return null;
+			return name + "_random_value_" + random.Next();
 		}
 
 		public static void IfThrows<T>(IOperationResult result) where T : Exception

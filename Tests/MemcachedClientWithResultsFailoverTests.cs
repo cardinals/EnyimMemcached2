@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientFailoverTests : MemcachedClientTestBase, IDisposable
+	public partial class MemcachedClientFailoverTests : TestBase, IDisposable
 	{
 		private const string TestName = "MemcachedClientFailoverTests";
 

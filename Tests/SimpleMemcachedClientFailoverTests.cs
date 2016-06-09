@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class SimpleMemcachedClientFailoverTests : MemcachedClientTestBase, IDisposable
+	public partial class SimpleMemcachedClientFailoverTests : TestBase, IDisposable
 	{
 		private const string TestName = "SimpleMemcachedClientFailoverTests";
 

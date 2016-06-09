@@ -66,23 +66,6 @@ namespace Enyim.Caching.Tests
 		}
 
 		[Fact]
-		public async void When_Appending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
-		{
-			const string ToAppend = "The End";
-			var key = GetUniqueKey("Append_Cas_Fail");
-			var value = GetRandomString();
-
-			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(await Store(key: key, value: value));
-			var storeResult = ShouldPass(await Store(key: key, value: value));
-
-			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
-
-			ShouldFail(await client.ConcateAsync(ConcatenationMode.Append, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToAppend)), storeResult.Cas - 1));
-			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
-		}
-
-		[Fact]
 		public async void When_Prepending_To_Existing_Value_Result_Is_Successful_With_Valid_Cas()
 		{
 			const string ToPrepend = "The Beginning";
@@ -92,23 +75,6 @@ namespace Enyim.Caching.Tests
 			var storeResult = ShouldPass(await Store(key: key, value: value));
 			ShouldPass(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), storeResult.Cas));
 			AreEqual(ToPrepend + value, await client.GetAsync<object>(key, Protocol.NO_CAS));
-		}
-
-		[Fact]
-		public async void When_Prepending_To_Existing_Value_Result_Is_Not_Successful_With_Invalid_Cas()
-		{
-			const string ToPrepend = "The Beginning";
-			var key = GetUniqueKey("Prepend_Cas_Fail");
-			var value = GetRandomString();
-
-			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(await Store(key: key, value: value));
-			var storeResult = ShouldPass(await Store(key: key, value: value));
-
-			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
-
-			ShouldFail(await client.ConcateAsync(ConcatenationMode.Prepend, key, new ArraySegment<byte>(Encoding.UTF8.GetBytes(ToPrepend)), storeResult.Cas - 1));
-			AreEqual(value, await client.GetAsync<object>(key, Protocol.NO_CAS));
 		}
 	}
 }

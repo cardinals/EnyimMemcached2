@@ -1,29 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Linq;
-using System.Text;
-using Enyim.Caching.Memcached;
-using Xunit;
+using System.Collections.Generic;
 
 namespace Enyim.Caching.Tests
 {
-	public abstract partial class MemcachedClientTests : TestBase
+	public class MemcachedClientConfigFixture : SharedServerFixture
 	{
-		protected readonly IMemcachedClient client;
-
-		public MemcachedClientTests(string name, IContainer config)
-			: base(name)
+		public MemcachedClientConfigFixture()
 		{
-			client = new MemcachedClient(config);
+			Config = CreateConfig().Create();
 		}
+
+		public IContainer Config { get; }
 	}
+
 }
 
 #region [ License information          ]
 
 /* ************************************************************
  *
- *    Copyright (c) Attila Kiskó, enyim.com
+ *    Copyright (c) Attila Kisk�, enyim.com
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

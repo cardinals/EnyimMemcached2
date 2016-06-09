@@ -6,30 +6,26 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class MemcachedClientTests
+	public partial class SilentMemcachedClientTests : MemcachedClientTests, IClassFixture<SilentMemcachedClientConfigFixture>
 	{
-		[Fact]
-		public async void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
-		{
-			var key = GetUniqueKey("Cas_Success");
-			var value = GetRandomString();
+		public SilentMemcachedClientTests(SilentMemcachedClientConfigFixture fixture) : base("SilentMemcachedClientTests", fixture.Config) { }
 
-			var storeResult = ShouldPass(await Store(StoreMode.Add, key, value));
-			ShouldPass(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas));
+		[Fact]
+		public async void When_Incrementing_Value_Result_Is_Successful()
+		{
+			var key = GetUniqueKey("Increment");
+
+			ShouldPass(await client.MutateAsync(MutationMode.Increment, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual("200", await client.GetAsync<string>(key));
 		}
 
 		[Fact]
-		public async void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+		public async void When_Decrementing_Value_Result_Is_Successful()
 		{
-			var key = GetUniqueKey("Cas_Fail");
-			var value = GetRandomString();
+			var key = GetUniqueKey("Decrement");
 
-			// make sure cas > 1 (so that we can provide a non-zero cas for the last store)
-			ShouldPass(await Store(StoreMode.Set, key, value));
-			var storeResult = ShouldPass(await Store(StoreMode.Set, key, value));
-
-			Assert.True(storeResult.Cas > 1, "Cas should be > 1");
-			ShouldFail(await client.StoreAsync(StoreMode.Set, key, value, Expiration.Never, storeResult.Cas - 1));
+			ShouldPass(await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
+			AreEqual("200", await client.GetAsync<string>(key));
 		}
 	}
 }
