@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,112 +8,73 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Enyim.Caching
+namespace Enyim.Caching.Memcached
 {
 	public class DefaultNodeLocator : INodeLocator
 	{
-		private const int ServerAddressMutations = 160;
-		private static readonly Encoding NoPreambleUtf8 = new UTF8Encoding(false);
-
 		private readonly object InitLock = new Object();
-		private INode[] nodes;
-		private uint[] keyRing;
-		private int keyRingLengthComplement;
-		private Dictionary<uint, INode> keyToServer;
+		private InnerLocator locator;
 
 		public void Initialize(IEnumerable<INode> currentNodes)
 		{
 			lock (InitLock)
 			{
-				// quit if we've been initialized because we can handle dead nodes
-				if (keyRing != null) return;
-
-				nodes = currentNodes.ToArray();
-				keyRing = new uint[this.nodes.Length * ServerAddressMutations];
-				keyToServer = new Dictionary<uint, INode>(keyRing.Length);
-				keyRingLengthComplement = ~keyRing.Length;
-
-				var i = 0;
-
-				foreach (var node in nodes)
-				{
-					for (var mutation = 0; mutation < ServerAddressMutations; mutation++)
-					{
-						var address = node.EndPoint.ToString();
-						var hash = GetKeyHash(address + "-" + mutation);
-
-						keyRing[i++] = hash;
-						keyToServer[hash] = node;
-					}
-				}
-
-				Array.Sort(keyRing);
+				var tmp = new InnerLocator(currentNodes);
+				Interlocked.Exchange(ref locator, tmp);
 			}
-		}
-
-		private static uint GetKeyHash(string key)
-		{
-			return Murmur32.ComputeHash(NoPreambleUtf8.GetBytes(key));
-		}
-
-		private static uint GetKeyHash(byte[] key, int count)
-		{
-			return Murmur32.ComputeHash(key, 0, count);
 		}
 
 		public INode Locate(Key key)
 		{
-			var keyArray = key.Array;
-			if (keyArray == null) throw new ArgumentNullException("key");
+			return locator.Locate(key);
+		}
 
-			switch (nodes.Length)
+		#region [ InnerLocator                 ]
+
+		private class InnerLocator
+		{
+			private readonly INode[] nodes;
+			private readonly int bucketCount;
+
+			public InnerLocator(IEnumerable<INode> currentNodes)
 			{
-				case 0: return AlreadyFailedNode.Instance;
-				case 1: return nodes[0];
-				default:
+				nodes = currentNodes.ToArray();
+				bucketCount = nodes.Length;
+			}
 
-					var retval = LocateNode(GetKeyHash(keyArray, key.Length));
+			public INode Locate(Key key)
+			{
+				if (bucketCount == 0) return AlreadyFailedNode.Instance;
+				if (bucketCount == 1) return nodes[0];
 
-					// if the result is not alive then try to mutate the item key and find another node
-					// this way we do not have to reinitialize every time a node dies/comes back
-					// (DefaultServerPool will resurrect the nodes in the background without affecting the hashring)
-					//
-					// Key mutation logic is taken from spymemcached (https://code.google.com/p/spymemcached/)
-					if (!retval.IsAlive)
-					{
-						var alteredKey = new byte[key.Length + 1];
-						Buffer.BlockCopy(keyArray, 0, alteredKey, 1, key.Length);
+				var hash = Murmur64_64.ComputeHash(key.Array, key.Length, 0);
+				var bucketIndex = JumpConsistentHash(hash, bucketCount);
 
-						for (var i = (byte)'0'; i < (byte)'7'; i++)
-						{
-							// -- this is from spymemcached
-							alteredKey[0] = i;
-							var tmpKey = (ulong)GetKeyHash(alteredKey, alteredKey.Length);
-							tmpKey += (uint)(tmpKey ^ (tmpKey >> 32));
-							tmpKey &= 0xffffffffL; /* truncate to 32-bits */
-							retval = LocateNode((uint)tmpKey);
-							// -- end
+				return nodes[bucketIndex];
+			}
 
-							if (retval.IsAlive) return retval;
-						}
-					}
+			private static int JumpConsistentHash(ulong key, int bucketCount)
+			{
+				Debug.Assert(bucketCount > 0);
 
-					return retval;
+				const ulong MULTIPLIER = 2862933555777941757;
+
+				ulong retval = 0;
+				ulong index = 0;
+				ulong ulongCount = (ulong)bucketCount;
+
+				while (index < ulongCount)
+				{
+					retval = index;
+					key = key * MULTIPLIER + 1;
+					index = (ulong)((retval + 1) * (double)(1L << 31) / ((key >> 33) + 1));
+				}
+
+				return (int)retval;
 			}
 		}
 
-		private INode LocateNode(uint itemKeyHash)
-		{
-			// get the index of the server assigned to this hash
-			var foundIndex = Array.BinarySearch(keyRing, itemKeyHash);
-
-			if (foundIndex == keyRingLengthComplement) foundIndex = 0;
-			else if (foundIndex == ~0) foundIndex = keyRing.Length - 1;
-			else if (foundIndex < 0) foundIndex = ~foundIndex;
-
-			return keyToServer[keyRing[foundIndex]];
-		}
-
+		#endregion
 		#region [ AlreadyFailedNode            ]
 
 		private class AlreadyFailedNode : INode

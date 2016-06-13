@@ -68,6 +68,7 @@
     <Compile Include="Core\LogManager.cs" />
     <Compile Include="Core\Metrics.cs" />
     <Compile Include="Core\Murmur32.cs" />
+    <Compile Include="Core\Murmur64_64.cs" />
     <Compile Include="Core\NodeBase.cs" />
     <Compile Include="Core\NodePerformanceMonitor.cs" />
     <Compile Include="Core\NodeQueue.cs" />
