@@ -59,12 +59,12 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="LoudMemcachedClientTests.cs" />
-    <Compile Include="MemcachedClientConfigFixture.cs" />
+    <Compile Include="Fixtures\MemcachedClientConfigFixture.cs" />
     <Compile Include="SilentMemcachedClientTests.cs" />
     <Compile Include="MemcachedClientTests.Helpers.cs">
       <DependentUpon>MemcachedClientTests.cs</DependentUpon>
     </Compile>
-    <Compile Include="SilentMemcachedClientConfigFixture.cs" />
+    <Compile Include="Fixtures\SilentMemcachedClientConfigFixture.cs" />
     <Compile Include="SimpleMemcachedClientExtensions\Add.cs" />
     <Compile Include="SimpleMemcachedClientExtensions\Append.cs" />
     <Compile Include="SimpleMemcachedClientExtensions\Concate.cs" />
@@ -127,8 +127,8 @@
     <Compile Include="MemcachedClientExtensions\Mutate.cs" />
     <Compile Include="MemcachedClientTests.cs" />
     <Compile Include="PooledMemoryStreamTests.cs" />
-    <Compile Include="SharedServerFixture.cs" />
-    <Compile Include="PrivateServerFixture.cs">
+    <Compile Include="Fixtures\SharedServerFixture.cs" />
+    <Compile Include="Fixtures\PrivateServerFixture.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ClusterBuilderTests.cs">

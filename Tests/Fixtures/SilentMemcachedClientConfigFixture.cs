@@ -1,19 +1,18 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Configuration;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientConfigFixture : SharedServerFixture
+	public class SilentMemcachedClientConfigFixture : SharedServerFixture
 	{
-		public MemcachedClientConfigFixture()
+		protected override void ConfigureServices(IClientBuilderServices services)
 		{
-			Config = CreateConfig().Create();
+			services.OperationFactory<SilentOperationFactory>();
 		}
-
-		public IContainer Config { get; }
 	}
-
 }
 
 #region [ License information          ]

@@ -12,7 +12,7 @@ namespace Enyim.Caching.Tests
 		static readonly string BasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tools");
 		static readonly string ExePath = Path.Combine(BasePath, "memcached.exe");
 
-		public static IDisposable Run(int port = 11211, bool verbose = false, int maxMem = 512)
+		public static IDisposable Run(int port = 11211, bool verbose = false, int maxMem = 512, bool hidden = true)
 		{
 			var args = $"-E default_engine.so -p {port} -m {maxMem}";
 			if (verbose) args += " -vv";
@@ -21,11 +21,8 @@ namespace Enyim.Caching.Tests
 			{
 				Arguments = args,
 				FileName = ExePath,
-				WorkingDirectory = BasePath
-#if !DEBUG
-				,
-				WindowStyle = ProcessWindowStyle.Hidden
-#endif
+				WorkingDirectory = BasePath,
+				WindowStyle = hidden ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal
 			});
 
 			return new KillProcess(process);

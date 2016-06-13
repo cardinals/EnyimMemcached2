@@ -8,35 +8,14 @@ namespace Enyim.Caching.Tests
 {
 	public abstract class PrivateServerFixture
 	{
-		private const string ClusterPrefix = "MemcachedClientTests";
-		private static int port = 11211;
+		private static int Port = 11211;
+		private const string ClusterName = "MemcachedClientTests";
 
-		private object initLock = new Object();
+		private object InitLock = new Object();
+
 		private IDisposable server;
 		private string clusterName;
 		private IContainer config;
-
-		protected abstract void ConfigureServices(IClientBuilderServices services);
-
-		protected void InitConfig()
-		{
-			lock (initLock)
-			{
-				if (clusterName == null)
-				{
-					var p = Interlocked.Increment(ref port);
-					server = MemcachedServer.Run(p);
-
-					clusterName = ClusterPrefix + p;
-					new ClusterBuilder(clusterName).Endpoints("localhost:" + p).Register();
-
-					var clientBuilder = new ClientConfigurationBuilder();
-					ConfigureServices(clientBuilder.Cluster(clusterName).Use);
-
-					config = clientBuilder.Create();
-				}
-			}
-		}
 
 		public IContainer Config
 		{
@@ -44,6 +23,28 @@ namespace Enyim.Caching.Tests
 			{
 				InitConfig();
 				return config;
+			}
+		}
+
+		protected abstract void ConfigureServices(IClientBuilderServices services);
+
+		protected void InitConfig()
+		{
+			lock (InitLock)
+			{
+				if (clusterName == null)
+				{
+					var p = Interlocked.Increment(ref Port);
+					server = MemcachedServer.Run(p);
+
+					clusterName = ClusterName + p;
+					new ClusterBuilder(clusterName).Endpoints("localhost:" + p).Register();
+
+					var clientBuilder = new ClientConfigurationBuilder();
+					ConfigureServices(clientBuilder.Cluster(clusterName).Use);
+
+					config = clientBuilder.Create();
+				}
 			}
 		}
 

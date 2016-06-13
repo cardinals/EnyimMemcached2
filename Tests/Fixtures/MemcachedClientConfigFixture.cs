@@ -1,16 +1,15 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Configuration;
 
 namespace Enyim.Caching.Tests
 {
-	public class SilentMemcachedClientConfigFixture : PrivateServerFixture
+	public class MemcachedClientConfigFixture : SharedServerFixture
 	{
 		protected override void ConfigureServices(IClientBuilderServices services)
 		{
-			services.OperationFactory<SilentOperationFactory>();
+
 		}
 	}
 }

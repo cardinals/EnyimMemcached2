@@ -8,50 +8,73 @@ namespace Enyim.Caching.Tests
 {
 	public abstract class SharedServerFixture
 	{
-		private const int Port = 11211;
+		private const int Port = 11200;
 		private const string ClusterName = "SharedServerTests";
 
 		private static readonly object InitLock = new Object();
 
 		private static int refCount;
-		private static IDisposable server;
+		private static IDisposable[] servers;
+		private IContainer config;
 
-		public void Dispose()
+		public IContainer Config
 		{
-			lock (InitLock)
+			get
 			{
-				if (server == null) return;
-
-				refCount--;
-
-				if (refCount == 0)
-				{
-					ClusterManager.Shutdown(ClusterName);
-					server.Dispose();
-
-					server = null;
-				}
+				InitConfig();
+				return config;
 			}
 		}
 
-		protected static ClientConfigurationBuilder CreateConfig()
+		protected abstract void ConfigureServices(IClientBuilderServices services);
+
+		protected void InitConfig()
 		{
 			lock (InitLock)
 			{
 				if (refCount == 0)
 				{
-					server = MemcachedServer.Run(Port, verbose: true);
+					servers = Enumerable.Range(Port, 3).Select(p => MemcachedServer.Run(p, verbose: true)).ToArray();
 
-					new ClusterBuilder(ClusterName).Endpoints("localhost:" + Port).Register();
+					new ClusterBuilder(ClusterName)
+							.Endpoints(Enumerable
+											.Range(Port, 3)
+											.Select(p => "localhost:" + p)
+											.ToArray())
+							.Register();
 				}
 
 				refCount++;
 			}
 
 			var configBuilder = new ClientConfigurationBuilder();
-			configBuilder.Cluster(ClusterName);
+			ConfigureServices(configBuilder.Cluster(ClusterName).Use);
 
-			return configBuilder;
+			config = configBuilder.Create();
+		}
+
+		public void Dispose()
+		{
+			lock (InitLock)
+			{
+				if (config != null)
+					config.Dispose();
+
+				if (servers != null)
+				{
+					refCount--;
+
+					if (refCount == 0)
+					{
+						ClusterManager.Shutdown(ClusterName);
+
+						foreach (var server in servers)
+							server.Dispose();
+
+						servers = null;
+					}
+				}
+			}
 		}
 	}
 }
