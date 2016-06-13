@@ -10,14 +10,25 @@ namespace Enyim.Caching
 	public sealed class TrackingBufferAllocator : IBufferAllocator
 	{
 		private readonly BufferManager pool;
+		private readonly IMeter allocCount;
+		private readonly IMeter releaseCount;
+		private readonly ICounter totalSize;
 
 		public TrackingBufferAllocator(int maxBufferSize, long maxBufferPoolSize)
 		{
 			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
+
+			allocCount = Metrics.Meter("alloc count", null, Interval.Seconds);
+			releaseCount = Metrics.Meter("alloc release count", null, Interval.Seconds);
+			totalSize = Metrics.Counter("alloc total size", null);
 		}
 
 		public void Dispose()
 		{
+			allocCount.Reset();
+			releaseCount.Reset();
+			totalSize.Reset();
+
 			pool.Clear();
 		}
 
@@ -28,11 +39,17 @@ namespace Enyim.Caching
 
 			trackers.GetOrCreateValue(buffer).Remember();
 
+			allocCount.IncrementBy(1);
+			totalSize.IncrementBy(buffer.Length);
+
 			return buffer;
 		}
 
 		public void Return(byte[] buffer)
 		{
+			releaseCount.IncrementBy(1);
+			totalSize.DecrementBy(buffer.Length);
+
 			Tracker value;
 			if (trackers.TryGetValue(buffer, out value))
 				value.Forget();
@@ -52,7 +69,7 @@ namespace Enyim.Caching
 			{
 				ThrowIfLeaking();
 
-				stackTrace = new StackTrace(4, true);
+				stackTrace = new StackTrace(1, true);
 			}
 
 			~Tracker()
