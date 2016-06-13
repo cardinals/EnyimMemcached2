@@ -12,6 +12,7 @@ namespace Enyim.Caching.Memcached
 	public class DefaultTranscoder : ITranscoder
 	{
 		public const uint RawDataFlag = 0xfa52;
+		private static readonly Encoding Utf8 = new UTF8Encoding(false);
 
 		private readonly IBufferAllocator allocator;
 
@@ -63,7 +64,7 @@ namespace Enyim.Caching.Memcached
 					// serialized, usually from a MemoryStream (To avoid duplicating arrays
 					// the byte[] returned by MemoryStream.GetBuffer is placed into an ArraySegment.)
 					if (value is ArraySegment<byte>)
-						return new CacheItem(RawDataFlag, PooledSegment.From((ArraySegment<byte>)value));
+						return new CacheItem(RawDataFlag, PooledSegment.Wrap((ArraySegment<byte>)value));
 
 					data = SerializeObject(value); break;
 				default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
@@ -132,16 +133,15 @@ namespace Enyim.Caching.Memcached
 			if (String.IsNullOrEmpty(value))
 				return PooledSegment.Empty;
 
-			var utf8 = Encoding.UTF8;
-			var buffer = allocator.Take(utf8.GetMaxByteCount(value.Length));
-			var count = utf8.GetBytes(value, 0, value.Length, buffer, 0);
+			var buffer = allocator.Take(Utf8.GetMaxByteCount(value.Length));
+			var count = Utf8.GetBytes(value, 0, value.Length, buffer, 0);
 
 			return new PooledSegment(allocator, buffer, count);
 		}
 
 		private static string DeserializeString(PooledSegment value)
 		{
-			return Encoding.UTF8.GetString(value.Array, 0, value.Count);
+			return Utf8.GetString(value.Array, 0, value.Count);
 		}
 
 		private PooledSegment SerializeObject(object value)
