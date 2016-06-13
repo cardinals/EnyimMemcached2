@@ -208,8 +208,10 @@ namespace Enyim.Caching
 			// op is sent fully; response can be expected
 			readQueue.Enqueue(currentWriteOp);
 
+			#region Diagnostics
 			npm.EnqueueReadOp();
 			CoreEventSource.EnqueueReadOp(name);
+			#endregion
 
 			// clean up
 			currentWriteCopier.Dispose();
@@ -248,8 +250,10 @@ namespace Enyim.Caching
 
 			if (writeQueue.TryDequeue(out data))
 			{
+				#region Diagnostics
 				npm.DequeueWriteOp();
 				CoreEventSource.DequeueWriteOp(name);
+				#endregion
 
 				return data;
 			}
@@ -273,10 +277,12 @@ namespace Enyim.Caching
 				readQueue.Enqueue(data);
 				request.Dispose();
 
+				#region Diagnostics
 				npm.EnqueueReadOp();
 				CoreEventSource.EnqueueReadOp(name);
 
 				LogTo.Trace($"Full send of {data.Op}");
+				#endregion
 			}
 			else
 			{
@@ -284,6 +290,7 @@ namespace Enyim.Caching
 				// as "in-progress"; DoRun will loop until it's fully sent
 				currentWriteOp = data;
 				currentWriteCopier = request;
+
 				LogTo.Trace($"Partial send of {data.Op}");
 			}
 		}
@@ -359,7 +366,6 @@ namespace Enyim.Caching
 					if (!data.Op.ProcessResponse(isHandled ? response : null))
 					{
 						readQueue.Dequeue();
-						//if (data.Task != null)
 						data.Task.TrySetResult(data.Op);
 
 						#region Diagnostics

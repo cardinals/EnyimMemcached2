@@ -17,14 +17,13 @@ namespace Enyim.Caching.Memcached
 
 		public override Key Transform(string key)
 		{
-			using (var tmp = base.Transform(key))
+			using (var byteKey = base.Transform(key))
 			{
-				var retval = new Key(allocator, 4);
-				var hash = Murmur32.ComputeHash(tmp.Array, 0, tmp.Length);
+				var hash = Murmur32.ComputeHash(byteKey.Array, 0, byteKey.Length);
+				var array = allocator.Take(4);
+				NetworkOrderConverter.EncodeUInt32(hash, array, 0);
 
-				NetworkOrderConverter.EncodeUInt32(hash, retval.Array, 0);
-
-				return retval;
+				return new Key(allocator, array, 4);
 			}
 		}
 	}

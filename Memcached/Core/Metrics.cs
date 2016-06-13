@@ -107,6 +107,23 @@ namespace Enyim.Caching
 		long Count { get; }
 	}
 
+	public interface IMeter : ICounter
+	{
+		double Rate { get; }
+		Interval Interval { get; }
+	}
+
+	public enum Interval
+	{
+		Nanoseconds,
+		Microseconds,
+		Milliseconds,
+		Seconds,
+		Minutes,
+		Hours,
+		Days
+	}
+
 	public static class MetricExtensions
 	{
 		public static void Increment(this ICounter counter)
@@ -123,23 +140,6 @@ namespace Enyim.Caching
 		{
 			counter.IncrementBy(-value);
 		}
-	}
-
-	public interface IMeter : ICounter
-	{
-		double Rate { get; }
-		Interval Interval { get; }
-	}
-
-	public enum Interval
-	{
-		Nanoseconds,
-		Microseconds,
-		Milliseconds,
-		Seconds,
-		Minutes,
-		Hours,
-		Days
 	}
 
 	#region [ MetricsVisitor               ]
@@ -241,8 +241,8 @@ namespace Enyim.Caching
 		{
 			sb.Length = 0;
 			visitor.Visit(Metrics.GetAll());
-			Console.CursorLeft = 0;
-			Console.CursorTop = 0;
+			//Console.CursorLeft = 0;
+			//Console.CursorTop = 0;
 			Console.Write(sb.ToString());
 		}
 
@@ -271,28 +271,16 @@ namespace Enyim.Caching
 
 	internal static class IntervalConverter
 	{
-		static readonly long[][] ConversionMatrix = CreateMatrix();
-
-		static long[][] CreateMatrix()
+		private static readonly long[][] ConversionMatrix = new long[][]
 		{
-			var multipliers = new long[] { 1000L, 1000L, 1000L, 60L, 60L, 24L };
-			var length = multipliers.Length + 1;
-			var retval = new long[length][];
-
-			for (var i = 0; i < length; i++)
-			{
-				retval[i] = new long[i];
-
-				var tmp = 1L;
-				for (var j = i - 1; j >= 0; j--)
-				{
-					tmp *= multipliers[j];
-					retval[i][j] = tmp;
-				}
-			}
-
-			return retval;
-		}
+			/* Nanoseconds  */ null,
+			/* Microseconds */ new [] { 1000L },
+			/* Milliseconds */ new [] { 1000000L, 1000L },
+			/* Seconds      */ new [] { 1000000000L, 1000000L, 1000L },
+			/* Minutes      */ new [] { 60000000000L, 60000000L, 60000L, 60L },
+			/* Hours        */ new [] { 3600000000000L, 3600000000L, 3600000L, 3600L, 60L },
+			/* Days         */ new [] { 86400000000000L, 86400000000L, 86400000L, 86400L, 1440L, 24L }
+		};
 
 		public static long Convert(long value, Interval from, Interval to)
 		{
@@ -523,7 +511,7 @@ namespace Enyim.Caching
 					if (by == 0) return Count;
 
 					var retval = (double)Count / by;
-					Reset();
+					//Reset();
 
 					return retval;
 				}

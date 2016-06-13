@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Channels;
+using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Operations;
 using Xunit;
 

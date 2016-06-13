@@ -3,47 +3,30 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Enyim.Caching
 {
-	[SuppressMessage("Potential Code Quality Issues", "NonReadonlyReferencedInGetHashCodeIssue:Non-readonly field referenced in 'GetHashCode()'", Justification = "Only Dispose() changes the array")]
-	public struct Key : IDisposable
+	public struct Key : IDisposable, IEquatable<Key>
 	{
-		public static readonly Key Empty = new Key { array = new byte[0] };
+		private IBufferAllocator owner;
 
-		private IBufferAllocator allocator;
-		private byte[] array;
-		private readonly int length;
+		public readonly int Length;
+		public readonly byte[] Array;
 
-		public Key(IBufferAllocator allocator, int length)
-			: this()
+		public Key(IBufferAllocator owner, byte[] array, int length)
 		{
-			Require.NotNull(allocator, "allocator");
-			Require.That(length >= 0, "length must be >= 0");
+			Require.NotNull(owner, nameof(owner));
+			Require.NotNull(array, nameof(array));
+			Require.That(length >= 0, $"{nameof(length)} must be >= 0");
 
-			this.allocator = allocator;
-			this.length = length;
-			array = allocator.Take(length);
+			this.owner = owner;
+			Array = array;
+			Length = length;
 		}
-
-		public Key(IBufferAllocator allocator, byte[] array, int length)
-		{
-			Require.NotNull(allocator, "allocator");
-			Require.NotNull(array, "array");
-			Require.That(length >= 0, "length must be >= 0");
-
-			this.allocator = allocator;
-			this.array = array;
-			this.length = length;
-		}
-
-		public byte[] Array { get { return array; } }
-		public int Length { get { return length; } }
 
 		public void Dispose()
 		{
-			if (allocator != null)
+			if (owner != null)
 			{
-				allocator.Return(array);
-				array = null;
-				allocator = null;
+				owner.Return(Array);
+				owner = null;
 			}
 		}
 
@@ -54,12 +37,14 @@ namespace Enyim.Caching
 
 		public bool Equals(Key obj)
 		{
-			return obj.array == array && obj.length == length;
+			return obj.Array == Array && obj.Length == Length;
 		}
 
 		public override int GetHashCode()
 		{
-			return array == null ? 0 : HashCodeCombiner.Combine(array.GetHashCode(), length);
+			return Array == null
+					? Length.GetHashCode()
+					: HashCodeCombiner.Combine(Array.GetHashCode(), Length);
 		}
 
 		public static bool operator ==(Key a, Key b)

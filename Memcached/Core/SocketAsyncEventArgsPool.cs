@@ -16,7 +16,7 @@ namespace Enyim.Caching
 	/// </summary>
 	internal class SocketAsyncEventArgsFactory : IDisposable
 	{
-		internal static readonly SocketAsyncEventArgsFactory Instance = new SocketAsyncEventArgsFactory(1 * 1024 * 1024);
+		internal static readonly SocketAsyncEventArgsFactory Instance = new SocketAsyncEventArgsFactory(AsyncSocket.Defaults.MaxBufferSize);
 
 		private readonly object UpdateLock;
 		private readonly int chunkSize;
@@ -30,17 +30,17 @@ namespace Enyim.Caching
 
 		private SocketAsyncEventArgsFactory(int chunkSize)
 		{
-			this.UpdateLock = new object();
 			this.chunkSize = chunkSize;
 
-			this.factories = new ConcurrentStack<BufferFactory>();
-			this.knownEventArgs = new ConcurrentDictionary<SocketAsyncEventArgs, Tuple<BufferFactory, ArraySegment<byte>>>();
+			UpdateLock = new object();
+			factories = new ConcurrentStack<BufferFactory>();
+			knownEventArgs = new ConcurrentDictionary<SocketAsyncEventArgs, Tuple<BufferFactory, ArraySegment<byte>>>();
 		}
 
 		internal SocketAsyncEventArgs Take(int size)
 		{
 			if (size > chunkSize)
-				throw new ArgumentOutOfRangeException(String.Format("Required buffer {0} size is larger than the chunk size {1}", size, chunkSize));
+				throw new ArgumentOutOfRangeException($"Required buffer size {size} is larger than the chunk size {chunkSize}");
 
 			BufferFactory bufferFactory;
 			ArraySegment<byte> segment;
@@ -85,6 +85,7 @@ namespace Enyim.Caching
 		/// </summary>
 		internal void Compact()
 		{
+			// TODO this may not be entirely thread-safe
 			lock (UpdateLock)
 			{
 				if (factories.Count == 0) return;
@@ -181,7 +182,7 @@ namespace Enyim.Caching
 
 			public bool TryAlloc(int size, out ArraySegment<byte> buffer)
 			{
-				// round up to multiplies of 8
+				// round up to multiples of 8
 				size = ((size + 7) / 8) * 8;
 
 				// repeat until we manage to allocate the buffer or we run out of space

@@ -29,46 +29,48 @@ namespace Enyim.Caching.Memcached.Operations
 			remainingHeader = Protocol.HeaderLength;
 		}
 
+		public byte OpCode { get; private set; }
+		public int KeyLength { get; private set; }
+		public byte DataType { get; private set; }
+		public int StatusCode { get; private set; }
+
+		public uint CorrelationId { get; private set; }
+		public ulong CAS { get; private set; }
+
+		public ArraySegment<byte> Extra { get; private set; }
+		public ArraySegment<byte> Data { get; private set; }
+
+		public bool Success { get { return StatusCode == Protocol.Status.Success; } }
+
 		~BinaryResponse()
 		{
+			GC.WaitForPendingFinalizers();
+
 			Dispose();
 		}
 
 		public void Dispose()
 		{
+			GC.SuppressFinalize(this);
+
 			if (header != null)
 			{
-				GC.SuppressFinalize(this);
-
 				allocator.Return(header);
 				header = null;
+			}
 
-				if (data != null)
-				{
-					allocator.Return(data);
-					data = null;
-				}
+			if (data != null)
+			{
+				allocator.Return(data);
+				data = null;
 			}
 		}
 
-		public byte OpCode;
-		public int KeyLength;
-		public byte DataType;
-		public int StatusCode;
-
-		public uint CorrelationId;
-		public ulong CAS;
-
-		public ArraySegment<byte> Extra;
-		public ArraySegment<byte> Data;
-
-		public bool Success { get { return StatusCode == Protocol.Status.Success; } }
-
 		public string GetStatusMessage()
 		{
-			return this.Data.Array == null
+			return Data.Array == null
 					? null
-					: (this.responseMessage ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
+					: (responseMessage ?? (responseMessage = Encoding.ASCII.GetString(Data.Array, Data.Offset, Data.Count)));
 		}
 
 		bool IResponse.Read(ReadBuffer buffer)
@@ -78,8 +80,6 @@ namespace Enyim.Caching.Memcached.Operations
 				case STATE_NEED_HEADER:
 					remainingHeader -= buffer.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
 					if (remainingHeader > 0) return true;
-
-					Debug.Assert(remainingHeader == 0);
 
 					if (!ProcessHeader(header, out remainingData))
 					{
@@ -97,8 +97,6 @@ namespace Enyim.Caching.Memcached.Operations
 
 					if (remainingData > 0) return true;
 
-					Debug.Assert(remainingHeader == 0);
-
 					state = STATE_DONE;
 					break;
 			}
@@ -115,20 +113,18 @@ namespace Enyim.Caching.Memcached.Operations
 		/// <returns></returns>
 		private bool ProcessHeader(byte[] header, out int bodyLength)
 		{
-#if DEBUG
 			if (header[Protocol.HEADER_INDEX_MAGIC] != Protocol.ResponseMagic)
-				throw new InvalidOperationException("Expected magic value " + Protocol.ResponseMagic + ", received: " + header[Protocol.HEADER_INDEX_MAGIC]);
-#endif
+				throw new InvalidOperationException($"Expected magic value {Protocol.ResponseMagic}, received: {header[Protocol.HEADER_INDEX_MAGIC]}");
 
 			// TODO test if unsafe array gives a perf boost
 			OpCode = header[Protocol.HEADER_INDEX_OPCODE];
 			KeyLength = NetworkOrderConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_KEY);
 			DataType = header[Protocol.HEADER_INDEX_DATATYPE];
 			StatusCode = NetworkOrderConverter.DecodeUInt16(header, Protocol.HEADER_INDEX_STATUS);
-			CorrelationId = unchecked((uint)NetworkOrderConverter.DecodeInt32(header, Protocol.HEADER_INDEX_OPAQUE));
+			CorrelationId = NetworkOrderConverter.DecodeUInt32(header, Protocol.HEADER_INDEX_OPAQUE);
 			CAS = NetworkOrderConverter.DecodeUInt64(header, Protocol.HEADER_INDEX_CAS);
 
-			bodyLength = NetworkOrderConverter.DecodeInt32(header, Protocol.HEADER_INDEX_BODY);
+			bodyLength = (int)NetworkOrderConverter.DecodeUInt32(header, Protocol.HEADER_INDEX_BODY);
 
 			if (bodyLength > 0)
 			{

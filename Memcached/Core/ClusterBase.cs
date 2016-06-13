@@ -29,12 +29,12 @@ namespace Enyim.Caching
 			this.endpoints = endpoints.ToArray();
 			this.locator = locator;
 			this.reconnectPolicy = reconnectPolicy;
-			this.ReconnectLock = new Object();
 
-			this.worker = new Thread(Worker) { Name = "IO Thread {" + String.Join(", ", endpoints.Select(ep => ep.ToString())) + "}" };
+			ReconnectLock = new Object();
+			shutdownToken = new CancellationTokenSource();
+			workerIsDone = new ManualResetEventSlim(false);
 
-			this.shutdownToken = new CancellationTokenSource();
-			this.workerIsDone = new ManualResetEventSlim(false);
+			worker = new Thread(Worker) { Name = "IO Thread {" + String.Join(", ", endpoints.Select(ep => ep.ToString())) + "}" };
 		}
 
 		protected abstract INode CreateNode(IPEndPoint endpoint);

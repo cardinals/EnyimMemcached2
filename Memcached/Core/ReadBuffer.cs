@@ -4,41 +4,51 @@ using System.IO;
 
 namespace Enyim.Caching
 {
-	public class ReadBuffer
+	public sealed class ReadBuffer
 	{
 		private readonly byte[] readBuffer;
-		private readonly int bufferOffset;
 		private readonly int bufferLength;
 
 		private int length;
 		private int position;
 
+		internal readonly int BufferOffset;
+
 		internal ReadBuffer(byte[] buffer, int offset, int count)
 		{
 			readBuffer = buffer;
-			bufferOffset = offset;
+			BufferOffset = offset;
 			bufferLength = count;
 		}
 
-		public int Position { get { return position; } }
 		public int Length { get { return length; } }
 		public bool IsEmpty { get { return position == length; } }
 
+		/// <summary>
+		/// Reads a sequence of bytes
+		/// </summary>
+		/// <param name="buffer">
+		///    An array of bytes. When this method returns, the buffer contains the specified
+		///    byte array with the values between offset and (offset + count - 1) replaced by
+		///    the bytes read from the current source.</param>
+		/// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data read from the current stream.</param>
+		/// <param name="count">The maximum number of bytes to be read.</param>
+		/// <returns>The total number of bytes read into the buffer. This can be less than the number of bytes requested if that many bytes are not currently available, or zero (0) if the end of the stream has been reached.</returns>
 		public int Read(byte[] buffer, int offset, int count)
 		{
-			var canRead = length - position;
+			var toRead = length - position;
 
-			if (canRead <= 0) return 0;
-			if (canRead > count) canRead = count;
+			if (toRead <= 0) return 0;
+			if (toRead > count) toRead = count;
 
-			Buffer.BlockCopy(readBuffer, bufferOffset + position, buffer, offset, canRead);
+			Buffer.BlockCopy(readBuffer, BufferOffset + position, buffer, offset, toRead);
 
-			position += canRead;
+			position += toRead;
 
-			return canRead;
+			return toRead;
 		}
 
-		internal void SetAvailableLength(int length)
+		internal void SetDataLength(int length)
 		{
 			Debug.Assert(length <= bufferLength, "length cannot be larger than bufferLength");
 

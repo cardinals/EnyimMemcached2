@@ -1,46 +1,50 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Enyim.Caching
 {
-	public class WriteBuffer
+	public sealed class WriteBuffer
 	{
-		private readonly byte[] buffer;
-		private readonly int bufferOffset;
-		private readonly int length;
+		private readonly byte[] writeBuffer;
+		private readonly int capacity;
 		private int position;
 
-		internal WriteBuffer(byte[] buffer, int offset, int count)
+		internal readonly int BufferOffset;
+
+		internal WriteBuffer(byte[] buffer, int offset, int capacity)
 		{
-			this.buffer = buffer;
-			this.bufferOffset = offset;
-			this.length = count;
+			this.writeBuffer = buffer;
+			this.BufferOffset = offset;
+			this.capacity = capacity;
 		}
 
-		internal int BufferOffset { get { return bufferOffset; } }
-		public int Length { get { return length; } }
+		/// <summary>
+		/// The size of the buffer.
+		/// </summary>
+		public int Capacity { get { return capacity; } }
+
+		/// <summary>
+		/// The current position in the buffer
+		/// </summary>
 		public int Position { get { return position; } }
-		public bool IsFull { get { return position == length; } }
+		public bool IsFull { get { return position == capacity; } }
 
 		public int Append(byte[] data, int offset, int count)
 		{
-			var canWrite = length - position;
+			var toWrite = capacity - position;
 
-			if (canWrite <= 0) return 0;
-			if (canWrite > count) canWrite = count;
+			if (toWrite <= 0) return 0;
+			if (toWrite > count) toWrite = count;
 
-			Buffer.BlockCopy(data, offset, buffer, position + bufferOffset, canWrite);
+			System.Buffer.BlockCopy(data, offset, writeBuffer, BufferOffset + position, toWrite);
 
-			position += canWrite;
+			position += toWrite;
+			Debug.Assert(position <= capacity);
 
-			return canWrite;
+			return toWrite;
 		}
 
-		public bool CanWrite(int count)
-		{
-			return length - position >= count;
-		}
-
-		internal void Reset()
+		internal void Clear()
 		{
 			position = 0;
 		}

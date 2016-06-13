@@ -11,9 +11,9 @@ namespace Enyim.Caching.Memcached.Operations
 		private const int STATE_INITIAL = 0;
 		private const int STATE_WRITE_HEADER = 1;
 		private const int STATE_WRITE_KEY = 2;
-		private const int STATE_PREPARE_BODY = 30;
-		private const int STATE_WRITE_BODY = 3;
-		private const int STATE_DONE = 4;
+		private const int STATE_PREPARE_BODY = 3;
+		private const int STATE_WRITE_BODY = 4;
+		private const int STATE_DONE = 5;
 
 		private static int InstanceCounter;
 
@@ -56,65 +56,13 @@ namespace Enyim.Caching.Memcached.Operations
 			{
 				allocator.Return(header);
 				header = null;
-				Key.Dispose();
 			}
+
+			Key.Dispose();
+			Key = default(Key);
 		}
 
 		public bool WriteTo(WriteBuffer buffer)
-		{
-			// 0. init header
-			// 1. loop on header
-			// 2. loop on Key, if any
-			// 3. loop on Data, if any
-			// 4. done
-			switch (state)
-			{
-				case STATE_INITIAL: goto init;
-				case STATE_WRITE_HEADER: goto write_header;
-				case STATE_WRITE_KEY: goto write_key;
-				case STATE_WRITE_BODY: goto write_body;
-				default: return false;
-			}
-
-			// TODO put these inside switch..case
-		init:
-			PrepareHeader();
-			state = STATE_WRITE_HEADER;
-
-		write_header:
-			writeOffset += buffer.Append(header, writeOffset, headerLength - writeOffset);
-			if (writeOffset < headerLength) return true;
-
-			if (Key.Length > 0)
-			{
-				writeOffset = 0;
-				state = STATE_WRITE_KEY;
-			}
-			else goto pre_body;
-
-		write_key:
-			writeOffset += buffer.Append(Key.Array, writeOffset, Key.Length - writeOffset);
-			if (writeOffset < Key.Length) return true;
-
-		pre_body:
-			if (Data.Count > 0)
-			{
-				writeOffset = 0;
-				state = STATE_WRITE_BODY;
-			}
-			else goto done;
-
-		write_body:
-			writeOffset += buffer.Append(Data.Array, Data.Offset + writeOffset, Data.Count - writeOffset);
-			if (writeOffset < Data.Count) return true;
-
-		done:
-			state = STATE_DONE;
-
-			return false;
-		}
-
-		public bool WriteTo2(WriteBuffer buffer)
 		{
 			// 0. init header
 			// 1. loop on header
@@ -171,11 +119,11 @@ namespace Enyim.Caching.Memcached.Operations
 			var keyLength = Key.Length;
 			if (keyLength > Protocol.MaxKeyLength) throw new InvalidOperationException("KeyTooLong");
 
-			var totalLength = Extra.Count + keyLength + Data.Count;	// total payload size
+			var totalLength = Extra.Count + keyLength + Data.Count; // total payload size
 
-			fixed (byte* headerPtr = this.header)
+			fixed (byte* headerPtr = header)
 			{
-				headerPtr[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic;	// magic
+				headerPtr[Protocol.HEADER_INDEX_MAGIC] = Protocol.RequestMagic; // magic
 				headerPtr[Protocol.HEADER_INDEX_OPCODE] = Operation;
 
 				headerPtr[Protocol.HEADER_INDEX_KEY + 0] = (byte)(keyLength >> 8);
@@ -184,9 +132,9 @@ namespace Enyim.Caching.Memcached.Operations
 
 				//// 5 -- data type, 0 (RAW)
 				//// 6,7 -- reserved, always 0
-				//headerPtr[0x05] = 0;
-				//headerPtr[0x06] = (byte)(Reserved >> 8);
-				//headerPtr[0x07] = (byte)(Reserved);
+				headerPtr[0x05] = 0;
+				headerPtr[0x06] = (byte)(Reserved >> 8);
+				headerPtr[0x07] = (byte)(Reserved);
 
 				headerPtr[Protocol.HEADER_INDEX_BODY + 0] = (byte)(totalLength >> 24);
 				headerPtr[Protocol.HEADER_INDEX_BODY + 1] = (byte)(totalLength >> 16);
@@ -218,7 +166,7 @@ namespace Enyim.Caching.Memcached.Operations
 		public readonly uint CorrelationId;
 		public Key Key;
 		public ulong Cas;
-		//public ushort Reserved;
+		public ushort Reserved;
 		public readonly ArraySegment<byte> Extra;
 		public ArraySegment<byte> Data;
 	}

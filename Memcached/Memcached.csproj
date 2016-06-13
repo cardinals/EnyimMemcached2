@@ -42,6 +42,7 @@
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
     <Compile Include="CasResult.cs" />
+    <Compile Include="PooledMemoryStream.cs" />
     <Compile Include="Core\AsyncSocket.cs" />
     <Compile Include="Core\BufferManagerAllocator.cs" />
     <Compile Include="Core\ClusterBase.cs" />

@@ -19,8 +19,8 @@ namespace Enyim.Caching.Memcached
 
 		public PooledSegment(IBufferAllocator allocator, int count)
 		{
-			Require.NotNull(allocator, "allocator");
-			Require.That(count >= 0, "count must be >= 0");
+			Require.NotNull(allocator, nameof(allocator));
+			Require.That(count >= 0, $"{nameof(count)} must be >= 0");
 
 			this.allocator = allocator;
 			this.array = allocator.Take(count);
@@ -29,9 +29,8 @@ namespace Enyim.Caching.Memcached
 
 		public PooledSegment(IBufferAllocator allocator, byte[] array, int count)
 		{
-			Require.NotNull(allocator, "allocator");
-			Require.NotNull(array, "array");
-			Require.That(count >= 0, "count must be >= 0");
+			Require.NotNull(array, nameof(array));
+			Require.That(count >= 0, $"{nameof(count)} must be >= 0");
 
 			this.allocator = allocator;
 			this.array = array;
@@ -54,17 +53,14 @@ namespace Enyim.Caching.Memcached
 		/// <summary>
 		/// Unowned buffer
 		/// </summary>
-		public static PooledSegment From(ArraySegment<byte> source, IBufferAllocator allocator = null)
+		internal static PooledSegment Wrap(ArraySegment<byte> source)
 		{
-			var c = source.Count;
+			var count = source.Count;
 			if (source.Offset == 0)
-				return new PooledSegment(source.Array, c);
+				return new PooledSegment(source.Array, count);
 
-			var retval = allocator == null
-							? new PooledSegment(new byte[c], c)
-							: new PooledSegment(allocator, c);
-
-			Buffer.BlockCopy(source.Array, source.Offset, retval.array, 0, c);
+			var retval = new PooledSegment(new byte[count], count);
+			Buffer.BlockCopy(source.Array, source.Offset, retval.array, 0, count);
 
 			return retval;
 		}
@@ -77,9 +73,20 @@ namespace Enyim.Caching.Memcached
 			if (allocator != null)
 			{
 				allocator.Return(array);
-				array = null;
 				allocator = null;
 			}
+
+			array = null;
+		}
+
+		public PooledSegment Clone()
+		{
+			var retval = new PooledSegment(allocator, array, count);
+
+			// the clone will return the buffer to the allocator
+			allocator = null;
+
+			return retval;
 		}
 
 		public ArraySegment<byte> AsArraySegment()

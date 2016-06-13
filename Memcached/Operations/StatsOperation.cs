@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Operations
@@ -20,9 +21,17 @@ namespace Enyim.Caching.Memcached.Operations
 		{
 			var request = new BinaryRequest(Allocator, OpCode.Stat);
 			if (!String.IsNullOrEmpty(type))
-				request.Key = NetworkOrderConverter.EncodeKey(Allocator, type);
+				request.Key = EncodeKey(type);
 
 			return request;
+		}
+
+		private Key EncodeKey(string key)
+		{
+			var array = Allocator.Take(key.Length);
+			Encoding.ASCII.GetBytes(key, 0, key.Length, array, 0);
+
+			return new Key(Allocator, array, key.Length);
 		}
 
 		protected override INodeStatsOperationResult CreateResult(BinaryResponse response)
@@ -41,8 +50,9 @@ namespace Enyim.Caching.Memcached.Operations
 			}
 
 			// decode stat key/value
-			var key = NetworkOrderConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
-			var value = NetworkOrderConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+			// both are ASCII in memcached
+			var key = Encoding.ASCII.GetString(data.Array, data.Offset, response.KeyLength);
+			var value = Encoding.ASCII.GetString(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
 
 			stats[key] = value;
 

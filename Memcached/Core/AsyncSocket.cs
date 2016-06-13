@@ -72,12 +72,12 @@ namespace Enyim.Caching
 
 		private void PerformConnect(IPEndPoint endpoint, CancellationToken token)
 		{
-			InitBuffers();
-
 			this.endpoint = endpoint;
 			this.name = endpoint.ToString();
 			this.IsAlive = false;
+
 			var sw = Stopwatch.StartNew();
+			InitBuffers();
 
 			using (var mre = new ManualResetEventSlim(false))
 			using (var opt = new SocketAsyncEventArgs { RemoteEndPoint = endpoint })
@@ -128,8 +128,8 @@ namespace Enyim.Caching
 			}
 			else
 			{
-				sendBuffer.Reset();
-				recvBuffer.SetAvailableLength(0);
+				sendBuffer.Clear();
+				recvBuffer.SetDataLength(0);
 			}
 		}
 
@@ -198,7 +198,7 @@ namespace Enyim.Caching
 				// otherwise try sending a new chunk
 				if (sendCount == 0)
 				{
-					sendBuffer.Reset();
+					sendBuffer.Clear();
 					FinishSending(true);
 					break;
 				}
@@ -230,7 +230,7 @@ namespace Enyim.Caching
 				Debug.Assert(sendCount == 0);
 
 				// all data was sent
-				sendBuffer.Reset();
+				sendBuffer.Clear();
 				FinishSending(true);
 			}
 		}
@@ -274,7 +274,7 @@ namespace Enyim.Caching
 			CoreEventSource.ReceiveChunk(name, IsAlive, received, recvArgs.SocketError);
 
 			var success = recvArgs.SocketError == SocketError.Success && received > 0;
-			recvBuffer.SetAvailableLength(success ? received : 0);
+			recvBuffer.SetDataLength(success ? received : 0);
 
 			CoreEventSource.ReceiveStop(name, IsAlive, success);
 			Volatile.Write(ref isReceiving, 0);
