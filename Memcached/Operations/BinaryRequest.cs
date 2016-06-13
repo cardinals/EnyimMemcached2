@@ -44,16 +44,19 @@ namespace Enyim.Caching.Memcached.Operations
 
 		~BinaryRequest()
 		{
+			GC.WaitForPendingFinalizers();
 			Dispose();
 		}
 
 		public virtual void Dispose()
 		{
+			GC.SuppressFinalize(this);
+
 			if (header != null)
 			{
-				GC.SuppressFinalize(this);
 				allocator.Return(header);
 				header = null;
+				Key.Dispose();
 			}
 		}
 
