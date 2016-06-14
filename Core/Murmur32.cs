@@ -22,7 +22,7 @@ namespace Enyim.Caching
 			var remainder = count & 3;
 			var h1 = 0u;
 
-			for (var i = offset; i < count / 4; i++)
+			for (int i = offset, max = count / 4; i < max; i++)
 			{
 				var k1 = uintBuffer[i] * C1;
 				k1 = ((k1 << 15) | (k1 >> (32 - 15))) * C2;
@@ -32,7 +32,22 @@ namespace Enyim.Caching
 			}
 
 			if (remainder > 0)
-				h1 ^= CalcTail(buffer, offset + (count - remainder), remainder);
+			{
+				var alignedLength = offset + (count - remainder);
+				var tail = 0u;
+
+				switch (remainder)
+				{
+					case 3: tail ^= (uint)buffer[alignedLength + 2] << 16; goto case 2;
+					case 2: tail ^= (uint)buffer[alignedLength + 1] << 8; goto case 1;
+					case 1: tail ^= buffer[alignedLength]; break;
+				}
+
+				tail *= C1;
+				tail = ((tail << 15) | (tail >> (32 - 15))) * C2;
+
+				h1 ^= tail;
+			}
 
 			h1 ^= (uint)count;
 
@@ -42,24 +57,6 @@ namespace Enyim.Caching
 			h1 ^= h1 >> 16;
 
 			return h1;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint CalcTail(byte[] source, int alignedLength, int remainder)
-		{
-			var k1 = 0u;
-
-			switch (remainder)
-			{
-				case 3: k1 ^= (uint)source[alignedLength + 2] << 16; goto case 2;
-				case 2: k1 ^= (uint)source[alignedLength + 1] << 8; goto case 1;
-				case 1: k1 ^= source[alignedLength]; break;
-			}
-
-			k1 *= C1;
-			k1 = ((k1 << 15) | (k1 >> (32 - 15))) * C2;
-
-			return k1;
 		}
 
 		// HACK PEVerify will not be able to load the parent type

@@ -28,7 +28,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "msbuild", "msbuild", "{3A1C
 		build\ILMerge.targets = build\ILMerge.targets
 		build\ProjectDefaults.targets = build\ProjectDefaults.targets
 		build\SignAssembly.targets = build\SignAssembly.targets
-		build\SignAssembly2.targets = build\SignAssembly2.targets
 		build\Tasks.targets = build\Tasks.targets
 		build\VersionInfo.targets = build\VersionInfo.targets
 	EndProjectSection
@@ -50,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{9929
 		build\modules\Utils.psm1 = build\modules\Utils.psm1
 		build\modules\XUnit.psm1 = build\modules\XUnit.psm1
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{B7258196-67ED-4135-B06F-F6F68C4176F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +90,10 @@ Global
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65FFFC96-CE69-464D-A2CC-4DF6D7A2722C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7258196-67ED-4135-B06F-F6F68C4176F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

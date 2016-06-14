@@ -13,8 +13,6 @@
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -35,6 +33,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
+      <Name>Core</Name>
+      <ILMerge>true</ILMerge>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="..\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
@@ -43,47 +48,6 @@
     </Compile>
     <Compile Include="CasResult.cs" />
     <Compile Include="PooledMemoryStream.cs" />
-    <Compile Include="Core\AsyncSocket.cs" />
-    <Compile Include="Core\BufferManagerAllocator.cs" />
-    <Compile Include="Core\ClusterBase.cs" />
-    <Compile Include="Core\ConsoleLoggerFactory.cs" />
-    <Compile Include="Core\Contracts\IBufferAllocator.cs" />
-    <Compile Include="Core\Contracts\ICluster.cs" />
-    <Compile Include="Core\Contracts\IContainer.cs" />
-    <Compile Include="Core\Contracts\IFailurePolicy.cs" />
-    <Compile Include="Core\Contracts\IItemOperation.cs" />
-    <Compile Include="Core\Contracts\ILog.cs" />
-    <Compile Include="Core\Contracts\ILogFactory.cs" />
-    <Compile Include="Core\Contracts\INode.cs" />
-    <Compile Include="Core\Contracts\INodeLocator.cs" />
-    <Compile Include="Core\Contracts\IOperation.cs" />
-    <Compile Include="Core\Contracts\IReconnectPolicy.cs" />
-    <Compile Include="Core\Contracts\IRequest.cs" />
-    <Compile Include="Core\Contracts\IResponse.cs" />
-    <Compile Include="Core\Contracts\ISocket.cs" />
-    <Compile Include="Core\Contracts\LogTo.cs" />
-    <Compile Include="Core\DefaultNodeLocator.cs" />
-    <Compile Include="Core\HashCodeCombiner.cs" />
-    <Compile Include="Core\ImmediateFailurePolicy.cs" />
-    <Compile Include="Core\Key.cs" />
-    <Compile Include="Core\LogManager.cs" />
-    <Compile Include="Core\Metrics.cs" />
-    <Compile Include="Core\Murmur32.cs" />
-    <Compile Include="Core\Murmur64_64.cs" />
-    <Compile Include="Core\NodeBase.cs" />
-    <Compile Include="Core\NodePerformanceMonitor.cs" />
-    <Compile Include="Core\NodeQueue.cs" />
-    <Compile Include="Core\PeriodicReconnectPolicy.cs" />
-    <Compile Include="Core\PooledMemoryStream.cs" />
-    <Compile Include="Core\ReadBuffer.cs" />
-    <Compile Include="Core\Require.cs" />
-    <Compile Include="Core\SocketAsyncEventArgsPool.cs" />
-    <Compile Include="Core\ThrottlingFailurePolicy.cs" />
-    <Compile Include="Core\Tracing\AsyncSocket.cs" />
-    <Compile Include="Core\Tracing\CoreEventSource.cs" />
-    <Compile Include="Core\Tracing\NodeBase.cs" />
-    <Compile Include="Core\TrackingBufferAllocator.cs" />
-    <Compile Include="Core\WriteBuffer.cs" />
     <Compile Include="Expiration.cs" />
     <Compile Include="Contracts\ICanBeSilent.cs" />
     <Compile Include="Contracts\IGetAndTouchOperation.cs" />

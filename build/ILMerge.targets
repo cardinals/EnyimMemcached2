@@ -1,0 +1,161 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!--
+
+		These tasks will merge the output of a project with its marked references using ILMerge.
+
+		References to be merged must have the metadata "ILMerge" set to True.
+
+		1. Exclude marked references from the references, so they will not get copied to the output dir
+		2. Merge the assemblies and store them in the obj\ folder. This step will only run when one of the dependent assemblies change.
+		3. Copy the merged assembly from obj\ to the output dir.
+				a) This allows us to support incremental builds by only doing ILMerge when neccessary
+				b) We cannot directly merge into the output dir, as incremental builds only copy from obj\ to bin\
+				c) We cannot overwrite the intermediate assembly in obj\ because this messes up the incremental builds (by VS)
+
+	-->
+	<!-- input args -->
+	<Choose>
+		<When Condition=" '$(ILMergePath)' == '' ">
+			<ItemGroup>
+				<ILMergePath Include="$(SolutionDir)\packages\ilmerge*\**\ILMerge.exe" />
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<ILMergePath Include="$(ILMergePath)" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<!-- Internals -->
+	<PropertyGroup>
+		<_LastMergeCache>$(IntermediateOutputPath)__lastmerge</_LastMergeCache>
+		<_MergeOutputPath>$(IntermediateOutputPath)merged\</_MergeOutputPath>
+		<_MergedAssembly>$(_MergeOutputPath)$(AssemblyName).dll</_MergedAssembly>
+	</PropertyGroup>
+
+	<!-- hook into the build process -->
+	<PropertyGroup>
+		<CompileDependsOn>FindMergedReferences;FixReferences;$(CompileDependsOn);MergeAssemblies</CompileDependsOn>
+		<PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyMergeResult</PrepareForRunDependsOn>
+		<CleanDependsOn>$(CleanDependsOn);CleanCache</CleanDependsOn>
+	</PropertyGroup>
+
+	<Target Name="FindMergedReferences">
+		<ItemGroup>
+			<MergedReferences Include="@(ReferencePath)" Condition=" '%(CopyLocal)' == 'True' And '%(ReferencePath.ILMerge)' == 'True' "/>
+		</ItemGroup>
+	</Target>
+
+	<Target Name="FixReferences">
+		<ItemGroup>
+			<!-- do not copy merged references to the output directory -->
+			<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition=" $([MSBuild]::ValueOrDefault(`%(ReferenceCopyLocalPaths.ILMerge)`, `False`)) " />
+
+			<!-- remove all manually marked references, as another referenced assembly already contains them -->
+			<ReferencePath Remove="@(ReferencePath)" Condition=" $([MSBuild]::ValueOrDefault(`%(ReferencePath.AlreadyMerged)`, `False`)) " />
+			<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition=" $([MSBuild]::ValueOrDefault(`%(ReferenceCopyLocalPaths.AlreadyMerged)`, `False`)) " />
+		</ItemGroup>
+
+		<ItemGroup>
+			<!-- add a Name metadata to each HintOnlyReference to make msbuild batching happy -->
+			<_Hint Include="@(HintOnlyReferences)" Condition=" '%(Identity)' != '' "><Name>%(Identity)</Name></_Hint>
+
+			<_NamedReferences Include="@(ReferencePath)" Condition=" '%(ReferencePath.Name)' != '' " />
+			<!-- find all references that are marked as "hint only" -->
+			<ToRemove Include="@(_NamedReferences)" Condition=" '%(Name)' == '@(_Hint)'" />
+			<!-- find all "hint only" reference that is not used as a merged reference (i.e. indirect merged reference) -->
+			<ToRemove Remove="@(ToRemove)" Condition=" $([MSBuild]::ValueOrDefault(`%(ReferencePath.ILMerge)`, `False`)) " />
+
+			<!-- remove all above references, as another referenced assembly already contains them -->
+			<ReferencePath Remove="@(ToRemove)" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="MergeAssemblies" Condition=" '@(MergedReferences)' != '' " Inputs="@(IntermediateAssembly);" Outputs="$(_LastMergeCache)" >
+		<Error Condition="@(ILMergePath->Count()) == 0" Text="ILMerge not found. Check the referenced packages or specify the ILMergePath property." />
+		<Error Condition="@(ILMergePath->Count()) > 1" Text="Found multiple ILMerge.exe; either clean up the referenced packages or only specify the ILMergePath property once." />
+
+		<Message Text="++ Merging @(MergedReferences -> '%(Filename)') into $(AssemblyName)" Importance="High" />
+
+		<!-- get path to the .net reference assemblies -->
+		<GetReferenceAssemblyPaths TargetFrameworkMoniker="$(TargetFrameworkMoniker)" RootPath="$(TargetFrameworkRootPath)">
+			<Output TaskParameter="ReferenceAssemblyPaths" PropertyName="_ReferenceAssemblies"/>
+			<Output TaskParameter="FullFrameworkReferenceAssemblyPaths" PropertyName="_FullFrameworkReferenceAssemblyPaths"/>
+			<Output TaskParameter="TargetFrameworkMonikerDisplayName" PropertyName="TargetFrameworkMonikerDisplayName" Condition="'$(TargetFrameworkMonikerDisplayName)' == ''"/>
+		</GetReferenceAssemblyPaths>
+
+		<!-- setup ILMerge parameters -->
+		<ItemGroup>
+			<ILMergeArgs Include="log" />
+			<ILMergeArgs Include="targetplatform">
+				<Value>v4,$(_ReferenceAssemblies.TrimEnd('\'))</Value>
+			</ILMergeArgs>
+			<ILMergeArgs Include="lib">
+				<Value>$(OutDir.TrimEnd('\'))</Value>
+			</ILMergeArgs>
+			<ILMergeArgs Include="out">
+				<Value>$(_MergedAssembly)</Value>
+			</ILMergeArgs>
+			<ILMergeArgs Include="keyfile" Condition=" '$(AssemblyOriginatorKeyFile)' != '' ">
+				<Value>$(AssemblyOriginatorKeyFile)</Value>
+			</ILMergeArgs>
+		</ItemGroup>
+
+		<ItemGroup>
+			<_StandaloneArgs Include="@(ILMergeArgs)" Condition=" '%(ILMergeArgs.Value)' == '' " />
+			<_QuotedArgs Include="@(ILMergeArgs)" Condition=" '%(ILMergeArgs.Value)' != '' " />
+		</ItemGroup>
+
+		<!-- generate command line -->
+		<PropertyGroup>
+			<_Exec>"@(ILMergePath)"</_Exec>
+			<_Exec>$(_Exec) @(_StandaloneArgs -> '/%(Identity)', ' ')</_Exec>
+			<_Exec>$(_Exec) @(_QuotedArgs -> '/%(Identity):"%(Value)"', ' ')</_Exec>
+			<_Exec>$(_Exec) "@(IntermediateAssembly)"</_Exec>
+			<_Exec>$(_Exec) @(MergedReferences -> '"%(FullPath)"', ' ')</_Exec>
+		</PropertyGroup>
+
+		<MakeDir Directories="$(_MergeOutputPath)" />
+
+		<Exec Command="$(_Exec)" StandardOutputImportance="normal" />
+
+		<WriteLinesToFile File="$(_LastMergeCache)" Lines="%(IntermediateAssembly.ModifiedTime)" />
+	</Target>
+
+	<Target Name="CopyMergeResult" Condition=" '@(MergedReferences)' != '' ">
+		<ItemGroup>
+			<Merged Include="$(_MergeOutputPath)*" />
+		</ItemGroup>
+		<Message Text="++ Copying merge result to $(TargetPath)" Importance="High" />
+		<Copy SourceFiles="@(Merged)" DestinationFiles="@(Merged->'$(OutputPath)%(FileName)%(Extension)')" OverwriteReadOnlyFiles="True" SkipUnchangedFiles="true"/>
+	</Target>
+
+	<Target Name="CleanCache">
+		<ItemGroup>
+			<TempFiles Include="$(_LastMergeCache)" />
+			<TempFiles Include="$(_MergeOutputPath)*" />
+		</ItemGroup>
+		<Delete Files="@(TempFiles)" />
+		<RemoveDir Directories="$(_MergeOutputPath)" />
+	</Target>
+
+</Project>
+
+<!--
+
+	Copyright (c) Attila Kiskó, enyim.com
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+
+-->

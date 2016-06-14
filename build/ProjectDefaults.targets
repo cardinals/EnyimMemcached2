@@ -36,6 +36,14 @@
 	<PropertyGroup >
 		<DefineConstants>$(DefineConstants);$(FrameworkVersions)</DefineConstants>
 	</PropertyGroup>
+
+	<!--
+		The Core project is merged into Memcached, so exclude from all others.
+		Easier than editing all csprojs to add the AlreadyMerged metadata to the reference.
+	-->
+	<ItemGroup>
+		<HintOnlyReferences Include="Core" />
+	</ItemGroup>
 </Project>
 
 <!--

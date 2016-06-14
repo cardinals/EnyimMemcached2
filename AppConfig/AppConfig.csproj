@@ -57,6 +57,10 @@
       <Project>{dd7b7346-2928-446b-a0d2-0466be2ba905}</Project>
       <Name>Configuration</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{b7258196-67ed-4135-b06f-f6f68c4176f4}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Memcached\Memcached.csproj">
       <Project>{934f5e21-0a76-4edd-a6df-e66379fa2e4c}</Project>
       <Name>Memcached</Name>
