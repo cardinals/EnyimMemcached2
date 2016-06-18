@@ -42,6 +42,7 @@
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="Tracing\CoreEventSource.cs" />
     <Compile Include="Tracing\NodeBase.cs" />
+    <Compile Include="BufferAllocatorPerformanceMonitor.cs" />
     <Compile Include="TrackingBufferAllocator.cs" />
     <Compile Include="BufferManagerAllocator.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />

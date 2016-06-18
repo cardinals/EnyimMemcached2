@@ -8,18 +8,12 @@ namespace Enyim.Caching
 	public sealed class BufferManagerAllocator : IBufferAllocator
 	{
 		private readonly BufferManager pool;
-
-		private readonly IMeter allocCount;
-		private readonly IMeter releaseCount;
-		private readonly ICounter totalSize;
+		private readonly BufferAllocatorPerformanceMonitor perfMon;
 
 		public BufferManagerAllocator(int maxBufferSize = 1024 * 1024, long maxBufferPoolSize = 1024 * 1024 * 16)
 		{
 			pool = BufferManager.CreateBufferManager(maxBufferPoolSize, maxBufferSize);
-
-			allocCount = Metrics.Meter("alloc count", null, Interval.Seconds);
-			releaseCount = Metrics.Meter("alloc release count", null, Interval.Seconds);
-			totalSize = Metrics.Counter("alloc total size", null);
+			perfMon = new BufferAllocatorPerformanceMonitor("BufferManagerAllocator");
 		}
 
 		public void Dispose()
@@ -32,16 +26,14 @@ namespace Enyim.Caching
 			var buffer = pool.TakeBuffer(size);
 			Array.Clear(buffer, 0, buffer.Length);
 
-			allocCount.IncrementBy(1);
-			totalSize.IncrementBy(buffer.Length);
+			perfMon.Take(buffer.Length);
 
 			return buffer;
 		}
 
 		public void Return(byte[] buffer)
 		{
-			releaseCount.IncrementBy(1);
-			totalSize.DecrementBy(buffer.Length);
+			perfMon.Return(buffer.Length);
 
 			pool.ReturnBuffer(buffer);
 		}

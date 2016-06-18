@@ -1,9 +1,11 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Enyim.Caching
 {
+#if DIAGNOSTICS
 	internal class NodePerformanceMonitor
 	{
 		private readonly ICounter opEnqueueWritePerSec;
@@ -89,6 +91,38 @@ namespace Enyim.Caching
 			flushPerSec.Increment();
 		}
 	}
+#else
+	internal class NodePerformanceMonitor
+	{
+		public NodePerformanceMonitor(string endpoint)
+		{
+		}
+
+		[Conditional("DIAGNOSTICS")]
+		public void ResetQueues() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void EnqueueWriteOp() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void DequeueWriteOp() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void EnqueueReadOp() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void DequeueReadOp() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void NewOp() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void Error() { }
+
+		[Conditional("DIAGNOSTICS")]
+		public void Flush() { }
+	}
+#endif
 }
 
 #region [ License information          ]

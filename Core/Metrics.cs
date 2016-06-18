@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if DIAGNOSTICS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -142,385 +143,387 @@ namespace Enyim.Caching
 		}
 	}
 
-	#region [ MetricsVisitor               ]
+#region [ MetricsVisitor               ]
 
-	internal abstract class MetricsVisitor
-	{
-		public virtual void Visit(IEnumerable<IMetric> metrics)
+		internal abstract class MetricsVisitor
 		{
-			foreach (var m in metrics)
-				Visit(m);
-		}
-
-		protected virtual void Visit(IMetric metric)
-		{
-			var im = metric as IMeter;
-			if (im != null) Visit(im);
-			else
+			public virtual void Visit(IEnumerable<IMetric> metrics)
 			{
-				var ic = metric as ICounter;
-				if (ic != null) Visit(ic);
+				foreach (var m in metrics)
+					Visit(m);
+			}
+
+			protected virtual void Visit(IMetric metric)
+			{
+				var im = metric as IMeter;
+				if (im != null) Visit(im);
 				else
 				{
-					var g = metric as IGauge;
-					if (g != null) Visit(g);
-				}
-			}
-		}
-
-		protected abstract void Visit(IMeter meter);
-		protected abstract void Visit(ICounter counter);
-		protected abstract void Visit(IGauge gauge);
-	}
-
-	#endregion
-	#region [ StringBuilderVisitor         ]
-
-	internal class StringBuilderVisitor : MetricsVisitor
-	{
-		private readonly StringBuilder sb;
-
-		public StringBuilderVisitor(StringBuilder sb)
-		{
-			this.sb = sb;
-		}
-
-		public override void Visit(IEnumerable<IMetric> metrics)
-		{
-			foreach (var m in metrics)
-			{
-				if (m.Parent == null)
-				{
-					sb.AppendLine();
-					sb.AppendFormat("{0,-22}", m.Name);
-				}
-				else
-				{
-					sb.AppendFormat("{0,20}: ", m.Instance);
-				}
-
-				Visit(m);
-				sb.AppendLine("      ");
-
-				if (m.Parent == null)
-					sb.AppendLine("========================================");
-			}
-		}
-
-		protected override void Visit(IMeter meter)
-		{
-			sb.AppendFormat("{0:0.##}/{1} ({2})", meter.Rate, meter.Interval.ToString().ToLower(), meter.Count);
-		}
-
-		protected override void Visit(ICounter counter)
-		{
-			sb.Append(counter.Count);
-		}
-
-		protected override void Visit(IGauge gauge)
-		{
-			sb.AppendFormat("{0} ({1}/{2})", gauge.Value, gauge.Min, gauge.Max);
-		}
-	}
-
-	#endregion
-	#region [ ConsoleReporter              ]
-
-	public class ConsoleReporter
-	{
-		private StringBuilder sb;
-		private StringBuilderVisitor visitor;
-
-		public ConsoleReporter()
-		{
-			this.sb = new StringBuilder();
-			this.visitor = new StringBuilderVisitor(sb);
-		}
-
-		public void Report()
-		{
-			sb.Length = 0;
-			visitor.Visit(Metrics.GetAll());
-			//Console.CursorLeft = 0;
-			//Console.CursorTop = 0;
-			Console.Write(sb.ToString());
-		}
-
-		public void StartPeriodicReporting(int time, Interval interval, CancellationToken cancellationToken)
-		{
-			var delay = (int)IntervalConverter.Convert(time, interval, Interval.Milliseconds);
-
-			Task.Factory.StartNew(async () =>
-			{
-				try
-				{
-					while (!cancellationToken.IsCancellationRequested)
+					var ic = metric as ICounter;
+					if (ic != null) Visit(ic);
+					else
 					{
-						Report();
-
-						await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+						var g = metric as IGauge;
+						if (g != null) Visit(g);
 					}
 				}
-				catch { }
-			}, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
-		}
-	}
-
-	#endregion
-	#region [ IntervalConverter            ]
-
-	internal static class IntervalConverter
-	{
-		private static readonly long[][] ConversionMatrix = new long[][]
-		{
-			/* Nanoseconds  */ null,
-			/* Microseconds */ new [] { 1000L },
-			/* Milliseconds */ new [] { 1000000L, 1000L },
-			/* Seconds      */ new [] { 1000000000L, 1000000L, 1000L },
-			/* Minutes      */ new [] { 60000000000L, 60000000L, 60000L, 60L },
-			/* Hours        */ new [] { 3600000000000L, 3600000000L, 3600000L, 3600L, 60L },
-			/* Days         */ new [] { 86400000000000L, 86400000000L, 86400000L, 86400L, 1440L, 24L }
-		};
-
-		public static long Convert(long value, Interval from, Interval to)
-		{
-			return from == to
-					? value
-					: from > to
-						? (value * ConversionMatrix[(int)from][(int)to])
-						: (value / ConversionMatrix[(int)to][(int)from]);
-		}
-	}
-
-	#endregion
-	#region [ Internal impl.               ]
-
-	namespace Internal
-	{
-		internal class DefaultMetricFactory : IMetricFactory
-		{
-			public ICounter Counter(string name)
-			{
-				return new Counter(name);
 			}
 
-			public IMeter Meter(string name, Interval interval)
-			{
-				return new DefaultMeter(name, interval);
-			}
-
-			public IGauge Gauge(string name)
-			{
-				return new DefaultGauge(name);
-			}
-
-			public ICounter Counter(ICounter parent, string instance)
-			{
-				return new Counter(parent, instance);
-			}
-
-			public IMeter Meter(IMeter parent, string instance, Interval interval)
-			{
-				return new DefaultMeter(parent, instance, interval);
-			}
-
-			public IGauge Gauge(IGauge parent, string instance)
-			{
-				return new DefaultGauge(parent, instance);
-			}
+			protected abstract void Visit(IMeter meter);
+			protected abstract void Visit(ICounter counter);
+			protected abstract void Visit(IGauge gauge);
 		}
 
-		internal abstract class DefaultMetric : IMetric
+#endregion
+#region [ StringBuilderVisitor         ]
+
+		internal class StringBuilderVisitor : MetricsVisitor
 		{
-			private readonly IMetric parent;
-			private readonly string name;
+			private readonly StringBuilder sb;
 
-			protected DefaultMetric(IMetric parent, string instance)
+			public StringBuilderVisitor(StringBuilder sb)
 			{
-				this.parent = parent;
-				Instance = instance;
+				this.sb = sb;
 			}
 
-			protected DefaultMetric(string name)
+			public override void Visit(IEnumerable<IMetric> metrics)
 			{
-				this.name = name;
-			}
-
-			public string Name { get { return name ?? parent.Name; } }
-			public string Instance { get; private set; }
-			IMetric IMetric.Parent { get { return parent; } }
-		}
-
-		internal class DefaultGauge : DefaultMetric, IGauge
-		{
-			public DefaultGauge(string name) : base(name) { }
-			public DefaultGauge(IMetric parent, string instance) : base(parent, instance) { }
-
-			public IGauge Parent { get { return ((IMetric)this).Parent as IGauge; } }
-
-			public void Set(long value)
-			{
-				Value = value;
-				if (Min > value) Min = value;
-				if (Max < value) Max = value;
-
-				var p = Parent;
-				if (p != null) p.Set(value);
-			}
-
-			public long Value { get; private set; }
-			public long Min { get; private set; }
-			public long Max { get; private set; }
-		}
-
-		internal class Counter : DefaultMetric, ICounter
-		{
-			// TODO tune this
-			private const int STRIPE_COUNT = 32;
-
-			// we have two counters and we pad them with 64 bytes (length of the cache-line)
-			private const int STRIPE_LENGTH = 10;
-
-			private const int IDX_THREAD_ID = 0;
-			private const int IDX_VALUE = 1;
-
-			private long global;
-			private long[] data;
-
-			public Counter(string name)
-				: base(name)
-			{
-				Initialize();
-			}
-
-			public Counter(IMetric parent, string instance)
-				: base(parent, instance)
-			{
-				Initialize();
-			}
-
-			public ICounter Parent { get { return ((IMetric)this).Parent as ICounter; } }
-
-			private void Initialize()
-			{
-				// add an extra padding to the beginning of the array to avoid false-sharing with the array's length
-				Volatile.Write(ref data, new long[STRIPE_LENGTH * STRIPE_COUNT + STRIPE_LENGTH]);
-				Volatile.Write(ref global, 0);
-			}
-
-			public virtual void Reset()
-			{
-				Initialize();
-
-				var p = Parent;
-				if (p != null) p.Reset();
-			}
-
-			public void IncrementBy(int value)
-			{
-				ChangeBy(value);
-			}
-
-			public void DecrementBy(int value)
-			{
-				ChangeBy(-value);
-			}
-
-			private void ChangeBy(int by)
-			{
-				var p = Parent as Counter;
-				if (p != null) p.ChangeBy(by);
-
-				var threadId = Thread.CurrentThread.ManagedThreadId;
-				var hash = threadId;
-
-				for (var i = 0; i < 3; i++)
+				foreach (var m in metrics)
 				{
-					var index = ((hash % STRIPE_COUNT) + 1) * STRIPE_LENGTH;
-					var bucketThread = data[index + IDX_THREAD_ID];
-
-					if (bucketThread == threadId)
+					if (m.Parent == null)
 					{
-						data[index + IDX_VALUE] += by;
-						return;
+						sb.AppendLine();
+						sb.AppendFormat("{0,-22}", m.Name);
 					}
-					else if (bucketThread == 0)
+					else
 					{
-						if (Interlocked.CompareExchange(ref data[index + IDX_VALUE], threadId, 0) == 0)
+						sb.AppendFormat("{0,20}: ", m.Instance);
+					}
+
+					Visit(m);
+					sb.AppendLine("      ");
+
+					if (m.Parent == null)
+						sb.AppendLine("========================================");
+				}
+			}
+
+			protected override void Visit(IMeter meter)
+			{
+				sb.AppendFormat("{0:0.##}/{1} ({2})", meter.Rate, meter.Interval.ToString().ToLower(), meter.Count);
+			}
+
+			protected override void Visit(ICounter counter)
+			{
+				sb.Append(counter.Count);
+			}
+
+			protected override void Visit(IGauge gauge)
+			{
+				sb.AppendFormat("{0} ({1}/{2})", gauge.Value, gauge.Min, gauge.Max);
+			}
+		}
+
+#endregion
+#region [ ConsoleReporter              ]
+
+		public class ConsoleReporter
+		{
+			private StringBuilder sb;
+			private StringBuilderVisitor visitor;
+
+			public ConsoleReporter()
+			{
+				this.sb = new StringBuilder();
+				this.visitor = new StringBuilderVisitor(sb);
+			}
+
+			public void Report()
+			{
+				sb.Length = 0;
+				visitor.Visit(Metrics.GetAll());
+				//Console.CursorLeft = 0;
+				//Console.CursorTop = 0;
+				Console.Write(sb.ToString());
+			}
+
+			public void StartPeriodicReporting(int time, Interval interval, CancellationToken cancellationToken)
+			{
+				var delay = (int)IntervalConverter.Convert(time, interval, Interval.Milliseconds);
+
+				Task.Factory.StartNew(async () =>
+				{
+					try
+					{
+						while (!cancellationToken.IsCancellationRequested)
 						{
-							data[index + IDX_VALUE] = by;
-							return;
+							Report();
+
+							await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
 						}
 					}
+					catch { }
+				}, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+			}
+		}
 
-					hash ^= (hash << 5) + (hash >> 2) + threadId;
+#endregion
+#region [ IntervalConverter            ]
+
+		internal static class IntervalConverter
+		{
+			private static readonly long[][] ConversionMatrix = new long[][]
+			{
+				/* Nanoseconds  */ null,
+				/* Microseconds */ new [] { 1000L },
+				/* Milliseconds */ new [] { 1000000L, 1000L },
+				/* Seconds      */ new [] { 1000000000L, 1000000L, 1000L },
+				/* Minutes      */ new [] { 60000000000L, 60000000L, 60000L, 60L },
+				/* Hours        */ new [] { 3600000000000L, 3600000000L, 3600000L, 3600L, 60L },
+				/* Days         */ new [] { 86400000000000L, 86400000000L, 86400000L, 86400L, 1440L, 24L }
+			};
+
+			public static long Convert(long value, Interval from, Interval to)
+			{
+				return from == to
+						? value
+						: from > to
+							? (value * ConversionMatrix[(int)from][(int)to])
+							: (value / ConversionMatrix[(int)to][(int)from]);
+			}
+		}
+
+#endregion
+#region [ Internal impl.               ]
+
+		namespace Internal
+		{
+			internal class DefaultMetricFactory : IMetricFactory
+			{
+				public ICounter Counter(string name)
+				{
+					return new Counter(name);
 				}
 
-				Interlocked.Add(ref global, by);
+				public IMeter Meter(string name, Interval interval)
+				{
+					return new DefaultMeter(name, interval);
+				}
+
+				public IGauge Gauge(string name)
+				{
+					return new DefaultGauge(name);
+				}
+
+				public ICounter Counter(ICounter parent, string instance)
+				{
+					return new Counter(parent, instance);
+				}
+
+				public IMeter Meter(IMeter parent, string instance, Interval interval)
+				{
+					return new DefaultMeter(parent, instance, interval);
+				}
+
+				public IGauge Gauge(IGauge parent, string instance)
+				{
+					return new DefaultGauge(parent, instance);
+				}
 			}
 
-			public long Count
+			internal abstract class DefaultMetric : IMetric
 			{
-				get
-				{
-					var retval = global;
+				private readonly IMetric parent;
+				private readonly string name;
 
-					for (var i = STRIPE_LENGTH; i < data.Length; i += STRIPE_LENGTH)
+				protected DefaultMetric(IMetric parent, string instance)
+				{
+					this.parent = parent;
+					Instance = instance;
+				}
+
+				protected DefaultMetric(string name)
+				{
+					this.name = name;
+				}
+
+				public string Name { get { return name ?? parent.Name; } }
+				public string Instance { get; private set; }
+				IMetric IMetric.Parent { get { return parent; } }
+			}
+
+			internal class DefaultGauge : DefaultMetric, IGauge
+			{
+				public DefaultGauge(string name) : base(name) { }
+				public DefaultGauge(IMetric parent, string instance) : base(parent, instance) { }
+
+				public IGauge Parent { get { return ((IMetric)this).Parent as IGauge; } }
+
+				public void Set(long value)
+				{
+					Value = value;
+					if (Min > value) Min = value;
+					if (Max < value) Max = value;
+
+					var p = Parent;
+					if (p != null) p.Set(value);
+				}
+
+				public long Value { get; private set; }
+				public long Min { get; private set; }
+				public long Max { get; private set; }
+			}
+
+			internal class Counter : DefaultMetric, ICounter
+			{
+				// TODO tune this
+				private const int STRIPE_COUNT = 32;
+
+				// we have two counters and we pad them with 64 bytes (length of the cache-line)
+				private const int STRIPE_LENGTH = 10;
+
+				private const int IDX_THREAD_ID = 0;
+				private const int IDX_VALUE = 1;
+
+				private long global;
+				private long[] data;
+
+				public Counter(string name)
+					: base(name)
+				{
+					Initialize();
+				}
+
+				public Counter(IMetric parent, string instance)
+					: base(parent, instance)
+				{
+					Initialize();
+				}
+
+				public ICounter Parent { get { return ((IMetric)this).Parent as ICounter; } }
+
+				private void Initialize()
+				{
+					// add an extra padding to the beginning of the array to avoid false-sharing with the array's length
+					Volatile.Write(ref data, new long[STRIPE_LENGTH * STRIPE_COUNT + STRIPE_LENGTH]);
+					Volatile.Write(ref global, 0);
+				}
+
+				public virtual void Reset()
+				{
+					Initialize();
+
+					var p = Parent;
+					if (p != null) p.Reset();
+				}
+
+				public void IncrementBy(int value)
+				{
+					ChangeBy(value);
+				}
+
+				public void DecrementBy(int value)
+				{
+					ChangeBy(-value);
+				}
+
+				private void ChangeBy(int by)
+				{
+					var p = Parent as Counter;
+					if (p != null) p.ChangeBy(by);
+
+					var threadId = Thread.CurrentThread.ManagedThreadId;
+					var hash = threadId;
+
+					for (var i = 0; i < 3; i++)
 					{
-						retval += data[i + IDX_VALUE];
+						var index = ((hash % STRIPE_COUNT) + 1) * STRIPE_LENGTH;
+						var bucketThread = data[index + IDX_THREAD_ID];
+
+						if (bucketThread == threadId)
+						{
+							data[index + IDX_VALUE] += by;
+							return;
+						}
+						else if (bucketThread == 0)
+						{
+							if (Interlocked.CompareExchange(ref data[index + IDX_VALUE], threadId, 0) == 0)
+							{
+								data[index + IDX_VALUE] = by;
+								return;
+							}
+						}
+
+						hash ^= (hash << 5) + (hash >> 2) + threadId;
 					}
 
-					return retval;
+					Interlocked.Add(ref global, by);
 				}
-			}
-		}
 
-		internal class DefaultMeter : Counter, IMeter
-		{
-			private static readonly long NanoTick = 1000 * 1000 * 1000 / Stopwatch.Frequency;
-			private readonly Stopwatch stopwatch;
-			private readonly Interval interval;
-
-			public DefaultMeter(string name, Interval interval)
-				: base(name)
-			{
-				this.interval = interval;
-				this.stopwatch = Stopwatch.StartNew();
-			}
-
-			public DefaultMeter(IMetric parent, string instance, Interval interval)
-				: base(parent, instance)
-			{
-				this.interval = interval;
-				this.stopwatch = Stopwatch.StartNew();
-			}
-
-			public override void Reset()
-			{
-				base.Reset();
-				stopwatch.Restart();
-			}
-
-			public Interval Interval { get { return interval; } }
-
-			public double Rate
-			{
-				get
+				public long Count
 				{
-					var by = IntervalConverter.Convert(stopwatch.ElapsedTicks * NanoTick, Interval.Nanoseconds, interval);
-					if (by == 0) return Count;
+					get
+					{
+						var retval = global;
 
-					var retval = (double)Count / by;
-					//Reset();
+						for (var i = STRIPE_LENGTH; i < data.Length; i += STRIPE_LENGTH)
+						{
+							retval += data[i + IDX_VALUE];
+						}
 
-					return retval;
+						return retval;
+					}
+				}
+			}
+
+			internal class DefaultMeter : Counter, IMeter
+			{
+				private static readonly long NanoTick = 1000 * 1000 * 1000 / Stopwatch.Frequency;
+				private readonly Stopwatch stopwatch;
+				private readonly Interval interval;
+
+				public DefaultMeter(string name, Interval interval)
+					: base(name)
+				{
+					this.interval = interval;
+					this.stopwatch = Stopwatch.StartNew();
+				}
+
+				public DefaultMeter(IMetric parent, string instance, Interval interval)
+					: base(parent, instance)
+				{
+					this.interval = interval;
+					this.stopwatch = Stopwatch.StartNew();
+				}
+
+				public override void Reset()
+				{
+					base.Reset();
+					stopwatch.Restart();
+				}
+
+				public Interval Interval { get { return interval; } }
+
+				public double Rate
+				{
+					get
+					{
+						var by = IntervalConverter.Convert(stopwatch.ElapsedTicks * NanoTick, Interval.Nanoseconds, interval);
+						if (by == 0) return Count;
+
+						var retval = (double)Count / by;
+						//Reset();
+
+						return retval;
+					}
 				}
 			}
 		}
-	}
 
-	#endregion
+#endregion
 }
+
+#endif
 
 #region [ License information          ]
 
