@@ -58,6 +58,7 @@
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
+    <Compile Include="Fixtures\RemoteServerFixture.cs" />
     <Compile Include="LoudMemcachedClientTests.cs" />
     <Compile Include="Fixtures\MemcachedClientConfigFixture.cs" />
     <Compile Include="SilentMemcachedClientTests.cs" />
