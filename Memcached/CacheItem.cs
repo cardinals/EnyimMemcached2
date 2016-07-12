@@ -5,26 +5,25 @@ using System.IO;
 
 namespace Enyim.Caching.Memcached
 {
-	[SuppressMessage("Potential Code Quality Issues", "NonReadonlyReferencedInGetHashCodeIssue:Non-readonly field referenced in 'GetHashCode()'", Justification = "Only Dispose() changes the array")]
 	public struct CacheItem : IDisposable
 	{
-		public static readonly CacheItem Empty = new CacheItem(0, PooledSegment.Empty);
+		public static readonly CacheItem Empty = new CacheItem(0, ByteBuffer.Empty);
 
 		private readonly uint flags;
-		private readonly PooledSegment segment;
+		private readonly ByteBuffer data;
 
-		public CacheItem(uint flags, PooledSegment segment)
+		public CacheItem(uint flags, ByteBuffer data)
 		{
 			this.flags = flags;
-			this.segment = segment;
+			this.data = data;
 		}
 
 		public uint Flags { get { return flags; } }
-		public PooledSegment Segment { get { return segment; } }
+		public ByteBuffer Data { get { return data; } }
 
 		public void Dispose()
 		{
-			segment.Dispose();
+			data.Dispose();
 		}
 
 		public override bool Equals(object obj)
@@ -34,12 +33,12 @@ namespace Enyim.Caching.Memcached
 
 		public bool Equals(CacheItem obj)
 		{
-			return obj.flags == flags && obj.segment.Equals(segment);
+			return obj.flags == flags && obj.data.Equals(data);
 		}
 
 		public override int GetHashCode()
 		{
-			return flags.GetHashCode() ^ segment.GetHashCode();
+			return HashCodeCombiner.Combine(flags.GetHashCode(), data.GetHashCode());
 		}
 
 		public static bool operator ==(CacheItem a, CacheItem b)

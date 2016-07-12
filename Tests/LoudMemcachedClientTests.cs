@@ -7,7 +7,8 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class LoudMemcachedClientTests : MemcachedClientTests, IClassFixture<MemcachedClientConfigFixture>
+	[Collection(TestSettings.CollectionToUse)]
+	public partial class LoudMemcachedClientTests : MemcachedClientTests//, IClassFixture<MemcachedClientConfigFixture>
 	{
 		public LoudMemcachedClientTests(MemcachedClientConfigFixture fixture) : base("LoudMemcachedClientTests", fixture.Config) { }
 

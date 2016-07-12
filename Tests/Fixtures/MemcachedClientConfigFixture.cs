@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Enyim.Caching.Memcached.Configuration;
+using Xunit;
 
 namespace Enyim.Caching.Tests
 {
@@ -11,6 +12,18 @@ namespace Enyim.Caching.Tests
 		{
 
 		}
+	}
+
+	public static class TestSettings
+	{
+		public const string SharedConfigCollection = "Shared config collection";
+
+		public const string CollectionToUse = SharedConfigCollection;
+	}
+
+	[CollectionDefinition(TestSettings.SharedConfigCollection)]
+	public class MemcachedClientConfigFixtureCollection : ICollectionFixture<MemcachedClientConfigFixture>
+	{
 	}
 }
 

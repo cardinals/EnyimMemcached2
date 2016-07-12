@@ -27,20 +27,33 @@ namespace Enyim.Caching.Memcached.Operations
 		public BinaryRequest(IBufferAllocator allocator, OpCode operation, byte extraLength = 0)
 			: this(allocator, (byte)operation, extraLength) { }
 
-		protected BinaryRequest(IBufferAllocator allocator, byte commandCode, byte extraLength)
+		protected BinaryRequest(IBufferAllocator allocator, byte operation, byte extraLength)
 		{
 			this.allocator = allocator;
 
-			Operation = commandCode;
-			CorrelationId = unchecked((uint)Interlocked.Increment(ref InstanceCounter)); // request id
-
-			// prealloc header so that the extra data can be placed into the same buffer
+			Operation = operation;
+			CorrelationId = (uint)Interlocked.Increment(ref InstanceCounter); // request id
 			headerLength = Protocol.HeaderLength + extraLength;
-			header = allocator.Take(headerLength);
 
 			if (extraLength > 0)
+			{
+				// prealloc header so that the extra data can be placed into the same buffer
+				// (extra is placed after header in the output buffer)
+				// only alloc header here if Extra > 0, otherwise do it in WriteTo
+				// to reduce the time we own the buffer for
+				header = allocator.Take(headerLength);
 				Extra = new ArraySegment<byte>(header, Protocol.HeaderLength, extraLength);
+			}
 		}
+
+		public readonly byte Operation;
+		public readonly uint CorrelationId;
+		public readonly ArraySegment<byte> Extra;
+
+		public ulong Cas;
+		public ushort Reserved;
+		public Key Key;
+		public ArraySegment<byte> Data;
 
 		~BinaryRequest()
 		{
@@ -57,13 +70,16 @@ namespace Enyim.Caching.Memcached.Operations
 				allocator.Return(header);
 				header = null;
 			}
-
-			Key.Dispose();
-			Key = default(Key);
 		}
 
 		public bool WriteTo(WriteBuffer buffer)
 		{
+			if (header == null)
+			{
+				Debug.Assert(headerLength == Protocol.HeaderLength);
+				header = allocator.Take(headerLength);
+			}
+
 			// 0. init header
 			// 1. loop on header
 			// 2. loop on Key, if any
@@ -130,16 +146,16 @@ namespace Enyim.Caching.Memcached.Operations
 				headerPtr[Protocol.HEADER_INDEX_KEY + 1] = (byte)(keyLength & 255);
 				headerPtr[Protocol.HEADER_INDEX_EXTRA] = (byte)(Extra.Count);
 
-				//// 5 -- data type, 0 (RAW)
-				//// 6,7 -- reserved, always 0
+				// 5 -- data type, 0 (RAW)
+				// 6,7 -- reserved, always 0 (in memcached, others are free to reuse it)
 				headerPtr[0x05] = 0;
 				headerPtr[0x06] = (byte)(Reserved >> 8);
 				headerPtr[0x07] = (byte)(Reserved);
 
-				headerPtr[Protocol.HEADER_INDEX_BODY + 0] = (byte)(totalLength >> 24);
-				headerPtr[Protocol.HEADER_INDEX_BODY + 1] = (byte)(totalLength >> 16);
-				headerPtr[Protocol.HEADER_INDEX_BODY + 2] = (byte)(totalLength >> 8);
-				headerPtr[Protocol.HEADER_INDEX_BODY + 3] = (byte)(totalLength);
+				headerPtr[Protocol.HEADER_INDEX_BODY_LENGTH + 0] = (byte)(totalLength >> 24);
+				headerPtr[Protocol.HEADER_INDEX_BODY_LENGTH + 1] = (byte)(totalLength >> 16);
+				headerPtr[Protocol.HEADER_INDEX_BODY_LENGTH + 2] = (byte)(totalLength >> 8);
+				headerPtr[Protocol.HEADER_INDEX_BODY_LENGTH + 3] = (byte)(totalLength);
 
 				var cid = CorrelationId;
 				headerPtr[Protocol.HEADER_INDEX_OPAQUE + 0] = (byte)(cid >> 24);
@@ -161,14 +177,6 @@ namespace Enyim.Caching.Memcached.Operations
 				}
 			}
 		}
-
-		public readonly byte Operation;
-		public readonly uint CorrelationId;
-		public Key Key;
-		public ulong Cas;
-		public ushort Reserved;
-		public readonly ArraySegment<byte> Extra;
-		public ArraySegment<byte> Data;
 	}
 }
 

@@ -8,13 +8,15 @@ namespace Enyim.Caching.Memcached.Operations
 	public class BinaryResponse : IResponse
 	{
 		private const int STATE_NEED_HEADER = 0;
-		private const int STATE_NEED_BODY = 1;
-		private const int STATE_DONE = 2;
+		private const int STATE_SETUP_EXTRA = 1;
+		private const int STATE_READ_EXTRA = 2;
+		private const int STATE_SETUP_BODY = 3;
+		private const int STATE_READ_BODY = 4;
+		private const int STATE_DONE = 5;
 
 		private readonly IBufferAllocator allocator;
 		private string responseMessage;
 		private byte[] header;
-		private byte[] data;
 
 		private int state;
 		private int remainingHeader;
@@ -29,16 +31,16 @@ namespace Enyim.Caching.Memcached.Operations
 			remainingHeader = Protocol.HeaderLength;
 		}
 
-		public byte OpCode { get; private set; }
-		public int KeyLength { get; private set; }
-		public byte DataType { get; private set; }
-		public int StatusCode { get; private set; }
+		public byte OpCode;
+		public int KeyLength;
+		public byte DataType;
+		public int StatusCode;
 
-		public uint CorrelationId { get; private set; }
-		public ulong CAS { get; private set; }
+		public uint CorrelationId;
+		public ulong CAS;
 
-		public ArraySegment<byte> Extra { get; private set; }
-		public ArraySegment<byte> Data { get; private set; }
+		public ByteBuffer Extra;
+		public ByteBuffer Data;
 
 		public bool Success { get { return StatusCode == Protocol.Status.Success; } }
 
@@ -59,44 +61,68 @@ namespace Enyim.Caching.Memcached.Operations
 				header = null;
 			}
 
-			if (data != null)
-			{
-				allocator.Return(data);
-				data = null;
-			}
+			Extra.Dispose();
+			Data.Dispose();
 		}
 
 		public string GetStatusMessage()
 		{
 			return Data.Array == null
 					? null
-					: (responseMessage ?? (responseMessage = Encoding.ASCII.GetString(Data.Array, Data.Offset, Data.Count)));
+					: (responseMessage ?? (responseMessage = Encoding.ASCII.GetString(Data.Array, 0, Data.Length)));
 		}
 
 		bool IResponse.Read(ReadBuffer buffer)
 		{
+			int read;
+
 			switch (state)
 			{
 				case STATE_NEED_HEADER:
 					remainingHeader -= buffer.Read(header, Protocol.HeaderLength - remainingHeader, remainingHeader);
+
 					if (remainingHeader > 0) return true;
+					if (!ProcessHeader(header)) goto case STATE_DONE;
 
-					if (!ProcessHeader(header, out remainingData))
-					{
-						state = STATE_DONE;
-						return false;
-					}
+					goto case STATE_SETUP_EXTRA;
 
-					state = STATE_NEED_BODY;
-					goto case STATE_NEED_BODY;
+				case STATE_SETUP_EXTRA:
+					if (Extra.Length == 0) goto case STATE_SETUP_BODY;
 
-				case STATE_NEED_BODY:
-					var read = buffer.Read(data, dataReadOffset, remainingData);
-					remainingData -= read;
+					dataReadOffset = 0;
+					remainingData = Extra.Length;
+
+					state = STATE_READ_EXTRA;
+					goto case STATE_READ_EXTRA;
+
+				case STATE_READ_EXTRA:
+					read = buffer.Read(Extra.Array, dataReadOffset, remainingData);
 					dataReadOffset += read;
 
+					remainingData -= read;
 					if (remainingData > 0) return true;
 
+					goto case STATE_SETUP_BODY;
+
+				case STATE_SETUP_BODY:
+					if (Data.Length == 0) goto case STATE_DONE;
+
+					dataReadOffset = 0;
+					remainingData = Data.Length;
+
+					state = STATE_READ_BODY;
+					goto case STATE_READ_BODY;
+
+				case STATE_READ_BODY:
+					read = buffer.Read(Data.Array, dataReadOffset, remainingData);
+					dataReadOffset += read;
+
+					remainingData -= read;
+					if (remainingData > 0) return true;
+
+					goto case STATE_DONE;
+
+				case STATE_DONE:
 					state = STATE_DONE;
 					break;
 			}
@@ -111,7 +137,7 @@ namespace Enyim.Caching.Memcached.Operations
 		/// <param name="bodyLength"></param>
 		/// <param name="extraLength"></param>
 		/// <returns></returns>
-		private bool ProcessHeader(byte[] header, out int bodyLength)
+		private bool ProcessHeader(byte[] header)
 		{
 			if (header[Protocol.HEADER_INDEX_MAGIC] != Protocol.ResponseMagic)
 				throw new InvalidOperationException($"Expected magic value {Protocol.ResponseMagic}, received: {header[Protocol.HEADER_INDEX_MAGIC]}");
@@ -124,16 +150,17 @@ namespace Enyim.Caching.Memcached.Operations
 			CorrelationId = NetworkOrderConverter.DecodeUInt32(header, Protocol.HEADER_INDEX_OPAQUE);
 			CAS = NetworkOrderConverter.DecodeUInt64(header, Protocol.HEADER_INDEX_CAS);
 
-			bodyLength = (int)NetworkOrderConverter.DecodeUInt32(header, Protocol.HEADER_INDEX_BODY);
+			var bodyLength = (int)NetworkOrderConverter.DecodeUInt32(header, Protocol.HEADER_INDEX_BODY_LENGTH);
 
 			if (bodyLength > 0)
 			{
 				var extraLength = header[Protocol.HEADER_INDEX_EXTRA];
+				if (extraLength > 0)
+					Extra = ByteBuffer.Allocate(allocator, extraLength);
 
-				data = allocator.Take(bodyLength);
-
-				Extra = new ArraySegment<byte>(data, 0, extraLength);
-				Data = new ArraySegment<byte>(data, extraLength, bodyLength - extraLength);
+				var dataLength = bodyLength - extraLength;
+				if (dataLength > 0)
+					Data = ByteBuffer.Allocate(allocator, dataLength);
 
 				return true;
 			}

@@ -46,10 +46,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Get(keyTransformer.Transform(key), cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.Get(kb, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{
@@ -61,10 +64,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.GetAndTouch(keyTransformer.Transform(key), expiration.Value, cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.GetAndTouch(kb, expiration.Value, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{
@@ -77,8 +83,9 @@ namespace Enyim.Caching.Memcached
 			try
 			{
 				using (var ci = transcoder.Serialize(value))
+				using (var kb = keyTransformer.Transform(key))
 				{
-					var op = opFactory.Store(mode, keyTransformer.Transform(key), ci, expiration.Value, cas);
+					var op = opFactory.Store(mode, kb, ci, expiration.Value, cas);
 					await cluster.Execute(op).ConfigureAwait(false);
 
 					return op.Result;
@@ -94,10 +101,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Delete(keyTransformer.Transform(key), cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.Delete(kb, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{
@@ -109,10 +119,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Concat(mode, keyTransformer.Transform(key), data, cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.Concat(mode, kb, data, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{
@@ -124,10 +137,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Mutate(mode, keyTransformer.Transform(key), expiration.Value, delta, defaultValue, cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.Mutate(mode, kb, expiration.Value, delta, defaultValue, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{
@@ -141,26 +157,58 @@ namespace Enyim.Caching.Memcached
 			var tasks = new List<Task>();
 			var known = new HashSet<string>();
 
-			foreach (var key in keys)
+			using (var ad = new AggregateDisposable())
 			{
-				if (!known.Add(key)) continue;
-
-				try
+				foreach (var key in keys)
 				{
-					var op = opFactory.Get(keyTransformer.Transform(key), Protocol.NO_CAS);
-					tasks.Add(cluster.Execute(op));
+					if (!known.Add(key)) continue;
 
-					ops[key] = op;
+					try
+					{
+						var op = opFactory.Get(ad.Add(keyTransformer.Transform(key)), Protocol.NO_CAS);
+						tasks.Add(cluster.Execute(op));
+
+						ops[key] = op;
+					}
+					catch (IOException e)
+					{
+						tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
+					}
 				}
-				catch (IOException e)
-				{
-					tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
-				}
+
+				await Task.WhenAll(tasks).ConfigureAwait(false);
 			}
 
-			await Task.WhenAll(tasks).ConfigureAwait(false);
-
 			return ops;
+		}
+
+		class AggregateDisposable : IDisposable
+		{
+			private List<IDisposable> ds = new List<IDisposable>();
+
+			public void Add(IDisposable d)
+			{
+				ds.Add(d);
+			}
+
+			public T Add<T>(T d)
+				where T : IDisposable
+			{
+				ds.Add(d);
+
+				return d;
+			}
+
+			public void Dispose()
+			{
+				if (ds != null)
+				{
+					foreach (var d in ds)
+						d.Dispose();
+
+					ds = null;
+				}
+			}
 		}
 
 		protected async Task<Dictionary<string, IGetOperation>> MultiGetCore(IEnumerable<KeyValuePair<string, ulong>> items)
@@ -169,25 +217,28 @@ namespace Enyim.Caching.Memcached
 			var tasks = new List<Task>();
 			var known = new HashSet<string>();
 
-			foreach (var item in items)
+			using (var ad = new AggregateDisposable())
 			{
-				var key = item.Key;
-				if (!known.Add(key)) continue;
-
-				try
+				foreach (var item in items)
 				{
-					var op = opFactory.Get(keyTransformer.Transform(key), item.Value);
-					tasks.Add(cluster.Execute(op));
+					var key = item.Key;
+					if (!known.Add(key)) continue;
 
-					ops[key] = op;
+					try
+					{
+						var op = opFactory.Get(ad.Add(keyTransformer.Transform(key)), item.Value);
+						tasks.Add(cluster.Execute(op));
+
+						ops[key] = op;
+					}
+					catch (IOException e)
+					{
+						tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
+					}
 				}
-				catch (IOException e)
-				{
-					tasks.Add(Task.FromResult(new GetOperationResult().FailWith(e)));
-				}
+
+				await Task.WhenAll(tasks).ConfigureAwait(false);
 			}
-
-			await Task.WhenAll(tasks).ConfigureAwait(false);
 
 			return ops;
 		}
@@ -202,6 +253,7 @@ namespace Enyim.Caching.Memcached
 		protected async Task<IStatsOperationResult> PerformStats(string key)
 		{
 			var ops = new List<Tuple<IStatsOperation, INode>>();
+			// TODO catch this?
 			await cluster.Broadcast(n =>
 			{
 				var op = opFactory.Stats(key);
@@ -236,10 +288,13 @@ namespace Enyim.Caching.Memcached
 		{
 			try
 			{
-				var op = opFactory.Touch(keyTransformer.Transform(key), expiration.Value, cas);
-				await cluster.Execute(op).ConfigureAwait(false);
+				using (var kb = keyTransformer.Transform(key))
+				{
+					var op = opFactory.Touch(kb, expiration.Value, cas);
+					await cluster.Execute(op).ConfigureAwait(false);
 
-				return op.Result;
+					return op.Result;
+				}
 			}
 			catch (IOException e)
 			{

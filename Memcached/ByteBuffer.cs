@@ -1,19 +1,22 @@
-using System;
+﻿using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Enyim.Caching
 {
-	public struct Key : IDisposable, IEquatable<Key>
+	public struct ByteBuffer : IDisposable, IEquatable<ByteBuffer>
 	{
-		private IBufferAllocator owner;
+		public static readonly ByteBuffer Empty = new ByteBuffer(null, new byte[0], 0);
+
+		public IBufferAllocator owner;
 
 		public readonly int Length;
 		public readonly byte[] Array;
 
-		public Key(IBufferAllocator owner, byte[] array, int length)
+		public ByteBuffer(IBufferAllocator owner, byte[] array, int length)
 		{
 			Require.NotNull(array, nameof(array));
-			Require.Value(nameof(length), length >= 0, $"{nameof(length)} must be >= 0");
-			Require.Value(nameof(length), length <= array.Length, $"{nameof(length)} cannot be greater than the size of the array");
+			Require.That(length >= 0, $"{nameof(length)} must be >= 0");
 
 			this.owner = owner;
 			Array = array;
@@ -31,10 +34,10 @@ namespace Enyim.Caching
 
 		public override bool Equals(object obj)
 		{
-			return obj is Key && Equals((Key)obj);
+			return obj is ByteBuffer && Equals((ByteBuffer)obj);
 		}
 
-		public bool Equals(Key obj)
+		public bool Equals(ByteBuffer obj)
 		{
 			return obj.Array == Array && obj.Length == Length;
 		}
@@ -46,23 +49,48 @@ namespace Enyim.Caching
 					: Array.GetHashCode() ^ Length;
 		}
 
-		public static bool operator ==(Key a, Key b)
+		public static bool operator ==(ByteBuffer a, ByteBuffer b)
 		{
 			return a.Equals(b);
 		}
 
-		public static bool operator !=(Key a, Key b)
+		public static bool operator !=(ByteBuffer a, ByteBuffer b)
 		{
 			return !a.Equals(b);
 		}
 
-		public Key Clone()
+		public ByteBuffer Clone()
 		{
-			var retval = new Key(owner, Array, Length);
+			var retval = new ByteBuffer(owner, Array, Length);
 			owner = null;
 
 			return retval;
 		}
+
+		public static ByteBuffer Allocate(IBufferAllocator allocator, int length)
+		{
+			return new ByteBuffer(allocator, allocator.Take(length), length);
+		}
+	}
+
+	public static class BBX
+	{
+		public static ByteBuffer AsByteBuffer(this ArraySegment<byte> segment, IBufferAllocator allocator = null)
+		{
+			if (segment.Offset == 0)
+				return new ByteBuffer(null, segment.Array, segment.Count);
+
+			var target = allocator == null ? new byte[segment.Count] : allocator.Take(segment.Count);
+			Buffer.BlockCopy(segment.Array, segment.Offset, target, 0, segment.Count);
+
+			return new ByteBuffer(allocator, target, segment.Count);
+		}
+
+		public static ArraySegment<byte> AsArraySegment(this ByteBuffer buffer)
+		{
+			return new ArraySegment<byte>(buffer.Array, 0, buffer.Length);
+		}
+
 	}
 }
 

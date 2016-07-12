@@ -6,22 +6,26 @@ using Enyim.Caching.Memcached.Configuration;
 
 namespace Enyim.Caching.Tests
 {
-	public abstract class SharedServerFixture
+	public abstract class SharedServerFixture : IDisposable
 	{
-		private const int Port = 11200;
-		private const string ClusterName = "SharedServerTests";
+		private const string ClusterPrefix = "SharedServerTests";
+		private static int InstanceCounter = 1;
+		private static int Port = 11200;
 
-		private static readonly object InitLock = new Object();
-
-		private static int refCount;
-		private static IDisposable[] servers;
+		private readonly object initLock = new Object();
+		private IDisposable[] servers;
 		private IContainer config;
+		private string clusterName;
 
 		public IContainer Config
 		{
 			get
 			{
-				InitConfig();
+				if (config == null)
+				{
+					InitConfig();
+				}
+
 				return config;
 			}
 		}
@@ -30,49 +34,41 @@ namespace Enyim.Caching.Tests
 
 		protected void InitConfig()
 		{
-			lock (InitLock)
+			lock (initLock)
 			{
-				if (refCount == 0)
-				{
-					servers = Enumerable.Range(Port, 3).Select(p => MemcachedServer.Run(p, verbose: true)).ToArray();
+				if (config != null) return;
 
-					new ClusterBuilder(ClusterName)
-							.Endpoints(Enumerable
-											.Range(Port, 3)
-											.Select(p => "localhost:" + p)
-											.ToArray())
-							.Register();
-				}
+				var ports = Enumerable.Range(1, 3).Select(i => Interlocked.Increment(ref Port)).ToArray();
 
-				refCount++;
+				clusterName = ClusterPrefix + Interlocked.Increment(ref InstanceCounter);
+				servers = ports.Select(p => MemcachedServer.Run(p, verbose: true)).ToArray();
+
+				new ClusterBuilder(clusterName)
+						.Endpoints(ports.Select(p => "localhost:" + p).ToArray())
+						.Register();
+
+				var configBuilder = new ClientConfigurationBuilder();
+				ConfigureServices(configBuilder.Cluster(clusterName).Use);
+
+				config = configBuilder.Create();
 			}
-
-			var configBuilder = new ClientConfigurationBuilder();
-			ConfigureServices(configBuilder.Cluster(ClusterName).Use);
-
-			config = configBuilder.Create();
 		}
 
 		public void Dispose()
 		{
-			lock (InitLock)
+			lock (initLock)
 			{
 				if (config != null)
 					config.Dispose();
 
 				if (servers != null)
 				{
-					refCount--;
+					ClusterManager.Shutdown(clusterName);
 
-					if (refCount == 0)
-					{
-						ClusterManager.Shutdown(ClusterName);
+					foreach (var server in servers)
+						server.Dispose();
 
-						foreach (var server in servers)
-							server.Dispose();
-
-						servers = null;
-					}
+					servers = null;
 				}
 			}
 		}

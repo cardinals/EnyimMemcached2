@@ -16,33 +16,33 @@ namespace Enyim.Caching.Memcached
 		const byte TRUE = 1;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, byte value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, byte value)
 		{
-			var retval = new PooledSegment(allocator, 1);
+			var retval = new ByteBuffer(allocator, 1);
 			retval.Array[0] = value;
 
 			return retval;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, bool value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, bool value)
 		{
-			var retval = new PooledSegment(allocator, 1);
+			var retval = new ByteBuffer(allocator, 1);
 			retval.Array[0] = value ? TRUE : FALSE;
 
 			return retval;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, char value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, char value)
 		{
 			return GetBytes(allocator, (short)value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, short value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, short value)
 		{
-			var retval = new PooledSegment(allocator, 2);
+			var retval = new ByteBuffer(allocator, 2);
 
 			fixed (byte* ptr = retval.Array)
 			{
@@ -54,9 +54,9 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, int value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, int value)
 		{
-			var retval = new PooledSegment(allocator, 4);
+			var retval = new ByteBuffer(allocator, 4);
 
 			fixed (byte* ptr = retval.Array)
 			{
@@ -70,12 +70,12 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, decimal value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, decimal value)
 		{
 			// should use 'internal static void GetBytes(decimal d, byte[] buffer)'
 			int v;
 			var tmp = Decimal.GetBits(value);
-			var retval = new PooledSegment(allocator, 16);
+			var retval = new ByteBuffer(allocator, 16);
 
 			const int I_0 = 0;
 			const int I_1 = 4;
@@ -113,7 +113,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static decimal ToDecimal(PooledSegment value)
+		public unsafe static decimal ToDecimal(ByteBuffer value)
 		{
 			if (value.Count != 16)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 16");
@@ -150,9 +150,9 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, long value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, long value)
 		{
-			var retval = new PooledSegment(allocator, 8);
+			var retval = new ByteBuffer(allocator, 8);
 
 			fixed (byte* ptr = retval.Array)
 			{
@@ -170,49 +170,49 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, ushort value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, ushort value)
 		{
 			return GetBytes(allocator, (short)value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, uint value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, uint value)
 		{
 			return GetBytes(allocator, (int)value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static PooledSegment GetBytes(IBufferAllocator allocator, ulong value)
+		public static ByteBuffer GetBytes(IBufferAllocator allocator, ulong value)
 		{
 			return GetBytes(allocator, (long)value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, float value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, float value)
 		{
 			return GetBytes(allocator, *(int*)(&value));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static PooledSegment GetBytes(IBufferAllocator allocator, double value)
+		public unsafe static ByteBuffer GetBytes(IBufferAllocator allocator, double value)
 		{
 			return GetBytes(allocator, *(long*)(&value));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool ToBoolean(PooledSegment value)
+		public static bool ToBoolean(ByteBuffer value)
 		{
 			return value.Array[0] == TRUE;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char ToChar(PooledSegment value)
+		public static char ToChar(ByteBuffer value)
 		{
 			return (char)ToInt16(value);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static short ToInt16(PooledSegment value)
+		public unsafe static short ToInt16(ByteBuffer value)
 		{
 			if (value.Count != 2)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 2");
@@ -224,7 +224,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static int ToInt32(PooledSegment value)
+		public unsafe static int ToInt32(ByteBuffer value)
 		{
 			if (value.Count != 4)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be == 4");
@@ -239,7 +239,7 @@ namespace Enyim.Caching.Memcached
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public unsafe static long ToInt64(PooledSegment value)
+		public unsafe static long ToInt64(ByteBuffer value)
 		{
 			if (value.Count < 8)
 				throw new ArgumentOutOfRangeException("value.Count", value.Count, "count must be >= 8");
@@ -257,29 +257,29 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public static ushort ToUInt16(PooledSegment value)
+		public static ushort ToUInt16(ByteBuffer value)
 		{
 			return (ushort)ToInt16(value);
 		}
 
-		public static uint ToUInt32(PooledSegment value)
+		public static uint ToUInt32(ByteBuffer value)
 		{
 			return (uint)ToInt32(value);
 		}
 
-		public static ulong ToUInt64(PooledSegment value)
+		public static ulong ToUInt64(ByteBuffer value)
 		{
 			return (ulong)ToInt64(value);
 		}
 
-		public unsafe static float ToSingle(PooledSegment value)
+		public unsafe static float ToSingle(ByteBuffer value)
 		{
 			var tmp = ToInt32(value);
 
 			return *(&tmp);
 		}
 
-		public unsafe static double ToDouble(PooledSegment value)
+		public unsafe static double ToDouble(ByteBuffer value)
 		{
 			var tmp = ToInt64(value);
 

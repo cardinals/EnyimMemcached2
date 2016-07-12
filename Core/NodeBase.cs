@@ -361,8 +361,8 @@ namespace Enyim.Caching
 					isHandled = data.Op.Handles(response);
 					LogTo.Trace($"Command {data.Op} handles reponse: {isHandled}");
 
-					// returns false when no more IO is required => command is processed
-					// otherwise continue filling the buffer
+					// operations are allowed to hanndle subsequent responses
+					// they returns false when no more IO (response) is required => done processing
 					if (!data.Op.ProcessResponse(isHandled ? response : null))
 					{
 						readQueue.Dequeue();

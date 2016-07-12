@@ -8,7 +8,8 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public partial class SimpleMemcachedClientTests : TestBase, IClassFixture<MemcachedClientConfigFixture>
+	[Collection(TestSettings.CollectionToUse)]
+	public partial class SimpleMemcachedClientTests : TestBase//, IClassFixture<MemcachedClientConfigFixture>
 	{
 		private readonly ISimpleMemcachedClient client;
 

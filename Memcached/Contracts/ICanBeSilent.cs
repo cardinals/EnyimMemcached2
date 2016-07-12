@@ -4,7 +4,7 @@ namespace Enyim.Caching.Memcached
 {
 	public interface ICanBeSilent
 	{
-		bool Silent { get; set; }
+		bool Silent { get; }
 	}
 }
 

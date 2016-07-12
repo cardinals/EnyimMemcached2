@@ -46,6 +46,7 @@
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
+    <Compile Include="ByteBuffer.cs" />
     <Compile Include="CasResult.cs" />
     <Compile Include="PooledMemoryStream.cs" />
     <Compile Include="Expiration.cs" />
@@ -74,7 +75,6 @@
     <Compile Include="Operations\StatsOperation.cs" />
     <Compile Include="Operations\GetAndTouchOperation.cs" />
     <Compile Include="Operations\TouchOperation.cs" />
-    <Compile Include="PooledSegment.cs" />
     <Compile Include="Results\IStatsResult.cs" />
     <Compile Include="Results\MutateOperationResult.cs" />
     <Compile Include="Results\ServerStats.cs" />

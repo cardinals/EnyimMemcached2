@@ -41,7 +41,7 @@ namespace Enyim.Caching.Memcached.Operations
 
 			var data = response.Data;
 
-			// if empty key (last response packet response)
+			// if empty key (last response packet)
 			// or if error
 			// return the response object to break the loop and let the node process the next op.
 			if (response.KeyLength == 0 || !response.Success)
@@ -51,8 +51,8 @@ namespace Enyim.Caching.Memcached.Operations
 
 			// decode stat key/value
 			// both are ASCII in memcached
-			var key = Encoding.ASCII.GetString(data.Array, data.Offset, response.KeyLength);
-			var value = Encoding.ASCII.GetString(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
+			var key = Encoding.ASCII.GetString(data.Array, 0, response.KeyLength);
+			var value = Encoding.ASCII.GetString(data.Array, response.KeyLength, data.Length - response.KeyLength);
 
 			stats[key] = value;
 

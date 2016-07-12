@@ -44,10 +44,8 @@ namespace Enyim.Caching.Memcached.Operations
 			if (response.StatusCode == 0)
 			{
 				var flags = NetworkOrderConverter.DecodeUInt32(response.Extra.Array, 0);
-				// HACK
-				var copy = new PooledSegment(Allocator, response.Data.Count);
-				Buffer.BlockCopy(response.Data.Array, response.Data.Offset, copy.Array, 0, copy.Count);
-				retval.Value = new CacheItem((uint)flags, copy);
+
+				retval.Value = new CacheItem((uint)flags, response.Data.Clone());
 			}
 
 			return retval.WithResponse(response);

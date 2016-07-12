@@ -26,18 +26,18 @@ namespace Enyim.Caching.Memcached
 			// - or we just received a byte[]. No further processing is needed.
 			var tmpByteArray = value as byte[];
 			if (tmpByteArray != null)
-				return new CacheItem(RawDataFlag, new PooledSegment(tmpByteArray, tmpByteArray.Length));
+				return new CacheItem(RawDataFlag, new ByteBuffer(null, tmpByteArray, tmpByteArray.Length));
 
 			// got some real data, serialize it
 			var code = value == null
 						? TypeCode.DBNull
 						: Type.GetTypeCode(value.GetType());
 
-			PooledSegment data;
+			ByteBuffer data;
 			switch (code)
 			{
 				case TypeCode.Empty:
-				case TypeCode.DBNull: data = PooledSegment.Empty; break;
+				case TypeCode.DBNull: data = ByteBuffer.Empty; break;
 				case TypeCode.String: data = SerializeString((String)value); break;
 
 				case TypeCode.SByte: data = PooledBitConverter.GetBytes(allocator, (SByte)value); break;
@@ -64,9 +64,15 @@ namespace Enyim.Caching.Memcached
 					// serialized, usually from a MemoryStream (To avoid duplicating arrays
 					// the byte[] returned by MemoryStream.GetBuffer is placed into an ArraySegment.)
 					if (value is ArraySegment<byte>)
-						return new CacheItem(RawDataFlag, PooledSegment.Wrap((ArraySegment<byte>)value));
+					{
+						var segment = (ArraySegment<byte>)value;
 
-					data = SerializeObject(value); break;
+						return new CacheItem(RawDataFlag, segment.AsByteBuffer(allocator));
+					}
+
+					data = SerializeObject(value);
+					break;
+
 				default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
 			}
 
@@ -75,24 +81,24 @@ namespace Enyim.Caching.Memcached
 
 		public object Deserialize(CacheItem item)
 		{
-			if (item.Segment.Array == null)
+			if (item.Data.Array == null)
 				return null;
 
 			if (item.Flags == RawDataFlag || (item.Flags & 0x1ff) != item.Flags)
 			{
-				var tmp = item.Segment;
-				if (tmp.Count == tmp.Array.Length)
+				var tmp = item.Data;
+				if (tmp.Length == tmp.Array.Length)
 					return tmp.Array;
 
 				// TODO improve memcpy
-				var retval = new byte[tmp.Count];
-				Buffer.BlockCopy(tmp.Array, 0, retval, 0, tmp.Count);
+				var retval = new byte[tmp.Length];
+				Buffer.BlockCopy(tmp.Array, 0, retval, 0, tmp.Length);
 
 				return retval;
 			}
 
 			var code = (TypeCode)(item.Flags & 0xff);
-			var data = item.Segment;
+			var data = item.Data;
 
 			switch (code)
 			{
@@ -128,39 +134,39 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		private PooledSegment SerializeString(string value)
+		private ByteBuffer SerializeString(string value)
 		{
 			if (String.IsNullOrEmpty(value))
-				return PooledSegment.Empty;
+				return ByteBuffer.Empty;
 
 			var buffer = allocator.Take(Utf8.GetMaxByteCount(value.Length));
 			var count = Utf8.GetBytes(value, 0, value.Length, buffer, 0);
 
-			return new PooledSegment(allocator, buffer, count);
+			return new ByteBuffer(allocator, buffer, count);
 		}
 
-		private static string DeserializeString(PooledSegment value)
+		private static string DeserializeString(ByteBuffer value)
 		{
-			return Utf8.GetString(value.Array, 0, value.Count);
+			return Utf8.GetString(value.Array, 0, value.Length);
 		}
 
-		private PooledSegment SerializeObject(object value)
+		private ByteBuffer SerializeObject(object value)
 		{
 			using (var ms = new PooledMemoryStream(allocator))
 			{
 				new BinaryFormatter().Serialize(ms, value);
 
-				var retval = new PooledSegment(allocator, (int)ms.Length);
+				var retval = new ByteBuffer(allocator, allocator.Take((int)ms.Length), (int)ms.Length);
 				ms.Position = 0;
-				ms.Read(retval.Array, 0, retval.Count);
+				ms.Read(retval.Array, 0, retval.Length);
 
 				return retval;
 			}
 		}
 
-		private static object DeserializeObject(PooledSegment value)
+		private static object DeserializeObject(ByteBuffer value)
 		{
-			using (var ms = new MemoryStream(value.Array, 0, value.Count))
+			using (var ms = new MemoryStream(value.Array, 0, value.Length))
 			{
 				return new BinaryFormatter().Deserialize(ms);
 			}

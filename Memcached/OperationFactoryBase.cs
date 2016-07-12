@@ -37,8 +37,10 @@ namespace Enyim.Caching.Memcached
 
 		public IStoreOperation Store(StoreMode mode, Key key, CacheItem value, uint expires, ulong cas)
 		{
-			return new StoreOperation(allocator, mode, key, value)
+			return new StoreOperation(allocator, key)
 			{
+				Mode = mode,
+				Value = value,
 				Cas = cas,
 				Expires = expires,
 				Silent = silent
