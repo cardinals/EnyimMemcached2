@@ -24,10 +24,7 @@ namespace Enyim.Caching.Memcached
 			}
 		}
 
-		public INode Locate(Key key)
-		{
-			return locator.Locate(key);
-		}
+		public INode Locate(Key key) => locator.Locate(key);
 
 		#region [ InnerLocator                 ]
 
@@ -79,29 +76,25 @@ namespace Enyim.Caching.Memcached
 
 		private class AlreadyFailedNode : INode
 		{
-			public static readonly INode Instance;
-			private static readonly TaskCompletionSource<IOperation> FailedTask;
-
-			static AlreadyFailedNode()
+			private static readonly Lazy<TaskCompletionSource<IOperation>> FailedTask = new Lazy<TaskCompletionSource<IOperation>>(() =>
 			{
-				FailedTask = new TaskCompletionSource<IOperation>();
-				FailedTask.SetException(new IOException("AlwaysDead"));
-				Instance = new AlreadyFailedNode();
-			}
+				var retval = new TaskCompletionSource<IOperation>();
+				retval.SetException(new IOException("AlwaysDead"));
 
-			public override string ToString()
-			{
-				return "AlreadyFailedNode";
-			}
+				return retval;
+			});
+
+			public static readonly INode Instance = new AlreadyFailedNode();
 
 			public bool IsAlive { get; } = false;
 			public IPEndPoint EndPoint { get; } = new IPEndPoint(IPAddress.None, 0);
 
 			public void Run() { }
-			public Task<IOperation> Enqueue(IOperation op) { return FailedTask.Task; }
-
 			public void Connect(CancellationToken token) { }
 			public void Shutdown() { }
+
+			public Task<IOperation> Enqueue(IOperation op) => FailedTask.Value.Task;
+			public override string ToString() => "AlreadyFailedNode";
 		}
 
 		#endregion

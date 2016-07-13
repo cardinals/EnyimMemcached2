@@ -10,7 +10,7 @@ using System.Threading;
 namespace Enyim.Caching
 {
 	[DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
-	public class AsyncSocket : ISocket
+	public sealed class AsyncSocket : ISocket
 	{
 		#region [ Defaults                     ]
 
@@ -382,6 +382,8 @@ namespace Enyim.Caching
 
 		~AsyncSocket()
 		{
+			GC.WaitForPendingFinalizers();
+
 			Dispose();
 		}
 

@@ -8,10 +8,7 @@ namespace Enyim.Caching
 	{
 		public static readonly ByteBuffer Empty = new ByteBuffer(null, new byte[0], 0);
 
-		public IBufferAllocator owner;
-
-		public readonly int Length;
-		public readonly byte[] Array;
+		private IBufferAllocator owner;
 
 		public ByteBuffer(IBufferAllocator owner, byte[] array, int length)
 		{
@@ -22,6 +19,9 @@ namespace Enyim.Caching
 			Array = array;
 			Length = length;
 		}
+
+		public readonly int Length;
+		public readonly byte[] Array;
 
 		public void Dispose()
 		{
@@ -49,16 +49,6 @@ namespace Enyim.Caching
 					: Array.GetHashCode() ^ Length;
 		}
 
-		public static bool operator ==(ByteBuffer a, ByteBuffer b)
-		{
-			return a.Equals(b);
-		}
-
-		public static bool operator !=(ByteBuffer a, ByteBuffer b)
-		{
-			return !a.Equals(b);
-		}
-
 		public ByteBuffer Clone()
 		{
 			var retval = new ByteBuffer(owner, Array, Length);
@@ -71,26 +61,9 @@ namespace Enyim.Caching
 		{
 			return new ByteBuffer(allocator, allocator.Take(length), length);
 		}
-	}
 
-	public static class BBX
-	{
-		public static ByteBuffer AsByteBuffer(this ArraySegment<byte> segment, IBufferAllocator allocator = null)
-		{
-			if (segment.Offset == 0)
-				return new ByteBuffer(null, segment.Array, segment.Count);
-
-			var target = allocator == null ? new byte[segment.Count] : allocator.Take(segment.Count);
-			Buffer.BlockCopy(segment.Array, segment.Offset, target, 0, segment.Count);
-
-			return new ByteBuffer(allocator, target, segment.Count);
-		}
-
-		public static ArraySegment<byte> AsArraySegment(this ByteBuffer buffer)
-		{
-			return new ArraySegment<byte>(buffer.Array, 0, buffer.Length);
-		}
-
+		public static bool operator ==(ByteBuffer a, ByteBuffer b) => a.Equals(b);
+		public static bool operator !=(ByteBuffer a, ByteBuffer b) => !a.Equals(b);
 	}
 }
 

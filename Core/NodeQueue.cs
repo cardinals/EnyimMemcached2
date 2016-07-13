@@ -15,7 +15,7 @@ namespace Enyim.Caching
 	/// Depending on the 'set' used inside, it may happen that a node gets added a couple of times,
 	/// but it still won't monopolize the queue.
 	/// </summary>
-	internal class NodeQueue
+	internal class NodeQueue : IDisposable
 	{
 		private readonly BlockingCollection<INode> queue;
 		private readonly __IndexSet set;
@@ -28,6 +28,11 @@ namespace Enyim.Caching
 			nodeIndexes = Enumerable
 									.Range(0, allNodes.Length)
 									.ToDictionary(k => allNodes[k], k => k);
+		}
+
+		public void Dispose()
+		{
+			queue.Dispose();
 		}
 
 		public void Add(INode node)

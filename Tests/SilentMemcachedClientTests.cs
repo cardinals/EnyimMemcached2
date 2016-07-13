@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Xunit;
 
@@ -26,6 +27,19 @@ namespace Enyim.Caching.Tests
 
 			ShouldPass(await client.MutateAsync(MutationMode.Decrement, key, Expiration.Never, 10, 200, Protocol.NO_CAS));
 			AreEqual("200", await client.GetAsync<string>(key));
+		}
+
+		[Fact]
+		public async Task When_Only_Sending_Silent_Commands_All_Should_Be_Executed()
+		{
+			const int COUNT = 10000;
+
+			var prefix = GetUniqueKey("StressTest");
+			var tasks = Enumerable.Range(1, COUNT).Select(i => client.SetAsync(prefix + i, i)).ToArray();
+
+			await Task.WhenAll(tasks);
+
+			Assert.All(tasks, t => Assert.True(t.Result.Silent && t.Result.Success));
 		}
 	}
 }

@@ -20,7 +20,24 @@ namespace Enyim.Caching.Memcached
 		public bool IsNever { get { return Value == 0; } }
 		public uint Value { get; private set; }
 
-		public static Expiration Create(TimeSpan validFor)
+		public override int GetHashCode()
+		{
+			return HashCodeCombiner.Combine((int)Value, IsAbsolute ? 0 : 1, IsForever ? 0 : 1);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return Equals((Expiration)obj);
+		}
+
+		public bool Equals(Expiration other)
+		{
+			return Value == other.Value
+					&& IsAbsolute == other.IsAbsolute
+					&& IsForever == other.IsForever;
+		}
+
+		public static Expiration From(TimeSpan validFor)
 		{
 			// infinity
 			if (validFor == TimeSpan.Zero || validFor == TimeSpan.MaxValue)
@@ -29,10 +46,10 @@ namespace Enyim.Caching.Memcached
 			var seconds = (uint)validFor.TotalSeconds;
 			if (seconds < MaxSeconds) return new Expiration { Value = seconds };
 
-			return Create(SystemTime.Now() + validFor);
+			return From(SystemTime.Now() + validFor);
 		}
 
-		public static Expiration Create(DateTime expiresAt)
+		public static Expiration From(DateTime expiresAt)
 		{
 			if (expiresAt == DateTime.MaxValue || expiresAt == DateTime.MinValue)
 				return Never;
@@ -47,37 +64,12 @@ namespace Enyim.Caching.Memcached
 			};
 		}
 
-		public static implicit operator Expiration(TimeSpan validFor)
-		{
-			return Create(validFor);
-		}
+		public static implicit operator Expiration(TimeSpan validFor) => From(validFor);
+		public static implicit operator Expiration(DateTime expiresAt) => From(expiresAt);
+		public static implicit operator Expiration(uint value) => new Expiration(value);
 
-		public static implicit operator Expiration(DateTime expiresAt)
-		{
-			return Create(expiresAt);
-		}
-
-		public static implicit operator Expiration(uint value)
-		{
-			return new Expiration(value);
-		}
-
-		public override bool Equals(object obj)
-		{
-			return Equals((Expiration)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCodeCombiner.Combine((int)Value, IsAbsolute ? 0 : 1, IsForever ? 0 : 1);
-		}
-
-		public bool Equals(Expiration other)
-		{
-			return Value == other.Value
-					&& IsAbsolute == other.IsAbsolute
-					&& IsForever == other.IsForever;
-		}
+		public static bool operator ==(Expiration a, Expiration b) => a.Equals(b);
+		public static bool operator !=(Expiration a, Expiration b) => !a.Equals(b);
 	}
 }
 

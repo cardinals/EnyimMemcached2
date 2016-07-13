@@ -11,7 +11,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void TimeSpan_Zero_Should_Never_Expire()
 		{
-			var e = Expiration.Create(TimeSpan.Zero);
+			var e = Expiration.From(TimeSpan.Zero);
 
 			Assert.Equal(0u, e.Value);
 			Assert.Equal(true, e.IsAbsolute);
@@ -21,7 +21,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void TimeSpan_MaxValue_Should_Never_Expire()
 		{
-			var e = Expiration.Create(TimeSpan.MaxValue);
+			var e = Expiration.From(TimeSpan.MaxValue);
 
 			Assert.Equal(0u, e.Value);
 			Assert.Equal(true, e.IsAbsolute);
@@ -31,7 +31,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void TimeSpan_Less_Than_One_Month_Should_Become_Valid_Relative_Expiration()
 		{
-			var e = Expiration.Create(TimeSpan.FromSeconds(100));
+			var e = Expiration.From(TimeSpan.FromSeconds(100));
 
 			Assert.Equal(100u, e.Value);
 			Assert.Equal(false, e.IsAbsolute);
@@ -43,7 +43,7 @@ namespace Enyim.Caching.Tests
 		{
 			using (SystemTime.Set(() => new DateTime(2011, 12, 31, 23, 0, 0, DateTimeKind.Utc)))
 			{
-				var e = Expiration.Create(TimeSpan.FromDays(31));
+				var e = Expiration.From(TimeSpan.FromDays(31));
 
 				Assert.Equal(1328050800u, e.Value);
 				Assert.Equal(true, e.IsAbsolute);
@@ -60,7 +60,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void DateTime_MinValue_Should_Never_Expire()
 		{
-			var e = Expiration.Create(DateTime.MaxValue);
+			var e = Expiration.From(DateTime.MaxValue);
 
 			Assert.Equal(0u, e.Value);
 			Assert.Equal(true, e.IsAbsolute);
@@ -70,7 +70,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void DateTime_MaxValue_Should_Never_Expire()
 		{
-			var e = Expiration.Create(DateTime.MaxValue);
+			var e = Expiration.From(DateTime.MaxValue);
 
 			Assert.Equal(0u, e.Value);
 			Assert.Equal(true, e.IsAbsolute);
@@ -80,7 +80,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void DateTime_Value_Should_Become_Valid_Absolute_Expiration()
 		{
-			var e = Expiration.Create(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
+			var e = Expiration.From(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
 
 			Assert.Equal(1328050800u, e.Value);
 			Assert.Equal(true, e.IsAbsolute);
@@ -90,7 +90,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Different_Instances_From_Same_DateTime_Must_Be_Equal()
 		{
-			var a = Expiration.Create(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
+			var a = Expiration.From(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
 			var b = (Expiration)(new DateTime(2012, 01, 31, 23, 0, 0, DateTimeKind.Utc));
 
 			Assert.True(a.Equals(a));
@@ -103,7 +103,7 @@ namespace Enyim.Caching.Tests
 		[Fact]
 		public void Different_Instances_From_Same_TimeSpan_Must_Be_Equal()
 		{
-			var a = Expiration.Create(TimeSpan.FromSeconds(100));
+			var a = Expiration.From(TimeSpan.FromSeconds(100));
 			var b = (Expiration)(TimeSpan.FromSeconds(100));
 
 			Assert.True(a.Equals(a));

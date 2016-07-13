@@ -23,6 +23,7 @@ namespace Enyim.Caching
 		private INode[] allNodes; // all nodes in the cluster known by us
 		private INode[] workingNodes; // the nodes that are still working
 		private NodeQueue ioQueue; // the nodes that has IO pending
+		private bool isDisposed;
 
 		protected ClusterBase(IEnumerable<IPEndPoint> endpoints, INodeLocator locator, IReconnectPolicy reconnectPolicy)
 		{
@@ -51,22 +52,27 @@ namespace Enyim.Caching
 
 		public virtual void Dispose()
 		{
-			// if the cluster is not stopped yet, we should clean up
-			if (shutdownToken != null && !shutdownToken.IsCancellationRequested)
+			lock (ReconnectLock)
 			{
-				shutdownToken.Cancel();
-				using (workerIsDone) workerIsDone.Wait();
-
-				foreach (var node in allNodes)
+				// if the cluster is not stopped yet, we should clean up
+				if (!isDisposed)
 				{
-					try { node.Shutdown(); }
-					catch (Exception e)
-					{
-						LogTo.Error(e, $"Error while shutting down {node}");
-					}
-				}
+					shutdownToken.Cancel();
+					using (workerIsDone) workerIsDone.Wait();
 
-				shutdownToken.Dispose();
+					foreach (var node in allNodes)
+					{
+						try { node.Shutdown(); }
+						catch (Exception e)
+						{
+							LogTo.Error(e, $"Error while shutting down {node}");
+						}
+					}
+
+					shutdownToken.Dispose();
+					ioQueue.Dispose();
+					isDisposed = true;
+				}
 			}
 
 			SocketAsyncEventArgsFactory.Instance.Compact();

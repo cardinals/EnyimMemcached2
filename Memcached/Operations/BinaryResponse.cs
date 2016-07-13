@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Operations
 {
-	public class BinaryResponse : IResponse
+	public sealed class BinaryResponse : IResponse
 	{
 		private const int STATE_NEED_HEADER = 0;
 		private const int STATE_SETUP_EXTRA = 1;

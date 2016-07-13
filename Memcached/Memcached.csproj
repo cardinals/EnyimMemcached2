@@ -46,6 +46,7 @@
     <Compile Include="..\GlobalSuppressions.cs">
       <Link>Properties\GlobalSuppressions.cs</Link>
     </Compile>
+    <Compile Include="ByteBuferExtensions.cs" />
     <Compile Include="ByteBuffer.cs" />
     <Compile Include="CasResult.cs" />
     <Compile Include="PooledMemoryStream.cs" />
