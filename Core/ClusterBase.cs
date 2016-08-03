@@ -13,7 +13,9 @@ namespace Enyim.Caching
 		private readonly IPEndPoint[] endpoints;
 		private readonly INodeLocator locator;
 		private readonly IReconnectPolicy reconnectPolicy;
+
 		private readonly object ReconnectLock;
+		private readonly object StateLock;
 
 		private readonly CancellationTokenSource shutdownToken;
 
@@ -32,6 +34,7 @@ namespace Enyim.Caching
 			this.reconnectPolicy = reconnectPolicy;
 
 			ReconnectLock = new Object();
+			StateLock = new Object();
 			shutdownToken = new CancellationTokenSource();
 			workerIsDone = new ManualResetEventSlim(false);
 
@@ -42,40 +45,48 @@ namespace Enyim.Caching
 
 		public virtual void Start()
 		{
-			allNodes = endpoints.Select(CreateNode).ToArray();
-			ioQueue = new NodeQueue(allNodes);
-			workingNodes = allNodes.ToArray();
-			locator.Initialize(allNodes);
+			lock (StateLock)
+			{
+				if (isDisposed) throw new ObjectDisposedException("Cluster is already disposed");
+				if (allNodes != null) throw new InvalidOperationException("Cluster is already initialized");
 
-			worker.Start();
+				allNodes = endpoints.Select(CreateNode).ToArray();
+				ioQueue = new NodeQueue(allNodes);
+				workingNodes = allNodes.ToArray();
+				locator.Initialize(allNodes);
+
+				worker.Start();
+			}
 		}
 
 		public virtual void Dispose()
 		{
-			lock (ReconnectLock)
+			lock (StateLock)
 			{
 				// if the cluster is not stopped yet, we should clean up
 				if (!isDisposed)
 				{
-					shutdownToken.Cancel();
-					using (workerIsDone) workerIsDone.Wait();
+					isDisposed = true;
 
-					foreach (var node in allNodes)
+					using (shutdownToken)
+					using (ioQueue)
 					{
-						try { node.Shutdown(); }
-						catch (Exception e)
+						shutdownToken.Cancel();
+						using (workerIsDone) workerIsDone.Wait();
+
+						foreach (var node in allNodes)
 						{
-							LogTo.Error(e, $"Error while shutting down {node}");
+							try { node.Shutdown(); }
+							catch (Exception e)
+							{
+								LogTo.Error(e, $"Error while shutting down {node}");
+							}
 						}
 					}
-
-					shutdownToken.Dispose();
-					ioQueue.Dispose();
-					isDisposed = true;
 				}
-			}
 
-			SocketAsyncEventArgsFactory.Instance.Compact();
+				SocketAsyncEventArgsFactory.Instance.Compact();
+			}
 		}
 
 		public virtual Task<IOperation> Execute(IItemOperation op)

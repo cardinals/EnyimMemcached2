@@ -12,16 +12,11 @@ namespace Enyim.Caching.Memcached
 {
 	public class DefaultNodeLocator : INodeLocator
 	{
-		private readonly object InitLock = new Object();
-		private InnerLocator locator;
+		private InnerLocator locator = new InnerLocator(Enumerable.Empty<INode>());
 
 		public void Initialize(IEnumerable<INode> currentNodes)
 		{
-			lock (InitLock)
-			{
-				var tmp = new InnerLocator(currentNodes);
-				Interlocked.Exchange(ref locator, tmp);
-			}
+			Interlocked.Exchange(ref locator, new InnerLocator(currentNodes));
 		}
 
 		public INode Locate(Key key) => locator.Locate(key);

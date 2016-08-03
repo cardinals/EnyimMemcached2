@@ -49,6 +49,7 @@
     <Compile Include="ByteBuferExtensions.cs" />
     <Compile Include="ByteBuffer.cs" />
     <Compile Include="CasResult.cs" />
+    <Compile Include="KeyTransformers\Murmur32.cs" />
     <Compile Include="PooledMemoryStream.cs" />
     <Compile Include="Expiration.cs" />
     <Compile Include="Contracts\ICanBeSilent.cs" />

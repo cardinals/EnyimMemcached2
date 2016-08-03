@@ -98,7 +98,7 @@ namespace Enyim.Caching
 				for (var i = didPop - 1; i >= 0; i--)
 				{
 					var current = all[i];
-					Debug.Assert(current != null);
+					if (current == null) continue;
 
 					if (current.IsEmpty)
 					{
@@ -172,6 +172,7 @@ namespace Enyim.Caching
 				{
 					pin.Free();
 					data = null;
+					pin = default(GCHandle);
 				}
 			}
 
@@ -214,13 +215,6 @@ namespace Enyim.Caching
 
 				Debug.Assert(newValue >= 0, "a segment was released twice");
 			}
-
-#if DEBUG
-			public bool IsOwned(ArraySegment<byte> buffer)
-			{
-				return buffer.Array == data;
-			}
-#endif
 		}
 
 		#endregion

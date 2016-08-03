@@ -38,6 +38,7 @@
     <Compile Include="Contracts\LogTo.cs" />
     <Compile Include="Murmur64_64.cs" />
     <Compile Include="NodePerformanceMonitor.cs" />
+    <Compile Include="SocketAsyncEventArgsFactory.cs" />
     <Compile Include="Tracing\AsyncSocket.cs" />
     <Compile Include="HashCodeCombiner.cs" />
     <Compile Include="Tracing\CoreEventSource.cs" />
@@ -65,12 +66,10 @@
     <Compile Include="LogManager.cs" />
     <Compile Include="Key.cs" />
     <Compile Include="ReadBuffer.cs" />
-    <Compile Include="SocketAsyncEventArgsPool.cs" />
     <Compile Include="AsyncSocket.cs" />
     <Compile Include="ClusterBase.cs" />
     <Compile Include="DefaultNodeLocator.cs" />
     <Compile Include="ImmediateFailurePolicy.cs" />
-    <Compile Include="Murmur32.cs" />
     <Compile Include="NodeBase.cs" />
     <Compile Include="PeriodicReconnectPolicy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
