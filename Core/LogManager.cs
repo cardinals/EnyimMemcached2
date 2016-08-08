@@ -22,14 +22,6 @@ namespace Enyim.Caching
 			return factory.GetLogger(type);
 		}
 
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		public static ILog GetCurrentClassLogger()
-		{
-			var frame = new System.Diagnostics.StackFrame(1, false);
-
-			return GetLogger(frame.GetMethod().DeclaringType.FullName);
-		}
-
 		#region [ NullLoggerFactory            ]
 
 		private class NullLoggerFactory : ILogFactory
